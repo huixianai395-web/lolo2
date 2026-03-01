@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -14,7 +15,8 @@
     *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
     html,body{height:100%;overflow:hidden}
     body{
-      display:flex;flex-direction:column;background:
+      display:flex;flex-direction:column;
+      background:
       radial-gradient(1200px 500px at 20% -10%, rgba(217,185,139,.08), transparent 45%),
       radial-gradient(800px 400px at 100% 0%, rgba(122,162,247,.08), transparent 55%),
       var(--bg);
@@ -60,13 +62,15 @@
     }
     .msgAv img{width:100%;height:100%;object-fit:cover}
     .msg{
-      max-width:76%;padding:10px 12px;border-radius:14px;font-size:14px;line-height:1.6;word-break:break-word;
+      max-width:78%;padding:10px 12px;border-radius:14px;font-size:14px;line-height:1.6;word-break:break-word;
       box-shadow:0 6px 18px rgba(0,0,0,.18); animation:pop .18s ease-out;
     }
     @keyframes pop{from{opacity:.2;transform:translateY(6px) scale(.98)}to{opacity:1;transform:none}}
     .ai{background:var(--bg3);border:1px solid var(--bd);border-bottom-left-radius:4px}
     .meBubble{background:linear-gradient(135deg,var(--ac1),var(--ac2));color:#111;border-bottom-right-radius:4px}
     .tm{font-size:10px;opacity:.6;margin-top:4px}
+    .chatImg{max-width:min(62vw,260px);max-height:320px;border-radius:12px;display:block;border:1px solid rgba(255,255,255,.15)}
+
     .typ{align-self:flex-start;background:var(--bg3);border:1px solid var(--bd);border-radius:14px;padding:10px 12px}
     .typ i{display:inline-block;width:5px;height:5px;margin-right:4px;background:var(--tx2);border-radius:50%;animation:b 1.1s infinite}
     .typ i:nth-child(2){animation-delay:.2s}.typ i:nth-child(3){animation-delay:.4s}
@@ -74,34 +78,21 @@
     .cur{display:inline-block;animation:blink .8s step-end infinite}
     @keyframes blink{50%{opacity:0}}
 
-    .md h1,.md h2,.md h3,.md h4{margin:.2em 0 .35em 0;line-height:1.35}
-    .md h1{font-size:1.12em}.md h2{font-size:1.07em}.md h3{font-size:1.02em}.md h4{font-size:.98em}
-    .md ul,.md ol{padding-left:1.2em;margin:.28em 0}
+    .md h1,.md h2,.md h3{margin:.2em 0 .35em 0;line-height:1.35}
+    .md h1{font-size:1.12em}.md h2{font-size:1.07em}.md h3{font-size:1.02em}
+    .md ul{padding-left:1.2em;margin:.28em 0}
     .md li{margin:.18em 0}
-    .md code.inline{
-      padding:1px 6px;border-radius:6px;background:rgba(0,0,0,.18);
-      border:1px solid rgba(255,255,255,.12);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.92em
-    }
-    .md pre{
-      margin:.42em 0;overflow:auto;border:1px solid rgba(255,255,255,.12);
-      background:#0b1220;border-radius:10px;padding:10px
-    }
-    .md pre code{
-      font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
-      font-size:12.5px;line-height:1.55;white-space:pre
-    }
+    .md code{padding:1px 6px;border-radius:6px;background:rgba(0,0,0,.18);border:1px solid rgba(255,255,255,.12);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.92em}
+    .md pre{margin:.42em 0;overflow:auto;border:1px solid rgba(255,255,255,.12);background:#0b1220;border-radius:10px;padding:10px}
+    .md pre code{padding:0;border:none;background:none}
     .md a{color:#8fb4ff;text-decoration:none}
-    .md a:hover{text-decoration:underline}
-    .tok-k{color:#f29e74}
-    .tok-s{color:#9dd68c}
-    .tok-n{color:#a9b7ff}
-    .tok-c{color:#7f8aaa}
-    .langTag{
-      display:inline-block;margin-bottom:6px;padding:1px 7px;border-radius:999px;
-      font-size:10px;letter-spacing:.2px;background:#1d2b48;color:#a9bcdf;border:1px solid rgba(255,255,255,.12)
-    }
 
-    .inputBar{display:flex;gap:8px;align-items:flex-end;padding:10px;background:rgba(18,26,44,.9);border-top:1px solid var(--bd)}
+    .inputBar{display:flex;flex-direction:column;gap:8px;padding:10px;background:rgba(18,26,44,.9);border-top:1px solid var(--bd)}
+    .tools{display:flex;gap:8px;align-items:center}
+    .toolBtn{
+      min-width:36px;height:36px;padding:0 10px;border:1px solid var(--bd);border-radius:10px;background:var(--bg3);color:var(--tx2);font-size:14px
+    }
+    .sendRow{display:flex;gap:8px;align-items:flex-end}
     #inp{
       flex:1;resize:none;max-height:120px;min-height:40px;border:1px solid var(--bd);border-radius:20px;
       background:var(--bg3);color:var(--tx);padding:10px 14px;font-size:14px;outline:none
@@ -111,6 +102,12 @@
       background:linear-gradient(135deg,var(--ac1),var(--ac2));color:#111;font-weight:700
     }
     #sendBtn:disabled{opacity:.35}
+
+    .emojiPanel{
+      display:none;gap:6px;flex-wrap:wrap;padding:8px;border:1px solid var(--bd);border-radius:10px;background:var(--bg3)
+    }
+    .emojiPanel.show{display:flex}
+    .emoji{width:32px;height:32px;border:none;background:#111a2d;border:1px solid var(--bd);border-radius:8px;color:#fff;font-size:18px;line-height:1}
 
     .wrap{padding:14px;display:flex;flex-direction:column;gap:12px}
     .card{
@@ -208,8 +205,16 @@
       <div class="chatWrap">
         <div id="chat" class="chat"></div>
         <div class="inputBar">
-          <textarea id="inp" rows="1" placeholder="说点什么……" oninput="autoGrow(this)" onkeydown="hotKey(event)"></textarea>
-          <button id="sendBtn" onclick="send()">↑</button>
+          <div class="tools">
+            <button class="toolBtn" onclick="openImagePick()">🖼</button>
+            <button class="toolBtn" onclick="toggleEmoji()">😊</button>
+            <input id="imgPick" type="file" accept="image/*" style="display:none" onchange="pickImage(event)" />
+          </div>
+          <div id="emojiPanel" class="emojiPanel"></div>
+          <div class="sendRow">
+            <textarea id="inp" rows="1" placeholder="说点什么……" oninput="autoGrow(this)" onkeydown="hotKey(event)"></textarea>
+            <button id="sendBtn" onclick="send()">↑</button>
+          </div>
         </div>
       </div>
     </section>
@@ -371,6 +376,7 @@
   let HMap = {};
   let streaming = false;
   let currentPage = 'chat';
+  const EMOJIS = ['😀','😎','🥺','🥰','😭','😤','🤍','💙','💜','💛','🔥','✨','🎀','🍓','🫶','😴','🙄','😈','📌','✅'];
 
   const $ = s => document.querySelector(s);
   const chat = $('#chat');
@@ -440,66 +446,31 @@
     toast('已在首页');
   }
 
-  function highlightCode(raw, lang=''){
-    let code = esc(raw || '');
-    const L = (lang||'').toLowerCase();
-
-    if (['js','javascript','ts','typescript','json'].includes(L)) {
-      code = code
-        .replace(/(\/\/[^\n]*)/g,'<span class="tok-c">$1</span>')
-        .replace(/("(?:\\.|[^"])*"|'(?:\\.|[^'])*')/g,'<span class="tok-s">$1</span>')
-        .replace(/\b(const|let|var|function|return|if|else|for|while|break|continue|new|class|extends|try|catch|throw|await|async|import|from|export|default|true|false|null|undefined)\b/g,'<span class="tok-k">$1</span>')
-        .replace(/\b([A-Za-z_$][\w$]*)\s*(?=\()/g,'<span class="tok-n">$1</span>');
-    } else if (['html','xml'].includes(L)) {
-      code = code
-        .replace(/(&lt;!--[\s\S]*?--&gt;)/g,'<span class="tok-c">$1</span>')
-        .replace(/(&lt;\/?[a-zA-Z0-9:-]+)/g,'<span class="tok-k">$1</span>')
-        .replace(/([a-zA-Z-:]+)=(".*?"|'.*?')/g,'<span class="tok-n">$1</span>=<span class="tok-s">$2</span>');
-    } else if (['bash','sh','shell'].includes(L)) {
-      code = code
-        .replace(/(#.*)/g,'<span class="tok-c">$1</span>')
-        .replace(/\b(curl|echo|cat|grep|sed|awk|ls|cd|pwd|mkdir|rm|cp|mv|git|npm|pnpm|yarn|node)\b/g,'<span class="tok-k">$1</span>');
-    }
-
-    return code;
-  }
-
   function markdownToHtml(src=''){
     let s = String(src ?? '');
     const blocks = [];
-
     s = s.replace(/```([^\n`]*)\n?([\s\S]*?)```/g, (_, lang, code) => {
       const i = blocks.length;
-      blocks.push({ lang: (lang||'').trim(), code: code || '' });
-      return `@@CODE_BLOCK_${i}@@`;
+      blocks.push({ lang: (lang||'').trim(), code: esc(code || '') });
+      return `@@CODE_${i}@@`;
     });
-
     s = esc(s);
-
-    s = s.replace(/^#### (.*)$/gm, '<h4>$1</h4>');
-    s = s.replace(/^### (.*)$/gm, '<h3>$1</h3>');
-    s = s.replace(/^## (.*)$/gm, '<h2>$1</h2>');
-    s = s.replace(/^# (.*)$/gm, '<h1>$1</h1>');
-
-    s = s.replace(/^\s*-\s+(.*)$/gm, '<li>$1</li>');
-    s = s.replace(/(?:<li>[\s\S]*?<\/li>)/g, m => `<ul>${m}</ul>`);
-
+    s = s.replace(/^### (.*)$/gm, '<h3>$1</h3>').replace(/^## (.*)$/gm, '<h2>$1</h2>').replace(/^# (.*)$/gm, '<h1>$1</h1>');
+    s = s.replace(/^\s*-\s+(.*)$/gm, '<li>$1</li>').replace(/(?:<li>[\s\S]*?<\/li>)/g, m => `<ul>${m}</ul>`);
     s = s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
     s = s.replace(/\*(.+?)\*/g, '<em>$1</em>');
-    s = s.replace(/`([^`]+)`/g, '<code class="inline">$1</code>');
+    s = s.replace(/`([^`]+)`/g, '<code>$1</code>');
     s = s.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
     s = s.replace(/\n/g, '<br>');
-
-    s = s.replace(/@@CODE_BLOCK_(\d+)@@/g, (_, idx) => {
-      const b = blocks[Number(idx)];
-      if(!b) return '';
-      const lang = b.lang || '';
-      const codeHtml = highlightCode(b.code, lang);
-      const tag = lang ? `<div class="langTag">${esc(lang)}</div>` : '';
-      return `${tag}<pre><code>${codeHtml}</code></pre>`;
-    });
-
+    s = s.replace(/@@CODE_(\d+)@@/g, (_, i) => `<pre><code>${blocks[Number(i)]?.code || ''}</code></pre>`);
     return `<div class="md">${s}</div>`;
+  }
+
+  function renderMsgContent(m){
+    if(m.type === 'image'){
+      return `<img class="chatImg" src="${m.content}" alt="img" />`;
+    }
+    return markdownToHtml(m.content || '');
   }
 
   function renderChat(){
@@ -512,7 +483,7 @@
     }
 
     if(!H.length){
-      chat.innerHTML=`<div class="welcome"><b>${esc(r.name)}</b> 已就位。<br>${r.greeting?esc(r.greeting):'你可以开始聊天了。'}</div>`;
+      chat.innerHTML=`<div class="welcome"><b>${esc(r.name)}</b> 已就位。<br>${r.greeting?esc(r.greeting):'你可以开始聊天了。'}<br><br>支持：文本 / 图片消息 / 表情。</div>`;
       return;
     }
 
@@ -524,7 +495,7 @@
       <div class="line ${isMe?'me':''}">
         ${isMe ? '' : `<div class="msgAv">${avatarHTML(avImg,avTxt)}</div>`}
         <div class="msg ${isMe?'meBubble':'ai'}">
-          ${markdownToHtml(m.content)}
+          ${renderMsgContent(m)}
           <div class="tm">${m.time||''}</div>
         </div>
         ${isMe ? `<div class="msgAv">${avatarHTML(avImg,avTxt)}</div>` : ''}
@@ -600,38 +571,27 @@
     const avatarImg = $('#rAvatarImg').value || '';
     const greeting = $('#rGreeting').value.trim();
     const prompt = $('#rPrompt').value.trim();
-
     if(!name){toast('角色名不能为空');return;}
-
     const obj={id,name,avatar,avatarImg,prompt,greeting};
     const idx=roles.findIndex(x=>x.id===id);
     if(idx>=0) roles[idx]=obj; else roles.unshift(obj);
-
     if(!activeRoleId) activeRoleId=id;
     save('nx_roles',roles); save('nx_active_role',activeRoleId);
-
     renderRoles(); refreshHeader(); renderChat(); toast('角色已保存');
   }
 
   function editRole(id){
     const r=roles.find(x=>x.id===id); if(!r) return;
-    $('#rId').value=r.id;
-    $('#rName').value=r.name||'';
-    $('#rAvatar').value=r.avatar||'';
-    $('#rGreeting').value=r.greeting||'';
-    $('#rPrompt').value=r.prompt||'';
-    $('#rAvatarImg').value=r.avatarImg||'';
-    $('#rAvatarFile').value='';
+    $('#rId').value=r.id; $('#rName').value=r.name||''; $('#rAvatar').value=r.avatar||'';
+    $('#rGreeting').value=r.greeting||''; $('#rPrompt').value=r.prompt||'';
+    $('#rAvatarImg').value=r.avatarImg||''; $('#rAvatarFile').value='';
     setRolePreview(r.avatarImg||'', r.avatar||'无图');
-    const t = document.querySelector('.tab[data-page="roles"]');
-    switchTab('roles', t);
+    switchTab('roles',document.querySelector('.tab[data-page="roles"]'));
   }
 
   function pickRole(id){
-    activeRoleId=id;
-    save('nx_active_role',activeRoleId);
-    refreshHeader(); renderRoles(); renderChat();
-    toast('已切换角色');
+    activeRoleId=id; save('nx_active_role',activeRoleId);
+    refreshHeader(); renderRoles(); renderChat(); toast('已切换角色');
   }
 
   function deleteRole(){
@@ -639,11 +599,8 @@
     if(!id){toast('没有可删除角色');return;}
     const r=roles.find(x=>x.id===id); if(!r){toast('角色不存在');return;}
     if(!confirm(`删除角色「${r.name}」？`)) return;
-
-    roles=roles.filter(x=>x.id!==id);
-    delete HMap[id];
+    roles=roles.filter(x=>x.id!==id); delete HMap[id];
     if(activeRoleId===id) activeRoleId=roles[0]?.id||'';
-
     save('nx_roles',roles); save('nx_active_role',activeRoleId); save('nx_hmap',HMap);
     resetRoleForm(); renderRoles(); refreshHeader(); renderChat(); toast('已删除');
   }
@@ -659,39 +616,23 @@
     if(f.size > 2*1024*1024){toast('图片请小于2MB');e.target.value='';return;}
     try{
       const data=await fileToDataURL(f);
-      C.selfAvatarImg=data;
-      $('#meAvatarImg').value=data;
-      setMePreview(data);
-      save('nx_cfg',C);
-      renderChat();
+      C.selfAvatarImg=data; $('#meAvatarImg').value=data;
+      setMePreview(data); save('nx_cfg',C); renderChat();
     }catch{toast('读取图片失败')}
   }
 
   function clearMeAvatar(){
-    C.selfAvatarImg='';
-    $('#meAvatarImg').value='';
-    $('#meAvatarFile').value='';
-    setMePreview('');
-    save('nx_cfg',C);
-    renderChat();
+    C.selfAvatarImg=''; $('#meAvatarImg').value=''; $('#meAvatarFile').value='';
+    setMePreview(''); save('nx_cfg',C); renderChat();
   }
 
   function fillCfgForm(){
-    $('#cUrl').value=C.url||'';
-    $('#cKey').value=C.key||'';
-    $('#cTemp').value=C.temp??0.8;
-    $('#cMax').value=C.max??800;
-    $('#meAvatarImg').value=C.selfAvatarImg||'';
-    setMePreview(C.selfAvatarImg||'');
-
-    $('#lockEnabled').checked = !!C.lockEnabled;
-    $('#lockPin').value = C.lockPin || '';
-
+    $('#cUrl').value=C.url||''; $('#cKey').value=C.key||''; $('#cTemp').value=C.temp??0.8; $('#cMax').value=C.max??800;
+    $('#meAvatarImg').value=C.selfAvatarImg||''; setMePreview(C.selfAvatarImg||'');
+    $('#lockEnabled').checked = !!C.lockEnabled; $('#lockPin').value = C.lockPin || '';
     const sel=$('#cModel');
     if(C.model){
-      if(![...sel.options].some(o=>o.value===C.model)){
-        const o=document.createElement('option');o.value=C.model;o.textContent=C.model;sel.appendChild(o);
-      }
+      if(![...sel.options].some(o=>o.value===C.model)){const o=document.createElement('option');o.value=C.model;o.textContent=C.model;sel.appendChild(o);}
       sel.value=C.model;
     }
   }
@@ -703,15 +644,10 @@
     C.temp=parseFloat($('#cTemp').value)||0.8;
     C.max=parseInt($('#cMax').value)||800;
     C.selfAvatarImg=$('#meAvatarImg').value||C.selfAvatarImg||'';
-    save('nx_cfg',C);
-    setStatus();
-    toast('配置已保存');
-    renderChat();
+    save('nx_cfg',C); setStatus(); toast('配置已保存'); renderChat();
   }
 
-  function toggleLockEnabled(v){
-    C.lockEnabled = !!v;
-  }
+  function toggleLockEnabled(v){ C.lockEnabled=!!v; }
 
   function saveLock(){
     const pin = $('#lockPin').value.trim();
@@ -721,48 +657,82 @@
     }else{
       C.lockPin = pin && /^\d{4,8}$/.test(pin) ? pin : '';
     }
-    save('nx_cfg', C);
-    toast('锁屏设置已保存');
+    save('nx_cfg', C); toast('锁屏设置已保存');
   }
 
   function lockNow(){
     if(!C.lockEnabled){toast('先启用锁屏');return;}
     if(!/^\d{4,8}$/.test(C.lockPin||'')){toast('先保存有效PIN');return;}
-    $('#unlockPin').value='';
-    $('#lockMask').classList.add('show');
+    $('#unlockPin').value=''; $('#lockMask').classList.add('show');
   }
 
   function unlock(){
     const val = $('#unlockPin').value.trim();
-    if(val === (C.lockPin||'')){
-      $('#lockMask').classList.remove('show');
-      $('#unlockPin').value='';
-      toast('已解锁');
-    }else{
-      toast('PIN错误');
+    if(val === (C.lockPin||'')){ $('#lockMask').classList.remove('show'); $('#unlockPin').value=''; toast('已解锁'); }
+    else toast('PIN错误');
+  }
+
+  function clearCurrentChat(){
+    if(!activeRoleId){toast('先选角色');return;}
+    if(!confirm('清空当前角色聊天记录？')) return;
+    HMap[activeRoleId]=[]; save('nx_hmap',HMap); renderChat(); toast('已清空');
+  }
+
+  function clearAllLocal(){
+    if(!confirm('清空全部本地数据？不可恢复。')) return;
+    localStorage.removeItem('nx_cfg');
+    localStorage.removeItem('nx_roles');
+    localStorage.removeItem('nx_active_role');
+    localStorage.removeItem('nx_hmap');
+    location.reload();
+  }
+
+  function openImagePick(){ $('#imgPick').click(); }
+
+  async function pickImage(e){
+    const f=e.target.files?.[0];
+    e.target.value='';
+    if(!f) return;
+    if(!activeRoleId){toast('先创建并选择角色');return;}
+    if(f.size > 4*1024*1024){toast('图片请小于4MB');return;}
+    try{
+      const data = await fileToDataURL(f);
+      const H=currentHistory();
+      H.push({role:'user',type:'image',content:data,time:now()});
+      save('nx_hmap',HMap);
+      renderChat();
+    }catch{
+      toast('图片发送失败');
     }
   }
 
+  function buildEmojiPanel(){
+    const p=$('#emojiPanel');
+    p.innerHTML = EMOJIS.map(x=>`<button class="emoji" onclick="addEmoji('${x}')">${x}</button>`).join('');
+  }
+  function toggleEmoji(){ $('#emojiPanel').classList.toggle('show'); }
+  function addEmoji(x){
+    const inp=$('#inp');
+    inp.value += x;
+    inp.focus();
+    autoGrow(inp);
+  }
+
   async function fetchModels(){
-    const url=normBaseUrl($('#cUrl').value);
-    const key=$('#cKey').value.trim();
+    const url=normBaseUrl($('#cUrl').value), key=$('#cKey').value.trim();
     if(!url){toast('先填反代地址');return;}
     const btn=$('#fetchBtn');btn.disabled=true;btn.textContent='拉取中…';
     try{
-      const headers={'Content-Type':'application/json'};
-      if(key) headers['Authorization']='Bearer '+key;
+      const headers={'Content-Type':'application/json'}; if(key) headers['Authorization']='Bearer '+key;
       const r=await fetch(apiUrl(url,'/models'),{headers});
       if(!r.ok) throw new Error(`${r.status} ${await r.text()}`);
       const j=await r.json();
-
       let list=[];
       if(Array.isArray(j?.data)) list=j.data.map(x=>x.id).filter(Boolean);
       else if(Array.isArray(j)) list=j.map(x=>typeof x==='string'?x:x?.id).filter(Boolean);
       list=[...new Set(list)].sort();
       if(!list.length) throw new Error('没拿到模型');
-
-      const sel=$('#cModel');
-      sel.innerHTML='';
+      const sel=$('#cModel'); sel.innerHTML='';
       list.forEach(m=>{const o=document.createElement('option');o.value=m;o.textContent=m;sel.appendChild(o)});
       if(C.model && list.includes(C.model)) sel.value=C.model;
       toast(`模型 ${list.length} 个`);
@@ -774,9 +744,7 @@
   }
 
   async function testOnce(){
-    const tUrl=normBaseUrl($('#cUrl').value);
-    const tKey=$('#cKey').value.trim();
-    const tModel=$('#cModel').value;
+    const tUrl=normBaseUrl($('#cUrl').value), tKey=$('#cKey').value.trim(), tModel=$('#cModel').value;
     if(!tUrl||!tKey||!tModel){toast('URL/Key/模型没填全');return;}
     try{
       const headers={'Content-Type':'application/json','Authorization':'Bearer '+tKey};
@@ -789,27 +757,17 @@
     }
   }
 
-  function clearCurrentChat(){
-    if(!activeRoleId){toast('先选角色');return;}
-    if(!confirm('清空当前角色聊天记录？')) return;
-    HMap[activeRoleId]=[];
-    save('nx_hmap',HMap);
-    renderChat();
-    toast('已清空');
+  function addTyping(){
+    const d=document.createElement('div');
+    d.className='line';
+    d.id='typing';
+    d.innerHTML='<div class="msgAv">AI</div><div class="typ"><i></i><i></i><i></i></div>';
+    chat.appendChild(d); chat.scrollTop=chat.scrollHeight;
   }
-
-  function clearAllLocal(){
-    if(!confirm('清空全部本地数据？不可恢复。')) return;
-    localStorage.removeItem('nx_cfg');
-    localStorage.removeItem('nx_roles');
-    localStorage.removeItem('nx_active_role');
-    localStorage.removeItem('nx_hmap');
-    location.reload();
-  }
+  function removeTyping(){ const t=$('#typing'); if(t) t.remove(); }
 
   async function send(){
     if($('#lockMask').classList.contains('show')) return;
-
     const inp=$('#inp');
     const text=inp.value.trim();
     if(!text||streaming) return;
@@ -820,18 +778,18 @@
 
     inp.value=''; inp.style.height='auto';
     const H=currentHistory();
-    const t=now();
-    H.push({role:'user',content:text,time:t});
+    H.push({role:'user',type:'text',content:text,time:now()});
     save('nx_hmap',HMap);
     renderChat();
 
-    streaming=true;
-    $('#sendBtn').disabled=true;
-    $('#status').textContent='正在输入…';
+    streaming=true; $('#sendBtn').disabled=true; $('#status').textContent='正在输入…';
     addTyping();
 
     const headers={'Content-Type':'application/json','Authorization':'Bearer '+C.key};
-    const M=H.map(x=>({role:x.role==='assistant'?'assistant':'user',content:x.content}));
+    const M=H.map(x=>({
+      role:x.role==='assistant'?'assistant':'user',
+      content:x.type==='image'?'[图片]':(x.content||'')
+    }));
     const systemMsgs=role.prompt?[{role:'system',content:role.prompt}]:[];
     const payload={model:C.model,messages:[...systemMsgs,...M.slice(-40)],temperature:C.temp,max_tokens:C.max};
 
@@ -847,30 +805,25 @@
         if(!r.ok) throw new Error(`${r.status}: ${(await r.text()).slice(0,200)}`);
         const j=await r.json();
         const out=j?.choices?.[0]?.message?.content?.trim()||'……';
-        H.push({role:'assistant',content:out,time:now()});
-        save('nx_hmap',HMap);
-        removeTyping();
-        renderChat();
+        H.push({role:'assistant',type:'text',content:out,time:now()});
+        save('nx_hmap',HMap); removeTyping(); renderChat();
       }else{
         removeTyping();
         const at=now();
         const holderLine=document.createElement('div');
         holderLine.className='line';
         holderLine.innerHTML=`<div class="msgAv">${avatarHTML(role.avatarImg,role.avatar||'AI')}</div><div class="msg ai"><div class="md"><span class="cur">▊</span></div><div class="tm">${at}</div></div>`;
-        chat.appendChild(holderLine);
-        chat.scrollTop=chat.scrollHeight;
-
+        chat.appendChild(holderLine); chat.scrollTop=chat.scrollHeight;
         const holder=holderLine.querySelector('.msg .md');
+
         let full='',buf='';
         const reader=r.body.getReader();
         const dec=new TextDecoder();
-
         while(true){
           const {done,value}=await reader.read();
           if(done) break;
           buf += dec.decode(value,{stream:true});
-          const lines=buf.split('\n');
-          buf=lines.pop();
+          const lines=buf.split('\n'); buf=lines.pop();
           for(const line of lines){
             const s=line.trim();
             if(!s.startsWith('data:')) continue;
@@ -887,31 +840,24 @@
             }catch{}
           }
         }
-
         if(!full) full='……';
         holder.innerHTML=markdownToHtml(full);
-        H.push({role:'assistant',content:full,time:at});
+        H.push({role:'assistant',type:'text',content:full,time:at});
         save('nx_hmap',HMap);
       }
     }catch(e){
       removeTyping();
-      H.push({role:'assistant',content:'[请求失败] '+String(e.message||e).slice(0,220),time:now()});
-      save('nx_hmap',HMap);
-      renderChat();
+      H.push({role:'assistant',type:'text',content:'[请求失败] '+String(e.message||e).slice(0,220),time:now()});
+      save('nx_hmap',HMap); renderChat();
     }finally{
-      streaming=false;
-      $('#sendBtn').disabled=false;
-      setStatus();
+      streaming=false; $('#sendBtn').disabled=false; setStatus();
     }
   }
 
   function initDefaultRoleIfEmpty(){
     if(roles.length) return;
     const id=uid();
-    roles=[{
-      id,name:'默认助手',avatar:'AI',avatarImg:'',
-      greeting:'你好，先去角色页改你的人设。',prompt:''
-    }];
+    roles=[{id,name:'默认助手',avatar:'AI',avatarImg:'',greeting:'你好，先去角色页改你的人设。',prompt:''}];
     activeRoleId=id;
     save('nx_roles',roles); save('nx_active_role',activeRoleId);
   }
@@ -925,11 +871,12 @@
     if(typeof C.selfAvatarImg!=='string') C.selfAvatarImg='';
     if(typeof C.lockEnabled!=='boolean') C.lockEnabled=false;
     if(typeof C.lockPin!=='string') C.lockPin='';
+    if(typeof HMap!=='object'||!HMap) HMap={};
 
     initDefaultRoleIfEmpty();
     if(!activeRoleId && roles[0]) activeRoleId=roles[0].id;
-    if(typeof HMap!=='object'||!HMap) HMap={};
 
+    buildEmojiPanel();
     fillCfgForm();
     renderRoles();
     refreshHeader();
