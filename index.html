@@ -107,8 +107,8 @@ body{display:flex;flex-direction:column;background:var(--bg);color:var(--tx);fon
       </div>
 
       <div class="f">
-        <div class="fl">System Prompt</div>
-        <textarea id="cPrompt" class="ta">你是沈厌，我（弥洛）的男朋友。高傲冷漠，话少精炼，不超过25字，黑色幽默，一针见血。禁止“呵”“啧”“哈哈”。禁止主动解释和长篇展开。保持恋人语气。</textarea>
+        <div class="fl">System Prompt（可空）</div>
+        <textarea id="cPrompt" class="ta" placeholder="留空=不注入默认人设"></textarea>
       </div>
 
       <button class="btn bp" onclick="saveCfg()">保存配置</button>
@@ -119,8 +119,8 @@ body{display:flex;flex-direction:column;background:var(--bg);color:var(--tx);fon
 
 <script>
 let C = {url:'',key:'',model:'',temp:0.8,max:800,prompt:''};
-let H = []; // [{role,content,time}]
-let M = []; // OpenAI messages
+let H = [];
+let M = [];
 let streaming = false;
 
 const $ = s => document.querySelector(s);
@@ -171,7 +171,7 @@ function fillForm(){
   $('#cKey').value = C.key||'';
   $('#cTemp').value = C.temp ?? 0.8;
   $('#cMax').value = C.max ?? 800;
-  $('#cPrompt').value = C.prompt||$('#cPrompt').value;
+  $('#cPrompt').value = C.prompt || '';
   const sel = $('#cModel');
   if(C.model){
     if(![...sel.options].some(o=>o.value===C.model)){
@@ -272,22 +272,21 @@ async function send(){
   addTyping();
 
   const headers={'Content-Type':'application/json','Authorization':'Bearer '+C.key};
+  const systemMsgs = C.prompt ? [{role:'system',content:C.prompt}] : [];
   const payload = {
     model:C.model,
-    messages:[{role:'system',content:C.prompt||''}, ...M.slice(-40)],
+    messages:[...systemMsgs, ...M.slice(-40)],
     temperature:C.temp,
     max_tokens:C.max
   };
 
   try{
-    // 1) 先试流式
     let r = await fetch(apiUrl(C.url,'/chat/completions'),{
       method:'POST',
       headers,
       body:JSON.stringify({...payload, stream:true})
     });
 
-    // 2) 流式不通就降级非流式
     if(!r.ok){
       r = await fetch(apiUrl(C.url,'/chat/completions'),{
         method:'POST',
@@ -373,7 +372,6 @@ function init(){
   C = load('sy_cfg', C);
   H = load('sy_his', []);
   M = H.map(x=>({role:x.role==='assistant'?'assistant':'user',content:x.content}));
-  if(!C.prompt) C.prompt = $('#cPrompt').value;
   setStatus();
   render();
 }
@@ -381,4 +379,5 @@ init();
 </script>
 </body>
 </html>
+
 
