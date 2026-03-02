@@ -1,8 +1,10 @@
+
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />  <title>Noctis</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Noctis</title>
   <style>
     :root{
       --bg:#0a0e1a;--bg2:#111827;--bg3:#1e2740;--bd:#2a3553;
@@ -627,6 +629,7 @@ function normalizeAssistantText(out,mode){
   return out;
 }
 function callChatOnce(messages,modelName){return fetch(apiUrl(C.url,"/chat/completions"),{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+C.key},body:JSON.stringify({model:modelName||C.model,messages:messages,temperature:C.temp,max_tokens:C.max,stream:false})}).then(function(r){if(!r.ok)return r.text().then(function(t){throw new Error(r.status+": "+t.slice(0,200))});return r.json()}).then(function(j){var out=(j&&j.choices&&j.choices[0]&&j.choices[0].message)?j.choices[0].message.content:"";return (out||"").trim()})}
+
 function requestReply(){
   if($("#lockMask").classList.contains("show")||streaming)return;
   var role=currentRole();if(!role){toast("先选角色");return}
@@ -637,12 +640,28 @@ function requestReply(){
 
   streaming=true;$("#replyBtn").disabled=true;$("#status").textContent="输入中...";addTyping();
 
-  var M=H.map(function(x){var c=x.content||"";if(x.type==="image") c="（用户发送了一张图片）";if(x.type==="sticker") c="（用户发送了一个表情包："+(x.stickerName||"未命名")+"）";return {role:x.role==="assistant"?"assistant":"user",content:c};});
-  var lastUser="";for(var i=H.length-1;i>=0;i--){if(H[i].role==="user"){lastUser=H[i].content||"";break}}
-  var wbP=buildWBSystemPrompt(lastUser),sys=[];if(role.prompt)sys.push({role:"system",content:role.prompt});
+  var M=H.map(function(x){
+    var c=x.content||"";
+    if(x.type==="image") c="（用户发送了一张图片）";
+    if(x.type==="sticker") c="（用户发送了一个表情包："+(x.stickerName||"未命名")+"）";
+    return {role:x.role==="assistant"?"assistant":"user",content:c};
+  });
 
-  if(mode==="online"){sys.push({role:"system",content:"你在即时聊天模式。必须自然、贴人设、像真人发消息。可一次1~3条短消息，自行决定；若多条请用 <msg>内容</msg> 包裹每条。不要写舞台说明。"});}
-  else{var rg=pickCharsRange();sys.push({role:"system",content:"你在线下沉浸模式。只输出一条长文本，不分条，不解释规则。必须紧贴角色人设、关系与情绪递进；多写细节、动作、心理与对话。禁止只回省略号、禁止敷衍、禁止模板腔。目标字数"+rg.min+"~"+rg.max+"字。"});}
+  var lastUser="";
+  for(var i=H.length-1;i>=0;i--){
+    if(H[i].role==="user"){lastUser=H[i].content||"";break}
+  }
+
+  var wbP=buildWBSystemPrompt(lastUser),sys=[];
+  if(role.prompt)sys.push({role:"system",content:role.prompt});
+
+  if(mode==="online"){
+    sys.push({role:"system",content:"你在即时聊天模式。必须自然、贴人设、像真人发消息。可一次1~3条短消息，自行决定；若多条请用 <msg>内容</msg> 包裹每条。不要写舞台说明。"});
+  }else{
+    var rg=pickCharsRange();
+    sys.push({role:"system",content:"你在线下沉浸模式。只输出一条长文本，不分条，不解释规则。必须紧贴角色人设、关系与情绪递进；多写细节、动作、心理与对话。禁止只回省略号、禁止敷衍、禁止模板腔。目标字数"+rg.min+"~"+rg.max+"字。"});
+  }
+
   if(wbP)sys.push({role:"system",content:wbP});
 
   var forceMulti=(mode==="online"&&!!C.multiReplyEnabled),count=forceMulti?pickReplyCount():1;
@@ -650,7 +669,7 @@ function requestReply(){
 
   callChatOnce(sys.concat(M.slice(-60)),modelName).then(function(out){
     removeTyping();var arr=[];
-    if(mode==="offline"){```html
+    if(mode==="offline"){
       arr=[normalizeAssistantText(out,"offline")];
     }else if(forceMulti){
       var reg=/<msg>([\s\S]*?)<\/msg>/g,m;
