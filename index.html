@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -107,9 +108,6 @@
     }
     .emojiPanel.show{display:flex}
     .emoji{width:32px;height:32px;border:none;background:#111a2d;border:1px solid var(--bd);border-radius:8px;color:#fff;font-size:18px;line-height:1}
-    .stickerBtn{width:54px;height:54px;border:1px solid var(--bd);border-radius:10px;background:#111a2d;padding:0;overflow:hidden}
-    .stickerBtn img{width:100%;height:100%;object-fit:cover;display:block}
-    .stickerEmpty{font-size:12px;color:var(--tx3)}
 
     .wrap{padding:14px;display:flex;flex-direction:column;gap:12px}
     .card{
@@ -158,7 +156,7 @@
     .preview img{width:100%;height:100%;object-fit:cover}
 
     .tabs{
-      display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:8px 10px;
+      display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:8px 10px;
       border-top:1px solid var(--bd);background:rgba(18,26,44,.9)
     }
     .tab{
@@ -210,13 +208,9 @@
           <div class="tools">
             <button class="toolBtn" onclick="openImagePick()">🖼</button>
             <button class="toolBtn" onclick="toggleEmoji()">😊</button>
-            <button class="toolBtn" onclick="openStickerPicker()">🧩+</button>
-            <button class="toolBtn" onclick="toggleStickerPanel()">🧩</button>
             <input id="imgPick" type="file" accept="image/*" style="display:none" onchange="pickImage(event)" />
-            <input id="stickerPick" type="file" accept="image/*" multiple style="display:none" onchange="pickSticker(event)" />
           </div>
           <div id="emojiPanel" class="emojiPanel"></div>
-          <div id="stickerPanel" class="emojiPanel"></div>
           <div class="sendRow">
             <textarea id="inp" rows="1" placeholder="说点什么……" oninput="autoGrow(this)" onkeydown="hotKey(event)"></textarea>
             <button id="sendBtn" onclick="send()">↑</button>
@@ -237,6 +231,7 @@
           <div class="ct">新建 / 编辑角色</div>
           <input type="hidden" id="rId" />
           <input type="hidden" id="rAvatarImg" />
+
           <div class="row">
             <div class="f">
               <div class="fl">角色名</div>
@@ -247,6 +242,7 @@
               <input id="rAvatar" class="fi" maxlength="2" placeholder="AI" />
             </div>
           </div>
+
           <div class="f">
             <div class="fl">角色头像（上传）</div>
             <div class="row" style="align-items:center">
@@ -255,6 +251,7 @@
               <button class="btn2" type="button" onclick="clearRoleAvatar()">清空头像</button>
             </div>
           </div>
+
           <div class="f">
             <div class="fl">开场白</div>
             <input id="rGreeting" class="fi" placeholder="第一次进入该角色时显示" />
@@ -263,44 +260,11 @@
             <div class="fl">System Prompt</div>
             <textarea id="rPrompt" class="ta" placeholder="留空则无默认人设"></textarea>
           </div>
+
           <div class="row">
             <button class="btn" onclick="saveRole()">保存角色</button>
             <button class="btn2" onclick="resetRoleForm()">清空表单</button>
             <button class="btn2 btnDanger" onclick="deleteRole()">删除当前</button>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section id="page-worldbook" class="page">
-      <div class="wrap">
-        <div class="card">
-          <div class="ct">世界书</div>
-          <div class="note" style="margin-bottom:8px">按关键词命中，发送时自动注入上下文。</div>
-          <div id="wbList" class="list"></div>
-        </div>
-
-        <div class="card">
-          <div class="ct">新增 / 编辑词条</div>
-          <input type="hidden" id="wbId" />
-          <div class="f">
-            <div class="fl">关键词（逗号分隔）</div>
-            <input id="wbKeys" class="fi" placeholder="例如：沈厌,弥洛,小窝" />
-          </div>
-          <div class="f">
-            <div class="fl">内容</div>
-            <textarea id="wbContent" class="ta" placeholder="命中关键词时注入给模型"></textarea>
-          </div>
-          <div class="row">
-            <label class="btn2" style="display:flex;align-items:center;gap:6px">
-              <input id="wbEnabled" type="checkbox" checked />
-              启用
-            </label>
-          </div>
-          <div class="row">
-            <button class="btn" onclick="saveWB()">保存词条</button>
-            <button class="btn2" onclick="resetWBForm()">清空表单</button>
-            <button class="btn2 btnDanger" onclick="deleteWB()">删除当前</button>
           </div>
         </div>
       </div>
@@ -375,11 +339,7 @@
           <div class="ct">数据管理</div>
           <div class="row">
             <button class="btn2" onclick="clearCurrentChat()">清空当前角色聊天</button>
-            <button class="btn2" onclick="clearStickers()">清空表情包库</button>
-            <button class="btn2" onclick="exportAllData()">导出全部数据</button>
-            <button class="btn2" onclick="openImportFile()">导入数据</button>
             <button class="btn2 btnDanger" onclick="clearAllLocal()">清空全部本地数据</button>
-            <input id="importFile" type="file" accept="application/json" style="display:none" onchange="importAllData(event)" />
           </div>
         </div>
       </div>
@@ -389,7 +349,6 @@
   <div class="tabs">
     <button class="tab active" data-page="chat" onclick="switchTab('chat',this)">聊天</button>
     <button class="tab" data-page="roles" onclick="switchTab('roles',this)">角色</button>
-    <button class="tab" data-page="worldbook" onclick="switchTab('worldbook',this)">世界书</button>
     <button class="tab" data-page="settings" onclick="switchTab('settings',this)">设置</button>
   </div>
 
@@ -417,8 +376,6 @@
   let HMap = {};
   let streaming = false;
   let currentPage = 'chat';
-  let stickers = [];
-  let worldbook = [];
   const EMOJIS = ['😀','😎','🥺','🥰','😭','😤','🤍','💙','💜','💛','🔥','✨','🎀','🍓','🫶','😴','🙄','😈','📌','✅'];
 
   const $ = s => document.querySelector(s);
@@ -445,25 +402,6 @@
       fr.onerror=reject;
       fr.readAsDataURL(file);
     });
-  }
-
-  async function compressImageFile(file, maxW=1280, maxH=1280, quality=0.82){
-    const dataUrl = await fileToDataURL(file);
-    const img = await new Promise((resolve,reject)=>{
-      const im = new Image();
-      im.onload = ()=>resolve(im);
-      im.onerror = reject;
-      im.src = dataUrl;
-    });
-    const ow = img.width, oh = img.height;
-    const scale = Math.min(maxW/ow, maxH/oh, 1);
-    const w = Math.max(1, Math.round(ow*scale));
-    const h = Math.max(1, Math.round(oh*scale));
-    const canvas = document.createElement('canvas');
-    canvas.width = w; canvas.height = h;
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(img,0,0,w,h);
-    return canvas.toDataURL('image/jpeg', quality);
   }
 
   function currentRole(){ return roles.find(r=>r.id===activeRoleId) || null; }
@@ -513,7 +451,7 @@
     const blocks = [];
     s = s.replace(/```([^\n`]*)\n?([\s\S]*?)```/g, (_, lang, code) => {
       const i = blocks.length;
-      blocks.push({ code: esc(code || '') });
+      blocks.push({ lang: (lang||'').trim(), code: esc(code || '') });
       return `@@CODE_${i}@@`;
     });
     s = esc(s);
@@ -545,7 +483,7 @@
     }
 
     if(!H.length){
-      chat.innerHTML=`<div class="welcome"><b>${esc(r.name)}</b> 已就位。<br>${r.greeting?esc(r.greeting):'你可以开始聊天了。'}<br><br>支持：文本 / 图片消息 / 表情包。</div>`;
+      chat.innerHTML=`<div class="welcome"><b>${esc(r.name)}</b> 已就位。<br>${r.greeting?esc(r.greeting):'你可以开始聊天了。'}<br><br>支持：文本 / 图片消息 / 表情。</div>`;
       return;
     }
 
@@ -568,9 +506,7 @@
 
   function addTyping(){
     const d=document.createElement('div');
-    d.className='line';
-    d.id='typing';
-    d.innerHTML='<div class="msgAv">AI</div><div class="typ"><i></i><i></i><i></i></div>';
+    d.className='typ'; d.id='typing'; d.innerHTML='<i></i><i></i><i></i>';
     chat.appendChild(d); chat.scrollTop=chat.scrollHeight;
   }
   function removeTyping(){ const t=$('#typing'); if(t) t.remove(); }
@@ -616,7 +552,7 @@
     if(!f) return;
     if(f.size > 2*1024*1024){toast('图片请小于2MB');e.target.value='';return;}
     try{
-      const data=await compressImageFile(f, 512, 512, 0.82);
+      const data=await fileToDataURL(f);
       $('#rAvatarImg').value=data;
       setRolePreview(data);
     }catch{toast('读取图片失败')}
@@ -679,7 +615,7 @@
     if(!f) return;
     if(f.size > 2*1024*1024){toast('图片请小于2MB');e.target.value='';return;}
     try{
-      const data=await compressImageFile(f, 512, 512, 0.82);
+      const data=await fileToDataURL(f);
       C.selfAvatarImg=data; $('#meAvatarImg').value=data;
       setMePreview(data); save('nx_cfg',C); renderChat();
     }catch{toast('读取图片失败')}
@@ -742,22 +678,12 @@
     HMap[activeRoleId]=[]; save('nx_hmap',HMap); renderChat(); toast('已清空');
   }
 
-  function clearStickers(){
-    if(!confirm('清空表情包库？')) return;
-    stickers = [];
-    save('nx_stickers', stickers);
-    renderStickerPanel();
-    toast('已清空表情包');
-  }
-
   function clearAllLocal(){
     if(!confirm('清空全部本地数据？不可恢复。')) return;
     localStorage.removeItem('nx_cfg');
     localStorage.removeItem('nx_roles');
     localStorage.removeItem('nx_active_role');
     localStorage.removeItem('nx_hmap');
-    localStorage.removeItem('nx_stickers');
-    localStorage.removeItem('nx_worldbook');
     location.reload();
   }
 
@@ -768,9 +694,9 @@
     e.target.value='';
     if(!f) return;
     if(!activeRoleId){toast('先创建并选择角色');return;}
-    if(f.size > 12*1024*1024){toast('图片太大，换一张');return;}
+    if(f.size > 4*1024*1024){toast('图片请小于4MB');return;}
     try{
-      const data = await compressImageFile(f, 1280, 1280, 0.82);
+      const data = await fileToDataURL(f);
       const H=currentHistory();
       H.push({role:'user',type:'image',content:data,time:now()});
       save('nx_hmap',HMap);
@@ -784,201 +710,12 @@
     const p=$('#emojiPanel');
     p.innerHTML = EMOJIS.map(x=>`<button class="emoji" onclick="addEmoji('${x}')">${x}</button>`).join('');
   }
-  function toggleEmoji(){
-    $('#emojiPanel').classList.toggle('show');
-    $('#stickerPanel').classList.remove('show');
-  }
+  function toggleEmoji(){ $('#emojiPanel').classList.toggle('show'); }
   function addEmoji(x){
     const inp=$('#inp');
     inp.value += x;
     inp.focus();
     autoGrow(inp);
-  }
-
-  function openStickerPicker(){ $('#stickerPick').click(); }
-  function toggleStickerPanel(){
-    $('#stickerPanel').classList.toggle('show');
-    $('#emojiPanel').classList.remove('show');
-  }
-
-  async function pickSticker(e){
-    const files = Array.from(e.target.files || []);
-    e.target.value='';
-    if(!files.length) return;
-    let added = 0;
-    for(const f of files){
-      if(!f.type.startsWith('image/')) continue;
-      try{
-        const data = await compressImageFile(f, 420, 420, 0.78);
-        stickers.unshift(data);
-        added++;
-      }catch{}
-      if(stickers.length > 120) stickers = stickers.slice(0,120);
-    }
-    save('nx_stickers', stickers);
-    renderStickerPanel();
-    toast(added ? `已加入${added}张表情包` : '没有可用图片');
-  }
-
-  function renderStickerPanel(){
-    const p = $('#stickerPanel');
-    if(!stickers.length){
-      p.innerHTML = `<div class="stickerEmpty">还没有表情包，点“🧩+”批量上传。</div>`;
-      return;
-    }
-    p.innerHTML = stickers.map((src,i)=>`
-      <button class="stickerBtn" onclick="sendSticker(${i})"><img src="${src}" alt="sticker"></button>
-    `).join('');
-  }
-
-  function sendSticker(i){
-    const src = stickers[i];
-    if(!src) return;
-    if(!activeRoleId){toast('先创建并选择角色');return;}
-    const H=currentHistory();
-    H.push({role:'user',type:'image',content:src,time:now()});
-    save('nx_hmap',HMap);
-    renderChat();
-  }
-
-  function wbId(){ return 'wb_' + Math.random().toString(36).slice(2,10); }
-
-  function resetWBForm(){
-    $('#wbId').value = '';
-    $('#wbKeys').value = '';
-    $('#wbContent').value = '';
-    $('#wbEnabled').checked = true;
-  }
-
-  function renderWB(){
-    const box = $('#wbList');
-    if(!box) return;
-    if(!worldbook.length){
-      box.innerHTML = `<div class="mini">还没有词条，先创建一个。</div>`;
-      return;
-    }
-    box.innerHTML = worldbook.map(x => `
-      <div class="roleItem">
-        <div class="roleL" style="align-items:flex-start">
-          <div style="min-width:0">
-            <div class="rName">${esc((x.keys||[]).join(', ') || '无关键词')}</div>
-            <div class="rSub">${esc((x.content||'').slice(0,90))}${(x.content||'').length>90?'…':''}</div>
-            <div class="mini">${x.enabled ? '已启用' : '已停用'}</div>
-          </div>
-        </div>
-        <div style="display:flex;gap:6px">
-          <button class="btn2" onclick="editWB('${x.id}')">编辑</button>
-        </div>
-      </div>
-    `).join('');
-  }
-
-  function saveWB(){
-    const id = $('#wbId').value || wbId();
-    const keys = $('#wbKeys').value.split(',').map(s=>s.trim()).filter(Boolean);
-    const content = $('#wbContent').value.trim();
-    const enabled = $('#wbEnabled').checked;
-    if(!keys.length){ toast('关键词不能为空'); return; }
-    if(!content){ toast('内容不能为空'); return; }
-
-    const obj = {id, keys, content, enabled};
-    const i = worldbook.findIndex(x=>x.id===id);
-    if(i>=0) worldbook[i]=obj; else worldbook.unshift(obj);
-
-    save('nx_worldbook', worldbook);
-    renderWB();
-    resetWBForm();
-    toast('世界书已保存');
-  }
-
-  function editWB(id){
-    const x = worldbook.find(v=>v.id===id);
-    if(!x) return;
-    $('#wbId').value = x.id;
-    $('#wbKeys').value = (x.keys||[]).join(', ');
-    $('#wbContent').value = x.content || '';
-    $('#wbEnabled').checked = !!x.enabled;
-    switchTab('worldbook', document.querySelector('.tab[data-page="worldbook"]'));
-  }
-
-  function deleteWB(){
-    const id = $('#wbId').value;
-    if(!id){ toast('没有可删除词条'); return; }
-    const x = worldbook.find(v=>v.id===id);
-    if(!x){ toast('词条不存在'); return; }
-    if(!confirm('删除当前词条？')) return;
-    worldbook = worldbook.filter(v=>v.id!==id);
-    save('nx_worldbook', worldbook);
-    renderWB();
-    resetWBForm();
-    toast('已删除');
-  }
-
-  function buildWBSystemPrompt(userText){
-    const t = (userText||'').toLowerCase();
-    const hits = worldbook.filter(x=>{
-      if(!x.enabled) return false;
-      return (x.keys||[]).some(k => t.includes(String(k).toLowerCase()));
-    });
-    if(!hits.length) return '';
-    return hits.map((h,i)=>`[世界书${i+1}] ${h.content}`).join('\n');
-  }
-
-  function exportAllData(){
-    const data = {
-      version: 1,
-      nx_cfg: C,
-      nx_roles: roles,
-      nx_active_role: activeRoleId,
-      nx_hmap: HMap,
-      nx_stickers: stickers,
-      nx_worldbook: worldbook
-    };
-    const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `noctis-backup-${Date.now()}.json`;
-    a.click();
-    URL.revokeObjectURL(a.href);
-    toast('已导出');
-  }
-
-  function openImportFile(){ $('#importFile').click(); }
-
-  async function importAllData(e){
-    const f = e.target.files?.[0];
-    e.target.value = '';
-    if(!f) return;
-    try{
-      const txt = await f.text();
-      const j = JSON.parse(txt);
-
-      if(j.nx_cfg) C = j.nx_cfg;
-      if(Array.isArray(j.nx_roles)) roles = j.nx_roles;
-      if(typeof j.nx_active_role === 'string') activeRoleId = j.nx_active_role;
-      if(j.nx_hmap && typeof j.nx_hmap === 'object') HMap = j.nx_hmap;
-      if(Array.isArray(j.nx_stickers)) stickers = j.nx_stickers;
-      if(Array.isArray(j.nx_worldbook)) worldbook = j.nx_worldbook;
-
-      save('nx_cfg', C);
-      save('nx_roles', roles);
-      save('nx_active_role', activeRoleId);
-      save('nx_hmap', HMap);
-      save('nx_stickers', stickers);
-      save('nx_worldbook', worldbook);
-
-      fillCfgForm();
-      renderRoles();
-      renderStickerPanel();
-      renderWB();
-      refreshHeader();
-      setStatus();
-      renderChat();
-
-      toast('导入成功');
-    }catch{
-      toast('导入失败：JSON格式不对');
-    }
   }
 
   async function fetchModels(){
@@ -1020,6 +757,15 @@
     }
   }
 
+  function addTyping(){
+    const d=document.createElement('div');
+    d.className='line';
+    d.id='typing';
+    d.innerHTML='<div class="msgAv">AI</div><div class="typ"><i></i><i></i><i></i></div>';
+    chat.appendChild(d); chat.scrollTop=chat.scrollHeight;
+  }
+  function removeTyping(){ const t=$('#typing'); if(t) t.remove(); }
+
   async function send(){
     if($('#lockMask').classList.contains('show')) return;
     const inp=$('#inp');
@@ -1044,12 +790,7 @@
       role:x.role==='assistant'?'assistant':'user',
       content:x.type==='image'?'[图片]':(x.content||'')
     }));
-
-    const wbPrompt = buildWBSystemPrompt(text);
-    const systemMsgs = [];
-    if(role.prompt) systemMsgs.push({role:'system',content:role.prompt});
-    if(wbPrompt) systemMsgs.push({role:'system',content:wbPrompt});
-
+    const systemMsgs=role.prompt?[{role:'system',content:role.prompt}]:[];
     const payload={model:C.model,messages:[...systemMsgs,...M.slice(-40)],temperature:C.temp,max_tokens:C.max};
 
     try{
@@ -1126,8 +867,6 @@
     roles=load('nx_roles',[]);
     activeRoleId=load('nx_active_role','');
     HMap=load('nx_hmap',{});
-    stickers = load('nx_stickers', []);
-    worldbook = load('nx_worldbook', []);
 
     if(typeof C.selfAvatarImg!=='string') C.selfAvatarImg='';
     if(typeof C.lockEnabled!=='boolean') C.lockEnabled=false;
@@ -1138,8 +877,6 @@
     if(!activeRoleId && roles[0]) activeRoleId=roles[0].id;
 
     buildEmojiPanel();
-    renderStickerPanel();
-    renderWB();
     fillCfgForm();
     renderRoles();
     refreshHeader();
