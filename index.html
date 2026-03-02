@@ -287,7 +287,7 @@
           <input type="hidden" id="rId" />
           <input type="hidden" id="rAvatarImg" />
           <div class="row">
-            <div class="f"><div class="fl">角色名</div><input id="rName" class="fi" placeholder="例如：冷淡男友 / 温柔姐姐" /></div>
+            <div class="f"><div class="fl">角色名</div><input id="rName" class="fi" placeholder="例如：冷淡男友 / 帅气姐姐" /></div>
             <div class="f"><div class="fl">头像字</div><input id="rAvatar" class="fi" maxlength="2" placeholder="AI" /></div>
           </div>
           <div class="f">
@@ -877,7 +877,8 @@ function queueMessage(){
 function normalizeAssistantText(out,mode){
   out=(out||"").replace(/\u0000/g,"").trim();
   if(mode==="online"){
-    out=out.replace(/\[表情包:[^\]]+\]/g,"（表情）").replace(/\n{3,}/g,"\n\n");
+    out=out.replace(/\[表情包:[^\]]+\]/g,"（表情）");
+    out=out.replace(/\n{3,}/g,"\n\n");
     return out||"继续。";
   }
   out=out.replace(/\n{4,}/g,"\n\n");
@@ -994,6 +995,6 @@ function init(){
   if(C.lockEnabled&&/^\d{4,8}$/.test(C.lockPin||""))$("#lockMask").classList.add("show");
 }
 init();
-  </script>
+</script>
 </body>
 </html>
