@@ -457,12 +457,12 @@
       </div>
     </div>
   </div>
-
 <script>
 var C={
   url:"",key:"",model:"",temp:0.8,max:800,selfAvatarImg:"",
   lockEnabled:false,lockPin:"",avatarShape:"circle",
-  multiReplyEnabled:false,multiReplyMin:2,multiReplyMax:4
+  multiReplyEnabled:false,multiReplyMin:2,multiReplyMax:4,
+  chatMode:"online",onlineModel:"",offlineModel:""
 };
 var roles=[],activeRoleId="",HMap={},streaming=false,currentPage="chat";
 var stickerGroups=[{id:"default",name:"默认分组",stickers:[]}];
@@ -476,7 +476,7 @@ var chatEl=$("#chat");
 function load(k,d){try{var v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}}
 function save(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
 function now(){var d=new Date();return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0")}
-function esc(s){s=s||"";return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
+function esc(s){s=s||"";return s.replace(/&/g,"&").replace(/</g,"<").replace(/>/g,">")}
 function normBaseUrl(u){u=u||"";return u.trim().replace(/\/+$/,"").replace(/\/v1$/,"")}
 function apiUrl(base,path){return normBaseUrl(base)+"/v1"+path}
 function uid(){return "r_"+Math.random().toString(36).slice(2,10)}
@@ -486,15 +486,29 @@ function hotKey(e){if(e.key==="Enter"&&!e.shiftKey&&!e.isComposing){e.preventDef
 
 function shapeRadius(shape){if(shape==="square")return "4px";if(shape==="round")return "12px";return "50%"}
 function applyAvatarShape(){document.documentElement.style.setProperty("--avRadius",shapeRadius(C.avatarShape||"circle"))}
-function toggleMultiReplyUI(){
-  var on=!!$("#multiReplyEnabled").checked;
-  $("#multiReplyMin").disabled=!on;
-  $("#multiReplyMax").disabled=!on;
-}
-function pickReplyCount(){
-  var a=parseInt(C.multiReplyMin,10)||1,b=parseInt(C.multiReplyMax,10)||1;
-  if(a<1)a=1;if(b<1)b=1;if(a>b){var t=a;a=b;b=t}
-  return Math.floor(Math.random()*(b-a+1))+a;
+function toggleMultiReplyUI(){var on=!!($("#multiReplyEnabled")&&$("#multiReplyEnabled").checked);if($("#multiReplyMin"))$("#multiReplyMin").disabled=!on;if($("#multiReplyMax"))$("#multiReplyMax").disabled=!on}
+function pickReplyCount(){var a=parseInt(C.multiReplyMin,10)||1,b=parseInt(C.multiReplyMax,10)||1;if(a<1)a=1;if(b<1)b=1;if(a>b){var t=a;a=b;b=t}return Math.floor(Math.random()*(b-a+1))+a}
+
+function injectModeControls(){
+  if($("#chatMode"))return;
+  var cards=document.querySelectorAll("#page-settings .card");
+  var apiCard=null;
+  for(var i=0;i<cards.length;i++){
+    var t=cards[i].querySelector(".ct");
+    if(t&&t.textContent.indexOf("API 设置")>=0){apiCard=cards[i];break}
+  }
+  if(!apiCard)return;
+  var row=apiCard.querySelector(".row:last-of-type");
+  var box=document.createElement("div");
+  box.innerHTML=
+    '<div class="f"><div class="fl">对话模式</div><select id="chatMode" class="fs"><option value="online">线上模式（自然聊天）</option><option value="offline">线下模式（长文本）</option></select></div>'+
+    '<div class="row">'+
+      '<div class="f"><div class="fl">线上模型（可空）</div><input id="onlineModel" class="fi" placeholder="留空则用主模型" /></div>'+
+      '<div class="f"><div class="fl">线下模型（可空）</div><input id="offlineModel" class="fi" placeholder="留空则用主模型" /></div>'+
+    '</div>'+
+    '<div class="mini" style="margin-bottom:10px">线上=短句自然聊；线下=更完整长文。</div>';
+  if(row&&row.parentNode===apiCard) apiCard.insertBefore(box,row);
+  else apiCard.appendChild(box);
 }
 
 function fileToDataURL(file){return new Promise(function(r,j){var fr=new FileReader();fr.onload=function(){r(fr.result)};fr.onerror=j;fr.readAsDataURL(file)})}
@@ -630,8 +644,10 @@ function fillCfgForm(){
   $("#multiReplyEnabled").checked=!!C.multiReplyEnabled;
   $("#multiReplyMin").value=C.multiReplyMin||2;
   $("#multiReplyMax").value=C.multiReplyMax||4;
-  toggleMultiReplyUI();
-  applyAvatarShape();
+  if($("#chatMode"))$("#chatMode").value=C.chatMode||"online";
+  if($("#onlineModel"))$("#onlineModel").value=C.onlineModel||"";
+  if($("#offlineModel"))$("#offlineModel").value=C.offlineModel||"";
+  toggleMultiReplyUI();applyAvatarShape();
   var sel=$("#cModel");
   if(C.model){
     var found=false;for(var i=0;i<sel.options.length;i++){if(sel.options[i].value===C.model)found=true}
@@ -647,9 +663,11 @@ function saveCfg(){
   C.multiReplyEnabled=!!$("#multiReplyEnabled").checked;
   C.multiReplyMin=parseInt($("#multiReplyMin").value,10)||1;
   C.multiReplyMax=parseInt($("#multiReplyMax").value,10)||1;
-  if(C.multiReplyMin<1)C.multiReplyMin=1;
-  if(C.multiReplyMax<1)C.multiReplyMax=1;
+  if(C.multiReplyMin<1)C.multiReplyMin=1;if(C.multiReplyMax<1)C.multiReplyMax=1;
   if(C.multiReplyMin>C.multiReplyMax){var t=C.multiReplyMin;C.multiReplyMin=C.multiReplyMax;C.multiReplyMax=t}
+  if($("#chatMode"))C.chatMode=$("#chatMode").value||"online";
+  if($("#onlineModel"))C.onlineModel=$("#onlineModel").value.trim();
+  if($("#offlineModel"))C.offlineModel=$("#offlineModel").value.trim();
   applyAvatarShape();toggleMultiReplyUI();
   save("nx_cfg",C);setStatus();toast("配置已保存");renderChat();
 }
@@ -799,17 +817,25 @@ function queueMessage(){
   currentHistory().push({role:"user",type:"text",content:text,time:now()});
   save("nx_hmap",HMap);renderChat();toast("已暂存");
 }
-function callChatOnce(messages){
+function normalizeAssistantText(out,mode){
+  out=(out||"").replace(/\u0000/g,"").trim();
+  if(mode==="online"){
+    out=out.replace(/\[表情包:[^\]]+\]/g,"（表情）");
+    out=out.replace(/\n{3,}/g,"\n\n");
+  }
+  return out||"......";
+}
+function callChatOnce(messages,modelName){
   return fetch(apiUrl(C.url,"/chat/completions"),{
     method:"POST",
     headers:{"Content-Type":"application/json","Authorization":"Bearer "+C.key},
-    body:JSON.stringify({model:C.model,messages:messages,temperature:C.temp,max_tokens:C.max,stream:false})
+    body:JSON.stringify({model:modelName||C.model,messages:messages,temperature:C.temp,max_tokens:C.max,stream:false})
   }).then(function(r){
     if(!r.ok)return r.text().then(function(t){throw new Error(r.status+": "+t.slice(0,200))});
     return r.json();
   }).then(function(j){
     var out=(j&&j.choices&&j.choices[0]&&j.choices[0].message)?j.choices[0].message.content:"";
-    return (out||"......").trim();
+    return (out||"").trim();
   });
 }
 function requestReply(){
@@ -819,12 +845,15 @@ function requestReply(){
   if(!C.url||!C.key||!C.model){toast("先配置API");return}
   var H=currentHistory();if(!H.length){toast("先发点内容");return}
 
+  var mode=(C.chatMode==="offline")?"offline":"online";
+  var modelName=(mode==="online"?(C.onlineModel||C.model):(C.offlineModel||C.model));
+
   streaming=true;$("#replyBtn").disabled=true;$("#status").textContent="输入中...";addTyping();
 
   var M=H.map(function(x){
     var c=x.content||"";
-    if(x.type==="image") c="[图片]";
-    if(x.type==="sticker") c="[表情包:"+(x.stickerName||"未命名")+"]";
+    if(x.type==="image") c="（用户发送了一张图片）";
+    if(x.type==="sticker") c="（用户发送了一个表情包："+(x.stickerName||"未命名")+"）";
     return {role:x.role==="assistant"?"assistant":"user",content:c};
   });
 
@@ -832,17 +861,19 @@ function requestReply(){
   for(var i=H.length-1;i>=0;i--){if(H[i].role==="user"){lastUser=H[i].content||"";break}}
   var wbP=buildWBSystemPrompt(lastUser),sys=[];
   if(role.prompt)sys.push({role:"system",content:role.prompt});
+  if(mode==="online"){
+    sys.push({role:"system",content:"你在即时聊天模式。回复自然、口语化、连贯，不要写舞台说明，不要强行长文。"});
+  }else{
+    sys.push({role:"system",content:"你在长文本模式。可更完整展开，但必须逻辑清晰、段落完整。"});
+  }
   if(wbP)sys.push({role:"system",content:wbP});
 
   var doMulti=!!C.multiReplyEnabled,count=doMulti?pickReplyCount():1;
   if(doMulti){
-    sys.push({
-      role:"system",
-      content:"你需要连续回复"+count+"条消息。请严格用 <msg>内容</msg> 包裹每一条，共"+count+"条；不要输出任何解释。"
-    });
+    sys.push({role:"system",content:"你需要连续回复"+count+"条消息。请严格用 <msg>内容</msg> 包裹每一条，共"+count+"条；不要输出任何解释。"});
   }
 
-  callChatOnce(sys.concat(M.slice(-60))).then(function(out){
+  callChatOnce(sys.concat(M.slice(-60)),modelName).then(function(out){
     removeTyping();
     var arr=[];
     if(doMulti){
@@ -851,9 +882,11 @@ function requestReply(){
       if(!arr.length)arr=out.split(/\n+/).map(function(x){return x.trim()}).filter(Boolean).slice(0,count);
       if(!arr.length)arr=["......"];
     }else{
-      arr=[out||"......"];
+      arr=[normalizeAssistantText(out,mode)];
     }
-    for(var k=0;k<arr.length;k++){H.push({role:"assistant",type:"text",content:arr[k],time:now()})}
+    for(var k=0;k<arr.length;k++){
+      H.push({role:"assistant",type:"text",content:normalizeAssistantText(arr[k],mode),time:now()});
+    }
     save("nx_hmap",HMap);renderChat();
   }).catch(function(e){
     removeTyping();
@@ -872,15 +905,18 @@ function init(){
   if(typeof C.multiReplyEnabled!=="boolean")C.multiReplyEnabled=false;
   if(typeof C.multiReplyMin!=="number")C.multiReplyMin=2;
   if(typeof C.multiReplyMax!=="number")C.multiReplyMax=4;
+  if(typeof C.chatMode!=="string")C.chatMode="online";
+  if(typeof C.onlineModel!=="string")C.onlineModel="";
+  if(typeof C.offlineModel!=="string")C.offlineModel="";
   if(typeof HMap!=="object"||!HMap)HMap={};
   ensureDefaultGroup();
   if(!roles.length){var id=uid();roles=[{id:id,name:"默认助手",avatar:"AI",avatarImg:"",greeting:"先去角色页设置你的人设。",prompt:""}];activeRoleId=id;save("nx_roles",roles);save("nx_active_role",activeRoleId)}
   if(!activeRoleId&&roles.length)activeRoleId=roles[0].id;
+  injectModeControls();
   buildEmojiPanel();renderStickerPanel();renderWB();fillCfgForm();renderRoles();refreshHeader();setStatus();renderChat();applyAvatarShape();
   if(C.lockEnabled&&/^\d{4,8}$/.test(C.lockPin||""))$("#lockMask").classList.add("show");
 }
 init();
 </script>
-
 </body>
 </html>
