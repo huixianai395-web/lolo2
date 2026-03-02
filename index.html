@@ -108,16 +108,9 @@
       transition:border-color .2s;
     }
     #inp:focus{border-color:var(--ac1)}
-    .actBtn{
-      width:42px;height:42px;border:none;border-radius:50%;font-weight:700;font-size:16px;transition:all .15s
-    }
-    #addBtn{
-      background:var(--bg3);color:var(--ac2);border:1px solid var(--bd);
-    }
-    #replyBtn{
-      background:linear-gradient(135deg,var(--ac1),var(--ac2));color:#111;
-      box-shadow:0 2px 10px rgba(201,168,124,.35);
-    }
+    .actBtn{width:42px;height:42px;border:none;border-radius:50%;font-weight:700;font-size:16px;transition:all .15s}
+    #addBtn{background:var(--bg3);color:var(--ac2);border:1px solid var(--bd)}
+    #replyBtn{background:linear-gradient(135deg,var(--ac1),var(--ac2));color:#111;box-shadow:0 2px 10px rgba(201,168,124,.35)}
     .actBtn:active{transform:scale(.9)}
     .actBtn:disabled{opacity:.3;box-shadow:none}
     .panelWrap{
@@ -369,6 +362,17 @@
             <div class="f"><div class="fl">Temperature</div><input id="cTemp" class="fi" type="number" min="0" max="2" step="0.1" value="0.8" /></div>
             <div class="f"><div class="fl">最大回复</div><input id="cMax" class="fi" type="number" min="50" max="8192" step="50" value="800" /></div>
           </div>
+
+          <div class="switchRow f">
+            <div class="fl" style="margin:0">AI多条回复模式</div>
+            <input id="multiReplyEnabled" type="checkbox" onchange="toggleMultiReplyUI()" />
+          </div>
+          <div class="row">
+            <div class="f"><div class="fl">最少条数</div><input id="multiReplyMin" class="fi" type="number" min="1" max="10" step="1" value="2" /></div>
+            <div class="f"><div class="fl">最多条数</div><input id="multiReplyMax" class="fi" type="number" min="1" max="10" step="1" value="4" /></div>
+          </div>
+          <div class="mini" style="margin-bottom:10px">关闭=按人设自由回；开启=按区间随机条数回。</div>
+
           <div class="row">
             <button class="btn" onclick="saveCfg()">保存配置</button>
             <button class="btn2" onclick="testOnce()">测试连接</button>
@@ -455,7 +459,11 @@
   </div>
 
 <script>
-var C={url:"",key:"",model:"",temp:0.8,max:800,selfAvatarImg:"",lockEnabled:false,lockPin:"",avatarShape:"circle"};
+var C={
+  url:"",key:"",model:"",temp:0.8,max:800,selfAvatarImg:"",
+  lockEnabled:false,lockPin:"",avatarShape:"circle",
+  multiReplyEnabled:false,multiReplyMin:2,multiReplyMax:4
+};
 var roles=[],activeRoleId="",HMap={},streaming=false,currentPage="chat";
 var stickerGroups=[{id:"default",name:"默认分组",stickers:[]}];
 var activeStickerGroup="default";
@@ -476,13 +484,17 @@ function toast(msg){var t=document.createElement("div");t.className="toast";t.te
 function autoGrow(el){el.style.height="auto";el.style.height=Math.min(el.scrollHeight,120)+"px"}
 function hotKey(e){if(e.key==="Enter"&&!e.shiftKey&&!e.isComposing){e.preventDefault();queueMessage()}}
 
-function shapeRadius(shape){
-  if(shape==="square")return "4px";
-  if(shape==="round")return "12px";
-  return "50%";
+function shapeRadius(shape){if(shape==="square")return "4px";if(shape==="round")return "12px";return "50%"}
+function applyAvatarShape(){document.documentElement.style.setProperty("--avRadius",shapeRadius(C.avatarShape||"circle"))}
+function toggleMultiReplyUI(){
+  var on=!!$("#multiReplyEnabled").checked;
+  $("#multiReplyMin").disabled=!on;
+  $("#multiReplyMax").disabled=!on;
 }
-function applyAvatarShape(){
-  document.documentElement.style.setProperty("--avRadius",shapeRadius(C.avatarShape||"circle"));
+function pickReplyCount(){
+  var a=parseInt(C.multiReplyMin,10)||1,b=parseInt(C.multiReplyMax,10)||1;
+  if(a<1)a=1;if(b<1)b=1;if(a>b){var t=a;a=b;b=t}
+  return Math.floor(Math.random()*(b-a+1))+a;
 }
 
 function fileToDataURL(file){return new Promise(function(r,j){var fr=new FileReader();fr.onload=function(){r(fr.result)};fr.onerror=j;fr.readAsDataURL(file)})}
@@ -528,15 +540,12 @@ function goBack(){
 }
 
 function markdownToHtml(src){
-  var s=String(src||"");
-  var blocks=[];
+  var s=String(src||""),blocks=[];
   s=s.replace(/```([^\n`]*)\n?([\s\S]*?)```/g,function(_,l,code){blocks.push({code:esc(code||"")});return "@@CODE_"+(blocks.length-1)+"@@"});
   s=esc(s);
   s=s.replace(/^### (.*)$/gm,"<h3>$1</h3>").replace(/^## (.*)$/gm,"<h2>$1</h2>").replace(/^# (.*)$/gm,"<h1>$1</h1>");
   s=s.replace(/^\s*-\s+(.*)$/gm,"<li>$1</li>").replace(/(?:<li>[\s\S]*?<\/li>)/g,function(m){return "<ul>"+m+"</ul>"});
-  s=s.replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>");
-  s=s.replace(/\*(.+?)\*/g,"<em>$1</em>");
-  s=s.replace(/`([^`]+)`/g,"<code>$1</code>");
+  s=s.replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>").replace(/\*(.+?)\*/g,"<em>$1</em>").replace(/`([^`]+)`/g,"<code>$1</code>");
   s=s.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,'<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
   s=s.replace(/\n/g,"<br>");
   s=s.replace(/@@CODE_(\d+)@@/g,function(_,i){return "<pre><code>"+(blocks[Number(i)]?blocks[Number(i)].code:"")+"</code></pre>"});
@@ -553,42 +562,29 @@ function renderChat(){
   if(!H.length){chatEl.innerHTML='<div class="welcome"><b>'+esc(r.name)+'</b> 已就位。<br>'+(r.greeting?esc(r.greeting):"你可以开始聊天了。")+"<br><br>支持：文本 · 图片 · 表情包</div>";return}
   var html="";
   for(var i=0;i<H.length;i++){
-    var m=H[i],isMe=m.role==="user";
-    var avImg=isMe?(C.selfAvatarImg||""):(r.avatarImg||"");
-    var avTxt=isMe?"我":(r.avatar||"AI");
-    var isSticker=m.type==="sticker";
-    var bubbleClass=isSticker?"":(isMe?"meBubble":"ai");
-    var bubbleStyle=isSticker?'style="background:none;border:none;box-shadow:none;padding:2px"':"";
+    var m=H[i],isMe=m.role==="user",avImg=isMe?(C.selfAvatarImg||""):(r.avatarImg||""),avTxt=isMe?"我":(r.avatar||"AI");
+    var isSticker=m.type==="sticker",bubbleClass=isSticker?"":(isMe?"meBubble":"ai"),bubbleStyle=isSticker?'style="background:none;border:none;box-shadow:none;padding:2px"':"";
     html+='<div class="line '+(isMe?"me":"")+'">';
     if(!isMe) html+='<div class="msgAv">'+avatarHTML(avImg,avTxt)+"</div>";
-    html+='<div class="msg '+bubbleClass+'" '+bubbleStyle+">";
-    html+=renderMsgContent(m);
-    html+='<div class="tm">'+(m.time||"")+"</div></div>";
+    html+='<div class="msg '+bubbleClass+'" '+bubbleStyle+">"+renderMsgContent(m)+'<div class="tm">'+(m.time||"")+"</div></div>";
     if(isMe) html+='<div class="msgAv">'+avatarHTML(avImg,avTxt)+"</div>";
     html+="</div>";
   }
-  chatEl.innerHTML=html;
-  chatEl.scrollTop=chatEl.scrollHeight;
+  chatEl.innerHTML=html;chatEl.scrollTop=chatEl.scrollHeight;
 }
 function addTyping(){
-  var r=currentRole();
-  var d=document.createElement("div");d.className="line";d.id="typing";
+  var r=currentRole(),d=document.createElement("div");d.className="line";d.id="typing";
   d.innerHTML='<div class="msgAv">'+avatarHTML(r?r.avatarImg:"",r?r.avatar:"AI")+'</div><div class="typ"><i></i><i></i><i></i></div>';
   chatEl.appendChild(d);chatEl.scrollTop=chatEl.scrollHeight;
 }
 function removeTyping(){var t=$("#typing");if(t)t.remove()}
 
 function renderRoles(){
-  var list=$("#roleList");
-  if(!roles.length){list.innerHTML='<div class="mini">还没有角色，先创建一个。</div>';return}
+  var list=$("#roleList");if(!roles.length){list.innerHTML='<div class="mini">还没有角色，先创建一个。</div>';return}
   var html="";
   for(var i=0;i<roles.length;i++){
     var r=roles[i];
-    html+='<div class="roleItem '+(r.id===activeRoleId?"active":"")+'">';
-    html+='<div class="roleL"><div class="rAv">'+avatarHTML(r.avatarImg,r.avatar||"AI")+"</div>";
-    html+='<div style="min-width:0"><div class="rName">'+esc(r.name||"未命名")+'</div><div class="rSub">'+(r.prompt?"已设置人设":"无默认人设")+"</div></div></div>";
-    html+='<div style="display:flex;gap:6px"><button class="btn2" style="padding:8px 12px" onclick="pickRole(\''+r.id+'\')">使用</button>';
-    html+='<button class="btn2" style="padding:8px 12px" onclick="editRole(\''+r.id+'\')">编辑</button></div></div>';
+    html+='<div class="roleItem '+(r.id===activeRoleId?"active":"")+'"><div class="roleL"><div class="rAv">'+avatarHTML(r.avatarImg,r.avatar||"AI")+'</div><div style="min-width:0"><div class="rName">'+esc(r.name||"未命名")+'</div><div class="rSub">'+(r.prompt?"已设置人设":"无默认人设")+'</div></div></div><div style="display:flex;gap:6px"><button class="btn2" style="padding:8px 12px" onclick="pickRole(\''+r.id+'\')">使用</button><button class="btn2" style="padding:8px 12px" onclick="editRole(\''+r.id+'\')">编辑</button></div></div>';
   }
   list.innerHTML=html;
 }
@@ -597,11 +593,10 @@ function resetRoleForm(){$("#rId").value="";$("#rName").value="";$("#rAvatar").v
 function onRoleAvatarPick(e){var f=e.target.files?e.target.files[0]:null;if(!f)return;if(f.size>2*1024*1024){toast("图片请小于2MB");return}compressImageFile(f,512,512,0.82).then(function(d){$("#rAvatarImg").value=d;setRolePreview(d)}).catch(function(){toast("读取失败")})}
 function clearRoleAvatar(){$("#rAvatarImg").value="";$("#rAvatarFile").value="";setRolePreview("","无图")}
 function saveRole(){
-  var id=$("#rId").value||uid(),name=$("#rName").value.trim(),avatar=($("#rAvatar").value.trim()||"AI").slice(0,2);
-  var avatarImg=$("#rAvatarImg").value||"",greeting=$("#rGreeting").value.trim(),prompt=$("#rPrompt").value.trim();
+  var id=$("#rId").value||uid(),name=$("#rName").value.trim(),avatar=($("#rAvatar").value.trim()||"AI").slice(0,2),avatarImg=$("#rAvatarImg").value||"",greeting=$("#rGreeting").value.trim(),prompt=$("#rPrompt").value.trim();
   if(!name){toast("角色名不能为空");return}
-  var obj={id:id,name:name,avatar:avatar,avatarImg:avatarImg,prompt:prompt,greeting:greeting};
-  var idx=-1;for(var i=0;i<roles.length;i++){if(roles[i].id===id){idx=i;break}}
+  var obj={id:id,name:name,avatar:avatar,avatarImg:avatarImg,prompt:prompt,greeting:greeting},idx=-1;
+  for(var i=0;i<roles.length;i++){if(roles[i].id===id){idx=i;break}}
   if(idx>=0)roles[idx]=obj;else roles.unshift(obj);
   if(!activeRoleId)activeRoleId=id;
   save("nx_roles",roles);save("nx_active_role",activeRoleId);
@@ -609,11 +604,8 @@ function saveRole(){
 }
 function editRole(id){
   var r=null;for(var i=0;i<roles.length;i++){if(roles[i].id===id){r=roles[i];break}}if(!r)return;
-  $("#rId").value=r.id;$("#rName").value=r.name||"";$("#rAvatar").value=r.avatar||"";
-  $("#rGreeting").value=r.greeting||"";$("#rPrompt").value=r.prompt||"";
-  $("#rAvatarImg").value=r.avatarImg||"";$("#rAvatarFile").value="";
-  setRolePreview(r.avatarImg||"",r.avatar||"无图");
-  switchTab("roles",document.querySelector('.tab[data-page="roles"]'));
+  $("#rId").value=r.id;$("#rName").value=r.name||"";$("#rAvatar").value=r.avatar||"";$("#rGreeting").value=r.greeting||"";$("#rPrompt").value=r.prompt||"";$("#rAvatarImg").value=r.avatarImg||"";$("#rAvatarFile").value="";
+  setRolePreview(r.avatarImg||"",r.avatar||"无图");switchTab("roles",document.querySelector('.tab[data-page="roles"]'));
 }
 function pickRole(id){activeRoleId=id;save("nx_active_role",activeRoleId);refreshHeader();renderRoles();renderChat();toast("已切换")}
 function deleteRole(){
@@ -635,6 +627,10 @@ function fillCfgForm(){
   $("#meAvatarImg").value=C.selfAvatarImg||"";setMePreview(C.selfAvatarImg||"");
   $("#lockEnabled").checked=!!C.lockEnabled;$("#lockPin").value=C.lockPin||"";
   $("#avatarShape").value=C.avatarShape||"circle";
+  $("#multiReplyEnabled").checked=!!C.multiReplyEnabled;
+  $("#multiReplyMin").value=C.multiReplyMin||2;
+  $("#multiReplyMax").value=C.multiReplyMax||4;
+  toggleMultiReplyUI();
   applyAvatarShape();
   var sel=$("#cModel");
   if(C.model){
@@ -648,7 +644,13 @@ function saveCfg(){
   C.temp=parseFloat($("#cTemp").value)||0.8;C.max=parseInt($("#cMax").value)||800;
   C.avatarShape=$("#avatarShape").value||"circle";
   C.selfAvatarImg=$("#meAvatarImg").value||C.selfAvatarImg||"";
-  applyAvatarShape();
+  C.multiReplyEnabled=!!$("#multiReplyEnabled").checked;
+  C.multiReplyMin=parseInt($("#multiReplyMin").value,10)||1;
+  C.multiReplyMax=parseInt($("#multiReplyMax").value,10)||1;
+  if(C.multiReplyMin<1)C.multiReplyMin=1;
+  if(C.multiReplyMax<1)C.multiReplyMax=1;
+  if(C.multiReplyMin>C.multiReplyMax){var t=C.multiReplyMin;C.multiReplyMin=C.multiReplyMax;C.multiReplyMax=t}
+  applyAvatarShape();toggleMultiReplyUI();
   save("nx_cfg",C);setStatus();toast("配置已保存");renderChat();
 }
 
@@ -675,8 +677,7 @@ function importAllData(e){
     if(Array.isArray(j.nx_sticker_groups))stickerGroups=j.nx_sticker_groups;
     else if(Array.isArray(j.nx_stickers)){stickerGroups=[{id:"default",name:"默认分组",stickers:j.nx_stickers.map(function(s){return{src:s,name:""}})}]}
     if(Array.isArray(j.nx_worldbook))worldbook=j.nx_worldbook;
-    save("nx_cfg",C);save("nx_roles",roles);save("nx_active_role",activeRoleId);
-    save("nx_hmap",HMap);save("nx_sticker_groups",stickerGroups);save("nx_worldbook",worldbook);
+    save("nx_cfg",C);save("nx_roles",roles);save("nx_active_role",activeRoleId);save("nx_hmap",HMap);save("nx_sticker_groups",stickerGroups);save("nx_worldbook",worldbook);
     fillCfgForm();renderRoles();renderStickerPanel();renderWB();refreshHeader();setStatus();renderChat();toast("导入成功");
   }).catch(function(){toast("导入失败")});
 }
@@ -688,34 +689,18 @@ function pickImage(e){
   compressImageFile(f,1280,1280,0.82).then(function(d){currentHistory().push({role:"user",type:"image",content:d,time:now()});save("nx_hmap",HMap);renderChat()}).catch(function(){toast("发送失败")});
 }
 
-function buildEmojiPanel(){
-  var html="";
-  for(var i=0;i<EMOJIS.length;i++) html+='<button class="emoji" onclick="addEmoji(\''+EMOJIS[i]+'\')">'+EMOJIS[i]+"</button>";
-  $("#emojiGrid").innerHTML=html;
-}
+function buildEmojiPanel(){var html="";for(var i=0;i<EMOJIS.length;i++)html+='<button class="emoji" onclick="addEmoji(\''+EMOJIS[i]+'\')">'+EMOJIS[i]+"</button>";$("#emojiGrid").innerHTML=html}
 function addEmoji(x){var inp=$("#inp");inp.value+=x;inp.focus();autoGrow(inp)}
-
-function togglePanel(which){
-  var ep=$("#emojiPanel"),sp=$("#stickerPanel");
-  if(which==="emoji"){ep.classList.toggle("show");sp.classList.remove("show")}
-  else{sp.classList.toggle("show");ep.classList.remove("show");renderStickerPanel()}
-}
+function togglePanel(which){var ep=$("#emojiPanel"),sp=$("#stickerPanel");if(which==="emoji"){ep.classList.toggle("show");sp.classList.remove("show")}else{sp.classList.toggle("show");ep.classList.remove("show");renderStickerPanel()}}
 function ensureDefaultGroup(){if(!stickerGroups.length)stickerGroups=[{id:"default",name:"默认分组",stickers:[]}];var found=false;for(var i=0;i<stickerGroups.length;i++){if(stickerGroups[i].id===activeStickerGroup)found=true}if(!found)activeStickerGroup=stickerGroups[0].id}
 function renderStickerPanel(){
   ensureDefaultGroup();
   var tabs=$("#stickerTabs"),grid=$("#stickerGrid"),tabsHtml="";
-  for(var i=0;i<stickerGroups.length;i++){
-    var g=stickerGroups[i];
-    tabsHtml+='<button class="panelTab '+(g.id===activeStickerGroup?"active":"")+'" onclick="switchStickerGroup(\''+g.id+'\')">'+esc(g.name)+"</button>";
-  }
+  for(var i=0;i<stickerGroups.length;i++){var g=stickerGroups[i];tabsHtml+='<button class="panelTab '+(g.id===activeStickerGroup?"active":"")+'" onclick="switchStickerGroup(\''+g.id+'\')">'+esc(g.name)+"</button>"}
   tabs.innerHTML=tabsHtml;
   var grp=null;for(var j=0;j<stickerGroups.length;j++){if(stickerGroups[j].id===activeStickerGroup)grp=stickerGroups[j]}
   if(!grp||!grp.stickers.length){grid.innerHTML='<div class="stickerEmpty">这个分组还没有表情包，点工具栏齿轮添加。</div>';return}
-  var html="";
-  for(var k=0;k<grp.stickers.length;k++){
-    var s=grp.stickers[k];
-    html+='<button class="stickerBtn" onclick="sendSticker(\''+activeStickerGroup+'\','+k+')"><img src="'+s.src+'" alt="'+esc(s.name||"")+'"></button>';
-  }
+  var html="";for(var k=0;k<grp.stickers.length;k++){var s=grp.stickers[k];html+='<button class="stickerBtn" onclick="sendSticker(\''+activeStickerGroup+'\','+k+')"><img src="'+s.src+'" alt="'+esc(s.name||"")+'"></button>'}
   grid.innerHTML=html;
 }
 function switchStickerGroup(id){activeStickerGroup=id;renderStickerPanel()}
@@ -732,77 +717,39 @@ function renderGroupMgrList(){
   var el=$("#groupMgrList"),html="";
   for(var i=0;i<stickerGroups.length;i++){
     var g=stickerGroups[i];
-    html+='<div class="roleItem"><div class="roleL"><div style="min-width:0"><div class="rName">'+esc(g.name)+'</div><div class="rSub">'+g.stickers.length+' 张</div></div></div>';
-    html+='<div style="display:flex;gap:6px"><button class="btn2" style="padding:6px 10px;font-size:12px" onclick="clearGroupStickers(\''+g.id+'\')">清空</button>';
-    if(g.id!=="default") html+='<button class="btn2 btnDanger" style="padding:6px 10px;font-size:12px" onclick="deleteGroup(\''+g.id+'\')">删除</button>';
-    html+="</div></div>";
+    html+='<div class="roleItem"><div class="roleL"><div style="min-width:0"><div class="rName">'+esc(g.name)+'</div><div class="rSub">'+g.stickers.length+' 张</div></div></div><div style="display:flex;gap:6px"><button class="btn2" style="padding:6px 10px;font-size:12px" onclick="clearGroupStickers(\''+g.id+'\')">清空</button>'+(g.id!=="default"?'<button class="btn2 btnDanger" style="padding:6px 10px;font-size:12px" onclick="deleteGroup(\''+g.id+'\')">删除</button>':"")+'</div></div>';
   }
   el.innerHTML=html;
 }
-function updateImportGroupSel(){
-  var html="";
-  for(var i=0;i<stickerGroups.length;i++) html+='<option value="'+stickerGroups[i].id+'">'+esc(stickerGroups[i].name)+"</option>";
-  $("#importGroupSel").innerHTML=html;
-}
-function addStickerGroup(){
-  var name=$("#newGroupName").value.trim();if(!name){toast("名称不能为空");return}
-  var id="sg_"+Math.random().toString(36).slice(2,8);
-  stickerGroups.push({id:id,name:name,stickers:[]});
-  save("nx_sticker_groups",stickerGroups);
-  $("#newGroupName").value="";renderGroupMgrList();updateImportGroupSel();toast("分组已创建");
-}
-function deleteGroup(id){
-  if(!confirm("删除此分组？"))return;
-  stickerGroups=stickerGroups.filter(function(g){return g.id!==id});
-  if(activeStickerGroup===id)activeStickerGroup=stickerGroups.length?stickerGroups[0].id:"default";
-  ensureDefaultGroup();save("nx_sticker_groups",stickerGroups);renderGroupMgrList();updateImportGroupSel();toast("已删除");
-}
-function clearGroupStickers(id){
-  var g=null;for(var i=0;i<stickerGroups.length;i++){if(stickerGroups[i].id===id)g=stickerGroups[i]}if(!g)return;
-  if(!confirm("清空「"+g.name+"」的表情包？"))return;
-  g.stickers=[];save("nx_sticker_groups",stickerGroups);renderGroupMgrList();toast("已清空");
-}
+function updateImportGroupSel(){var html="";for(var i=0;i<stickerGroups.length;i++)html+='<option value="'+stickerGroups[i].id+'">'+esc(stickerGroups[i].name)+"</option>";$("#importGroupSel").innerHTML=html}
+function addStickerGroup(){var name=$("#newGroupName").value.trim();if(!name){toast("名称不能为空");return}var id="sg_"+Math.random().toString(36).slice(2,8);stickerGroups.push({id:id,name:name,stickers:[]});save("nx_sticker_groups",stickerGroups);$("#newGroupName").value="";renderGroupMgrList();updateImportGroupSel();toast("分组已创建")}
+function deleteGroup(id){if(!confirm("删除此分组？"))return;stickerGroups=stickerGroups.filter(function(g){return g.id!==id});if(activeStickerGroup===id)activeStickerGroup=stickerGroups.length?stickerGroups[0].id:"default";ensureDefaultGroup();save("nx_sticker_groups",stickerGroups);renderGroupMgrList();updateImportGroupSel();toast("已删除")}
+function clearGroupStickers(id){var g=null;for(var i=0;i<stickerGroups.length;i++){if(stickerGroups[i].id===id)g=stickerGroups[i]}if(!g)return;if(!confirm("清空「"+g.name+"」的表情包？"))return;g.stickers=[];save("nx_sticker_groups",stickerGroups);renderGroupMgrList();toast("已清空")}
 function importStickerURLs(){
-  var gid=$("#importGroupSel").value,grp=null;
-  for(var i=0;i<stickerGroups.length;i++){if(stickerGroups[i].id===gid)grp=stickerGroups[i]}
+  var gid=$("#importGroupSel").value,grp=null;for(var i=0;i<stickerGroups.length;i++){if(stickerGroups[i].id===gid)grp=stickerGroups[i]}
   if(!grp){toast("先选分组");return}
   var text=$("#urlImportArea").value.trim();if(!text){toast("内容为空");return}
   var lines=text.split("\n"),added=0;
   for(var j=0;j<lines.length;j++){
     var line=lines[j].trim();if(!line)continue;
     var parts=line.split(/\s+/),url="",name="";
-    if(parts.length===1){url=parts[0]}
-    else if(parts[0].indexOf("http")===0){url=parts[0];name=parts.slice(1).join(" ")}
-    else{name=parts[0];for(var k=1;k<parts.length;k++){if(parts[k].indexOf("http")===0){url=parts[k];break}}if(!url)url=parts[parts.length-1]}
+    if(parts.length===1){url=parts[0]}else if(parts[0].indexOf("http")===0){url=parts[0];name=parts.slice(1).join(" ")}else{name=parts[0];for(var k=1;k<parts.length;k++){if(parts[k].indexOf("http")===0){url=parts[k];break}}if(!url)url=parts[parts.length-1]}
     if(!url||url.indexOf("http")!==0)continue;
-    grp.stickers.push({src:url,name:name||""});added++;
-    if(roughSizeOf(stickerGroups)>4.5*1024*1024){grp.stickers.pop();break}
+    grp.stickers.push({src:url,name:name||""});added++;if(roughSizeOf(stickerGroups)>4.5*1024*1024){grp.stickers.pop();break}
   }
   if(grp.stickers.length>500)grp.stickers=grp.stickers.slice(0,500);
-  save("nx_sticker_groups",stickerGroups);$("#urlImportArea").value="";
-  renderGroupMgrList();toast(added?("导入"+added+"张"):"没有有效URL");
+  save("nx_sticker_groups",stickerGroups);$("#urlImportArea").value="";renderGroupMgrList();toast(added?("导入"+added+"张"):"没有有效URL");
 }
 function openStickerFilePick(){$("#stickerFilePick").click()}
 function pickStickerFiles(e){
   var files=Array.from(e.target.files||[]);e.target.value="";if(!files.length)return;
-  var gid=$("#importGroupSel").value,grp=null;
-  for(var i=0;i<stickerGroups.length;i++){if(stickerGroups[i].id===gid)grp=stickerGroups[i]}
+  var gid=$("#importGroupSel").value,grp=null;for(var i=0;i<stickerGroups.length;i++){if(stickerGroups[i].id===gid)grp=stickerGroups[i]}
   if(!grp){toast("先选分组");return}
   var added=0,idx=0,stopped=false;
   function next(){
-    if(idx>=files.length||grp.stickers.length>500||stopped){
-      save("nx_sticker_groups",stickerGroups);renderGroupMgrList();
-      if(stopped)toast("本地空间满了，先导出或删点表情包");else toast(added?("已加入"+added+"张"):"无可用图片");
-      return;
-    }
-    var f=files[idx];idx++;
-    if(!f.type||f.type.indexOf("image/")!==0){next();return}
-    compressImageFile(f,220,220,0.62).then(function(d){
-      grp.stickers.push({src:d,name:f.name||""});
-      if(roughSizeOf(stickerGroups)>4.5*1024*1024){grp.stickers.pop();stopped=true}
-      else added++;
-      next();
-    }).catch(function(){next()});
+    if(idx>=files.length||grp.stickers.length>500||stopped){save("nx_sticker_groups",stickerGroups);renderGroupMgrList();if(stopped)toast("本地空间满了，先导出或删点表情包");else toast(added?("已加入"+added+"张"):"无可用图片");return}
+    var f=files[idx];idx++;if(!f.type||f.type.indexOf("image/")!==0){next();return}
+    compressImageFile(f,220,220,0.62).then(function(d){grp.stickers.push({src:d,name:f.name||""});if(roughSizeOf(stickerGroups)>4.5*1024*1024){grp.stickers.pop();stopped=true}else added++;next()}).catch(function(){next()});
   }
   next();
 }
@@ -813,145 +760,101 @@ function renderWB(){
   if(!worldbook.length){box.innerHTML='<div class="mini">还没有词条。</div>';return}
   var html="";
   for(var i=0;i<worldbook.length;i++){
-    var x=worldbook[i],keysStr=(x.keys||[]).join(", ")||"无";
-    var contentPrev=(x.content||"").slice(0,80);if((x.content||"").length>80)contentPrev+="...";
-    html+='<div class="roleItem"><div class="roleL" style="align-items:flex-start"><div style="min-width:0">';
-    html+='<div class="rName">'+esc(keysStr)+'</div><div class="rSub">'+esc(contentPrev)+'</div>';
-    html+='<div class="mini">'+(x.enabled?"已启用":"已停用")+"</div></div></div>";
-    html+='<button class="btn2" style="padding:8px 12px" onclick="editWB(\''+x.id+'\')">编辑</button></div>';
+    var x=worldbook[i],keysStr=(x.keys||[]).join(", ")||"无",contentPrev=(x.content||"").slice(0,80);if((x.content||"").length>80)contentPrev+="...";
+    html+='<div class="roleItem"><div class="roleL" style="align-items:flex-start"><div style="min-width:0"><div class="rName">'+esc(keysStr)+'</div><div class="rSub">'+esc(contentPrev)+'</div><div class="mini">'+(x.enabled?"已启用":"已停用")+'</div></div></div><button class="btn2" style="padding:8px 12px" onclick="editWB(\''+x.id+'\')">编辑</button></div>';
   }
   box.innerHTML=html;
 }
 function saveWB(){
   var id=$("#wbId").value||("wb_"+Math.random().toString(36).slice(2,8));
-  var keys=$("#wbKeys").value.split(",").map(function(s){return s.trim()}).filter(Boolean);
-  var content=$("#wbContent").value.trim(),enabled=$("#wbEnabled").checked;
+  var keys=$("#wbKeys").value.split(",").map(function(s){return s.trim()}).filter(Boolean),content=$("#wbContent").value.trim(),enabled=$("#wbEnabled").checked;
   if(!keys.length){toast("关键词不能为空");return}if(!content){toast("内容不能为空");return}
-  var obj={id:id,keys:keys,content:content,enabled:enabled};
-  var idx=-1;for(var i=0;i<worldbook.length;i++){if(worldbook[i].id===id){idx=i;break}}
+  var obj={id:id,keys:keys,content:content,enabled:enabled},idx=-1;for(var i=0;i<worldbook.length;i++){if(worldbook[i].id===id){idx=i;break}}
   if(idx>=0)worldbook[idx]=obj;else worldbook.unshift(obj);
   save("nx_worldbook",worldbook);renderWB();resetWBForm();toast("已保存");
 }
-function editWB(id){
-  var x=null;for(var i=0;i<worldbook.length;i++){if(worldbook[i].id===id){x=worldbook[i];break}}if(!x)return;
-  $("#wbId").value=x.id;$("#wbKeys").value=(x.keys||[]).join(", ");$("#wbContent").value=x.content||"";$("#wbEnabled").checked=!!x.enabled;
-  switchTab("worldbook",document.querySelector('.tab[data-page="worldbook"]'));
-}
-function deleteWB(){
-  var id=$("#wbId").value;if(!id){toast("无词条");return}
-  if(!confirm("删除当前词条？"))return;
-  worldbook=worldbook.filter(function(v){return v.id!==id});save("nx_worldbook",worldbook);renderWB();resetWBForm();toast("已删除");
-}
-function buildWBSystemPrompt(t){
-  t=(t||"").toLowerCase();
-  var hits=worldbook.filter(function(x){if(!x.enabled)return false;return (x.keys||[]).some(function(k){return t.indexOf(String(k).toLowerCase())>=0})});
-  if(!hits.length)return"";
-  return hits.map(function(h,i){return "[世界书"+(i+1)+"] "+h.content}).join("\n");
-}
+function editWB(id){var x=null;for(var i=0;i<worldbook.length;i++){if(worldbook[i].id===id){x=worldbook[i];break}}if(!x)return;$("#wbId").value=x.id;$("#wbKeys").value=(x.keys||[]).join(", ");$("#wbContent").value=x.content||"";$("#wbEnabled").checked=!!x.enabled;switchTab("worldbook",document.querySelector('.tab[data-page="worldbook"]'))}
+function deleteWB(){var id=$("#wbId").value;if(!id){toast("无词条");return}if(!confirm("删除当前词条？"))return;worldbook=worldbook.filter(function(v){return v.id!==id});save("nx_worldbook",worldbook);renderWB();resetWBForm();toast("已删除")}
+function buildWBSystemPrompt(t){t=(t||"").toLowerCase();var hits=worldbook.filter(function(x){if(!x.enabled)return false;return (x.keys||[]).some(function(k){return t.indexOf(String(k).toLowerCase())>=0})});if(!hits.length)return"";return hits.map(function(h,i){return "[世界书"+(i+1)+"] "+h.content}).join("\n")}
 
 function fetchModels(){
-  var url=normBaseUrl($("#cUrl").value),key=$("#cKey").value.trim();
-  if(!url){toast("先填地址");return}
-  var btn=$("#fetchBtn");btn.disabled=true;btn.textContent="...";
-  var h={"Content-Type":"application/json"};if(key)h["Authorization"]="Bearer "+key;
+  var url=normBaseUrl($("#cUrl").value),key=$("#cKey").value.trim();if(!url){toast("先填地址");return}
+  var btn=$("#fetchBtn");btn.disabled=true;btn.textContent="...";var h={"Content-Type":"application/json"};if(key)h["Authorization"]="Bearer "+key;
   fetch(apiUrl(url,"/models"),{headers:h}).then(function(r){if(!r.ok)throw new Error(r.status);return r.json()}).then(function(j){
-    var list=[];
-    if(Array.isArray(j&&j.data))list=j.data.map(function(x){return x.id}).filter(Boolean);
-    else if(Array.isArray(j))list=j.map(function(x){return typeof x==="string"?x:(x&&x.id)}).filter(Boolean);
-    var unique={};list.forEach(function(m){unique[m]=1});list=Object.keys(unique).sort();
-    if(!list.length)throw new Error("无模型");
-    var sel=$("#cModel");sel.innerHTML="";
-    list.forEach(function(m){var o=document.createElement("option");o.value=m;o.textContent=m;sel.appendChild(o)});
-    if(C.model&&unique[C.model])sel.value=C.model;
-    toast(list.length+" 个模型");
+    var list=[];if(Array.isArray(j&&j.data))list=j.data.map(function(x){return x.id}).filter(Boolean);else if(Array.isArray(j))list=j.map(function(x){return typeof x==="string"?x:(x&&x.id)}).filter(Boolean);
+    var unique={};list.forEach(function(m){unique[m]=1});list=Object.keys(unique).sort();if(!list.length)throw new Error("无模型");
+    var sel=$("#cModel");sel.innerHTML="";list.forEach(function(m){var o=document.createElement("option");o.value=m;o.textContent=m;sel.appendChild(o)});if(C.model&&unique[C.model])sel.value=C.model;toast(list.length+" 个模型");
   }).catch(function(e){toast("失败: "+String(e.message||e).slice(0,100))}).finally(function(){btn.disabled=false;btn.textContent="拉取"});
 }
 function testOnce(){
-  var u=normBaseUrl($("#cUrl").value),k=$("#cKey").value.trim(),m=$("#cModel").value;
-  if(!u||!k||!m){toast("没填全");return}
-  fetch(apiUrl(u,"/chat/completions"),{
-    method:"POST",
-    headers:{"Content-Type":"application/json","Authorization":"Bearer "+k},
-    body:JSON.stringify({model:m,messages:[{role:"user",content:"回1"}],temperature:0,max_tokens:5,stream:false})
-  }).then(function(r){if(!r.ok)throw new Error(r.status);toast("连接正常")}).catch(function(e){toast("失败: "+String(e.message||e).slice(0,100))});
+  var u=normBaseUrl($("#cUrl").value),k=$("#cKey").value.trim(),m=$("#cModel").value;if(!u||!k||!m){toast("没填全");return}
+  fetch(apiUrl(u,"/chat/completions"),{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+k},body:JSON.stringify({model:m,messages:[{role:"user",content:"回1"}],temperature:0,max_tokens:5,stream:false})}).then(function(r){if(!r.ok)throw new Error(r.status);toast("连接正常")}).catch(function(e){toast("失败: "+String(e.message||e).slice(0,100))});
 }
 
 function queueMessage(){
   if($("#lockMask").classList.contains("show"))return;
-  var inp=$("#inp"),text=inp.value.trim();
-  if(!text)return;
+  var inp=$("#inp"),text=inp.value.trim();if(!text)return;
   var role=currentRole();if(!role){toast("先选角色");return}
   inp.value="";inp.style.height="auto";
   currentHistory().push({role:"user",type:"text",content:text,time:now()});
   save("nx_hmap",HMap);renderChat();toast("已暂存");
 }
-
+function callChatOnce(messages){
+  return fetch(apiUrl(C.url,"/chat/completions"),{
+    method:"POST",
+    headers:{"Content-Type":"application/json","Authorization":"Bearer "+C.key},
+    body:JSON.stringify({model:C.model,messages:messages,temperature:C.temp,max_tokens:C.max,stream:false})
+  }).then(function(r){
+    if(!r.ok)return r.text().then(function(t){throw new Error(r.status+": "+t.slice(0,200))});
+    return r.json();
+  }).then(function(j){
+    var out=(j&&j.choices&&j.choices[0]&&j.choices[0].message)?j.choices[0].message.content:"";
+    return (out||"......").trim();
+  });
+}
 function requestReply(){
   if($("#lockMask").classList.contains("show"))return;
   if(streaming)return;
   var role=currentRole();if(!role){toast("先选角色");return}
   if(!C.url||!C.key||!C.model){toast("先配置API");return}
-  var H=currentHistory();
-  if(!H.length){toast("先发点内容");return}
+  var H=currentHistory();if(!H.length){toast("先发点内容");return}
 
   streaming=true;$("#replyBtn").disabled=true;$("#status").textContent="输入中...";addTyping();
-  var headers={"Content-Type":"application/json","Authorization":"Bearer "+C.key};
+
   var M=H.map(function(x){
     var c=x.content||"";
     if(x.type==="image") c="[图片]";
     if(x.type==="sticker") c="[表情包:"+(x.stickerName||"未命名")+"]";
     return {role:x.role==="assistant"?"assistant":"user",content:c};
   });
-  var lastUser = "";
+
+  var lastUser="";
   for(var i=H.length-1;i>=0;i--){if(H[i].role==="user"){lastUser=H[i].content||"";break}}
   var wbP=buildWBSystemPrompt(lastUser),sys=[];
   if(role.prompt)sys.push({role:"system",content:role.prompt});
   if(wbP)sys.push({role:"system",content:wbP});
-  var payload={model:C.model,messages:sys.concat(M.slice(-60)),temperature:C.temp,max_tokens:C.max};
 
-  fetch(apiUrl(C.url,"/chat/completions"),{method:"POST",headers:headers,body:JSON.stringify(Object.assign({},payload,{stream:true}))}).then(function(r){
-    if(!r.ok){
-      return fetch(apiUrl(C.url,"/chat/completions"),{method:"POST",headers:headers,body:JSON.stringify(Object.assign({},payload,{stream:false}))}).then(function(r2){
-        if(!r2.ok)return r2.text().then(function(t){throw new Error(r2.status+": "+t.slice(0,200))});
-        return r2.json().then(function(j){
-          var out=(j&&j.choices&&j.choices[0]&&j.choices[0].message)?j.choices[0].message.content:"......";
-          if(!out)out="......";
-          H.push({role:"assistant",type:"text",content:out.trim(),time:now()});save("nx_hmap",HMap);removeTyping();renderChat();
-        });
-      });
+  var doMulti=!!C.multiReplyEnabled,count=doMulti?pickReplyCount():1;
+  if(doMulti){
+    sys.push({
+      role:"system",
+      content:"你需要连续回复"+count+"条消息。请严格用 <msg>内容</msg> 包裹每一条，共"+count+"条；不要输出任何解释。"
+    });
+  }
+
+  callChatOnce(sys.concat(M.slice(-60))).then(function(out){
+    removeTyping();
+    var arr=[];
+    if(doMulti){
+      var reg=/<msg>([\s\S]*?)<\/msg>/g,m;
+      while((m=reg.exec(out))!==null){var t=(m[1]||"").trim();if(t)arr.push(t)}
+      if(!arr.length)arr=out.split(/\n+/).map(function(x){return x.trim()}).filter(Boolean).slice(0,count);
+      if(!arr.length)arr=["......"];
+    }else{
+      arr=[out||"......"];
     }
-
-    removeTyping();var at=now();
-    var ln=document.createElement("div");ln.className="line";
-    ln.innerHTML='<div class="msgAv">'+avatarHTML(role.avatarImg,role.avatar||"AI")+'</div><div class="msg ai"><div class="md"><span class="cur">█</span></div><div class="tm">'+at+"</div></div>";
-    chatEl.appendChild(ln);chatEl.scrollTop=chatEl.scrollHeight;
-    var holder=ln.querySelector(".msg .md");
-    var full="",buf="";
-    var reader=r.body.getReader(),dec=new TextDecoder();
-
-    function readChunk(){
-      return reader.read().then(function(result){
-        if(result.done){
-          if(!full)full="......";
-          holder.innerHTML=markdownToHtml(full);
-          H.push({role:"assistant",type:"text",content:full,time:at});save("nx_hmap",HMap);
-          return;
-        }
-        buf+=dec.decode(result.value,{stream:true});
-        var lines=buf.split("\n");buf=lines.pop();
-        for(var i=0;i<lines.length;i++){
-          var s=lines[i].trim();if(s.indexOf("data:")!==0)continue;
-          var data=s.slice(5).trim();if(data==="[DONE]")continue;
-          try{
-            var j=JSON.parse(data);
-            var delta=j&&j.choices&&j.choices[0]&&j.choices[0].delta?j.choices[0].delta.content:null;
-            if(delta){full+=delta;holder.innerHTML=markdownToHtml(full)+'<span class="cur">█</span>';chatEl.scrollTop=chatEl.scrollHeight}
-          }catch(e){}
-        }
-        return readChunk();
-      });
-    }
-    return readChunk();
+    for(var k=0;k<arr.length;k++){H.push({role:"assistant",type:"text",content:arr[k],time:now()})}
+    save("nx_hmap",HMap);renderChat();
   }).catch(function(e){
     removeTyping();
     H.push({role:"assistant",type:"text",content:"[请求失败] "+String(e.message||e).slice(0,200),time:now()});
@@ -961,20 +864,17 @@ function requestReply(){
 
 function init(){
   C=load("nx_cfg",C);roles=load("nx_roles",[]);activeRoleId=load("nx_active_role","");
-  HMap=load("nx_hmap",{});
-  stickerGroups=load("nx_sticker_groups",[{id:"default",name:"默认分组",stickers:[]}]);
-  worldbook=load("nx_worldbook",[]);
+  HMap=load("nx_hmap",{});stickerGroups=load("nx_sticker_groups",[{id:"default",name:"默认分组",stickers:[]}]);worldbook=load("nx_worldbook",[]);
   if(typeof C.selfAvatarImg!=="string")C.selfAvatarImg="";
   if(typeof C.lockEnabled!=="boolean")C.lockEnabled=false;
   if(typeof C.lockPin!=="string")C.lockPin="";
   if(typeof C.avatarShape!=="string")C.avatarShape="circle";
+  if(typeof C.multiReplyEnabled!=="boolean")C.multiReplyEnabled=false;
+  if(typeof C.multiReplyMin!=="number")C.multiReplyMin=2;
+  if(typeof C.multiReplyMax!=="number")C.multiReplyMax=4;
   if(typeof HMap!=="object"||!HMap)HMap={};
   ensureDefaultGroup();
-  if(!roles.length){
-    var id=uid();
-    roles=[{id:id,name:"默认助手",avatar:"AI",avatarImg:"",greeting:"先去角色页设置你的人设。",prompt:""}];
-    activeRoleId=id;save("nx_roles",roles);save("nx_active_role",activeRoleId);
-  }
+  if(!roles.length){var id=uid();roles=[{id:id,name:"默认助手",avatar:"AI",avatarImg:"",greeting:"先去角色页设置你的人设。",prompt:""}];activeRoleId=id;save("nx_roles",roles);save("nx_active_role",activeRoleId)}
   if(!activeRoleId&&roles.length)activeRoleId=roles[0].id;
   buildEmojiPanel();renderStickerPanel();renderWB();fillCfgForm();renderRoles();refreshHeader();setStatus();renderChat();applyAvatarShape();
   if(C.lockEnabled&&/^\d{4,8}$/.test(C.lockPin||""))$("#lockMask").classList.add("show");
