@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -1138,6 +1137,221 @@ window.requestReply = function(){
   });
 };
 /* ===== hotfix end ===== */
-</script>
+/* ===== Noctis mobile hotfix v2 ===== */
+(function(){
+  // 1) 线下模式样式：气泡接近满宽
+  if(!document.getElementById("offlineStylePatch")){
+    var st = document.createElement("style");
+    st.id = "offlineStylePatch";
+    st.textContent = `
+      .chat.offline .msg{max-width:94% !important;}
+      .chat.offline .line{gap:6px;}
+      .chat.offline .msg.ai,.chat.offline .msg.meBubble{border-radius:14px;}
+    `;
+    document.head.appendChild(st);
+  }
+
+  // 包装 renderChat：根据当前模式加 class
+  var _renderChat = window.renderChat;
+  window.renderChat = function(){
+    _renderChat && _renderChat();
+    var ch = $("#chat");
+    if(ch) ch.classList.toggle("offline", (C.chatMode === "offline"));
+  };
+
+  function extractMsgTags(out){
+    out = (out || "").trim();
+    var arr = [], reg = /<msg>([\s\S]*?)<\/msg>/g, m;
+    while((m = reg.exec(out)) !== null){
+      var t = (m[1] || "").trim();
+      if(t) arr.push(t);
+    }
+    return arr;
+  }
+
+  function splitLines(out){
+    return (out || "")
+      .split(/\n+/)
+      .map(function(x){ return x.trim(); })
+      .filter(Boolean);
+  }
+
+  // 覆盖：仅在需要时才限制条数
+  window.splitOnlineBubbles = function(out, limit){
+    out = (out || "").trim();
+    var arr = extractMsgTags(out);
+
+    if(!arr.length) arr = splitLines(out);
+    if(!arr.length && out) arr = [out];
+    if(!arr.length) arr = ["继续。"];
+
+    if(typeof limit === "number" && limit > 0 && arr.length > limit){
+      arr = arr.slice(0, limit);
+    }
+    return arr;
+  };
+
+  // 2) 覆盖 requestReply：自动补齐多条；线下状态栏模板
+  window.requestReply = async function(){
+    if($("#lockMask").classList.contains("show") || streaming) return;
+
+    var role = currentRole();
+    if(!role){ toast("先选角色"); return; }
+    if(!C.url || !C.key || !C.model){ toast("先配置API"); return; }
+
+    // 发送键自动把输入框内容入队
+    var inp = $("#inp"), text = (inp && inp.value ? inp.value : "").trim();
+    if(text){
+      currentHistory().push({role:"user",type:"text",content:text,time:now(),mode:C.chatMode});
+      save("nx_hmap", HMap);
+      inp.value = "";
+      inp.style.height = "auto";
+      renderChat();
+    }
+
+    var H = currentHistory();
+    if(!H.length){ toast("先发点内容"); return; }
+
+    var mode = (C.chatMode === "offline") ? "offline" : "online";
+    var modelName = C.model;
+
+    streaming = true;
+    $("#replyBtn").disabled = true;
+    $("#status").textContent = "输入中...";
+    addTyping();
+
+    try{
+      var M = H.map(function(x){
+        var c = x.content || "";
+        if(x.type === "image") c = "（用户发送了一张图片）";
+        if(x.type === "sticker") c = "（用户发送了一个表情包："+(x.stickerName||"未命名")+"）";
+        return { role: x.role === "assistant" ? "assistant" : "user", content: c };
+      });
+
+      var lastUser = "";
+      for(var i=H.length-1;i>=0;i--){
+        if(H[i].role === "user"){ lastUser = H[i].content || ""; break; }
+      }
+
+      var wbP = buildWBSystemPrompt(lastUser), sys = [];
+      if(role.prompt) sys.push({role:"system",content:role.prompt});
+      if(wbP) sys.push({role:"system",content:wbP});
+
+      var arr = [];
+
+      if(mode === "online"){
+        // —— 线上模式 ——
+        if(!!C.multiReplyEnabled){
+          // 区间模式：自动补齐，不需要你再按一次
+          var target = pickReplyCount();
+          var got = [];
+          var rounds = 0;
+          var convo = M.slice(-60);
+
+          while(got.length < target && rounds < 4){
+            rounds++;
+            var need = target - got.length;
+
+            var s2 = sys.slice();
+            if(rounds === 1){
+              s2.push({
+                role:"system",
+                content:"你在即时聊天。严格回复"+target+"条，每条必须用<msg>...</msg>包裹。语气自然，贴人设，不要舞台说明。"
+              });
+            }else{
+              s2.push({
+                role:"system",
+                content:"继续上一轮回复，不要重复，仍需补齐"+need+"条。每条必须用<msg>...</msg>包裹。"
+              });
+            }
+
+            var out1 = await callChatOnce(s2.concat(convo), modelName);
+            var chunk = extractMsgTags(out1);
+            if(!chunk.length){
+              // 模型不听话时兜底
+              chunk = splitLines(out1);
+              if(!chunk.length && out1.trim()) chunk = [out1.trim()];
+            }
+
+            chunk = chunk.map(function(x){ return normalizeAssistantText(x, "online"); }).filter(Boolean);
+            if(!chunk.length) break;
+            if(chunk.length > need) chunk = chunk.slice(0, need);
+
+            got = got.concat(chunk);
+            // 把已回复内容喂回去，避免下一轮重复
+            for(var c=0;c<chunk.length;c++){
+              convo.push({role:"assistant", content:chunk[c]});
+            }
+          }
+
+          arr = got.length ? got : ["继续。"];
+        }else{
+          // 自由模式：不限制条数；无 <msg> 时视为单条完整消息，不乱拆
+          var s3 = sys.slice();
+          s3.push({
+            role:"system",
+            content:"你在即时聊天模式。根据情境和人设自由决定回复长度与条数。若分多条，用<msg>...</msg>包裹；若不分条，就直接输出完整一条。不要舞台说明，不要模板腔。"
+          });
+
+          var out2 = await callChatOnce(s3.concat(M.slice(-60)), modelName);
+          var tags = extractMsgTags(out2);
+          if(tags.length){
+            arr = tags.map(function(x){ return normalizeAssistantText(x, "online"); }).filter(Boolean);
+          }else{
+            arr = [normalizeAssistantText(out2, "online")];
+          }
+        }
+      }else{
+        // —— 线下模式：状态栏 + 正文（单条） ——
+        var s4 = sys.slice();
+        s4.push({
+          role:"system",
+          content:
+`你在线下沉浸式角色扮演模式。必须只输出一条完整内容，使用以下格式：
+
+『时间』：
+『地点』：
+『人物』：
+『关系』：
+『状态』：
+
+—— 正文 ——
+（正文里写动作、心理、环境、对话推进，贴合人设与上下文，不要只回省略号，不要跳出角色）`
+        });
+
+        var out3 = await callChatOnce(s4.concat(M.slice(-60)), modelName);
+        var t = normalizeAssistantText(out3, "offline");
+        if(!t || /^(\.{2,}|…{1,}|。{2,})$/.test(t)) t = "『状态』：对方沉默中\n\n—— 正文 ——\n我在，说完整一点。";
+        arr = [t];
+      }
+
+      removeTyping();
+      for(var k=0;k<arr.length;k++){
+        H.push({role:"assistant",type:"text",content:arr[k],time:now(),mode:mode});
+      }
+      save("nx_hmap", HMap);
+      renderChat();
+    }catch(e){
+      removeTyping();
+      H.push({
+        role:"assistant",
+        type:"text",
+        content:"[请求失败] " + String(e.message || e).slice(0,200),
+        time:now(),
+        mode:mode
+      });
+      save("nx_hmap", HMap);
+      renderChat();
+    }finally{
+      streaming = false;
+      $("#replyBtn").disabled = false;
+      setStatus();
+    }
+  };
+
+  // 立即应用一次外观
+  renderChat();
+})();
+/* ===== hotfix v2 end ===== */</script>
 </body>
 </html>
