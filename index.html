@@ -1945,6 +1945,317 @@ window.requestReply = function(){
       setStatus();
     }
   };
+})();/* ===== Noctis v6: mode switch instant + offline full completion + online freer multi ===== */
+(function () {
+  function tlen(s){ return String(s||"").replace(/\s+/g,"").length; }
+  function lastChar(s){ s=String(s||"").trim(); return s ? s[s.length-1] : ""; }
+  function isEndPunc(ch){ return /[。！？!?…】》）」』"']/.test(ch); }
+  function incompleteText(s){
+    s = String(s||"").trim();
+    if(!s) return true;
+    if(s.length < 20) return true;
+    return !isEndPunc(lastChar(s));
+  }
+
+  function getLiveMode(){
+    var el = document.getElementById("chatMode");
+    var m = el ? (el.value || "online") : (C.chatMode || "online");
+    C.chatMode = m;
+    save("nx_cfg", C);
+    return m === "offline" ? "offline" : "online";
+  }
+
+  function getOfflineRange(){
+    var minEl = document.getElementById("offlineMinChars");
+    var maxEl = document.getElementById("offlineMaxChars");
+    var min = parseInt((minEl && minEl.value) || C.offlineMinChars || 800, 10);
+    var max = parseInt((maxEl && maxEl.value) || C.offlineMaxChars || 1900, 10);
+    if(!min || min < 200) min = 800;
+    if(!max || max < min) max = Math.max(min + 300, 1900);
+    C.offlineMinChars = min;
+    C.offlineMaxChars = max;
+    save("nx_cfg", C);
+    return {min:min, max:max};
+  }
+
+  function extractMsgs(out){
+    out = String(out||"").trim();
+    var arr = [], reg = /<msg>([\s\S]*?)<\/msg>/g, m;
+    while((m = reg.exec(out)) !== null){
+      var t = (m[1]||"").trim();
+      if(t) arr.push(t);
+    }
+    return arr;
+  }
+
+  async function callChatRaw(messages, modelName){
+    var body = {
+      model: modelName || C.model,
+      messages: messages,
+      temperature: C.temp,
+      max_tokens: C.max,
+      max_completion_tokens: C.max,
+      stream: false
+    };
+    var r = await fetch(apiUrl(C.url, "/chat/completions"), {
+      method: "POST",
+      headers: {"Content-Type":"application/json","Authorization":"Bearer "+C.key},
+      body: JSON.stringify(body)
+    });
+    if(!r.ok){
+      var tx = await r.text();
+      throw new Error(r.status + ": " + tx.slice(0,220));
+    }
+    var j = await r.json();
+    var ch = (j && j.choices && j.choices[0]) ? j.choices[0] : {};
+    var txt = (ch.message && ch.message.content) ? ch.message.content : "";
+    return { text: String(txt||"").trim(), reason: ch.finish_reason || "" };
+  }
+
+  function mapHistoryForLLM(H){
+    return H.map(function(x){
+      var c = x.content || "";
+      if(x.type==="image") c="（用户发送了一张图片）";
+      if(x.type==="sticker") c="（用户发送了一个表情包："+(x.stickerName||"未命名")+"）";
+      return {role:x.role==="assistant"?"assistant":"user",content:c};
+    });
+  }
+
+  function getLastUserText(H){
+    for(var i=H.length-1;i>=0;i--){
+      if(H[i].role==="user") return H[i].content || "";
+    }
+    return "";
+  }
+
+  function onlineSoftTarget(lastUser){
+    var s = String(lastUser||"");
+    var n = tlen(s);
+    var q = (s.match(/[?？]/g)||[]).length;
+    var lines = s.split(/\n+/).filter(Boolean).length;
+    if(q>=2 || lines>=2 || n>50) return 3;
+    if(n>12 || q>=1) return 2;
+    return 1;
+  }
+
+  async function genOnline(sysBase, convoBase, lastUser){
+    var arr = [];
+
+    if(!!C.multiReplyEnabled){
+      // 区间模式：严格条数 + 自动补齐
+      var target = pickReplyCount();
+      var got = [];
+      var convo = convoBase.slice(-60);
+      var rounds = 0;
+
+      while(got.length < target && rounds < 4){
+        rounds++;
+        var need = target - got.length;
+        var sys = sysBase.slice();
+        sys.push({
+          role:"system",
+          content:"即时聊天。严格回复"+need+"条，每条必须用<msg>...</msg>。自然贴人设，不要舞台说明。"
+        });
+
+        var r = await callChatRaw(sys.concat(convo), C.model);
+        var chunk = extractMsgs(r.text);
+        if(!chunk.length){
+          chunk = r.text.split(/\n+/).map(function(x){return x.trim()}).filter(Boolean);
+        }
+        if(!chunk.length) break;
+
+        chunk = chunk.map(function(x){ return normalizeAssistantText(x,"online"); }).filter(Boolean);
+        if(chunk.length > need) chunk = chunk.slice(0, need);
+        got = got.concat(chunk);
+
+        for(var i=0;i<chunk.length;i++){
+          convo.push({role:"assistant",content:chunk[i]});
+        }
+      }
+
+      arr = got.length ? got : ["继续。"];
+    }else{
+      // 自由模式：不限制条数，但给“建议条数”，避免永远单条
+      var suggest = onlineSoftTarget(lastUser); // 1~3
+      var sys = sysBase.slice();
+      sys.push({
+        role:"system",
+        content:
+"即时聊天。按人设与语境自由决定条数。建议本轮约"+suggest+
+"条（可少可多）。若分多条请用<msg>...</msg>；不要舞台说明，不要模板腔。"
+      });
+
+      var r1 = await callChatRaw(sys.concat(convoBase.slice(-60)), C.model);
+      var a1 = extractMsgs(r1.text);
+
+      if(a1.length){
+        arr = a1.map(function(x){ return normalizeAssistantText(x,"online"); }).filter(Boolean);
+      }else{
+        arr = [normalizeAssistantText(r1.text,"online")];
+      }
+
+      // 若本轮语境明显需要展开但只回1条，自动补1条跟进（不强制每次）
+      if(suggest >= 2 && arr.length === 1){
+        var sys2 = sysBase.slice();
+        sys2.push({
+          role:"system",
+          content:"补一条自然跟进短消息，不重复上一条；仍保持人设。只输出<msg>...</msg>一条。"
+        });
+        var r2 = await callChatRaw(sys2.concat(convoBase.slice(-60)).concat([
+          {role:"assistant",content:arr[0]}
+        ]), C.model);
+        var a2 = extractMsgs(r2.text);
+        if(a2.length){
+          arr.push(normalizeAssistantText(a2[0],"online"));
+        }
+      }
+    }
+
+    return arr.filter(Boolean);
+  }
+
+  async function genOffline(sysBase, convoBase){
+    var rg = getOfflineRange();
+    var min = rg.min, max = rg.max;
+
+    var full = "";
+    var convo = convoBase.slice(-60);
+    var rounds = 0;
+
+    while(rounds < 6){
+      rounds++;
+      var need = Math.max(0, min - tlen(full));
+
+      var sys = sysBase.slice();
+      if(rounds === 1){
+        sys.push({
+          role:"system",
+          content:
+`你正在进行沉浸式角色扮演（线下叙事）。
+硬性要求：
+1）只输出剧情，不提模式/系统/AI。
+2）先写状态栏：
+『时间』：
+『地点』：
+『人物』：
+『关系』：
+『状态』：
+—— 正文 ——
+3）状态栏必须具体，禁止空词（如“此刻/当前场景/你我/按既定人设”）。
+4）正文“以对话推进剧情”，不要整段独白小说。你只能写你扮演角色的言行与可观察信息，少量环境心理即可，不替用户下结论。
+5）承接上一轮线上内容，禁止时间地点大跳跃。
+6）目标总长度：${min}-${max}字，结尾必须完整收束，不要断句。`
+        });
+      }else{
+        sys.push({
+          role:"system",
+          content:
+`继续上一段，直接接最后一句往后写，只补正文，不重复状态栏，不总结，补足约${need}字，并确保最后一句完整收束。`
+        });
+      }
+
+      var r = await callChatRaw(sys.concat(convo), C.model);
+      var part = normalizeAssistantText(r.text,"offline")
+        .replace(/^(.*?(线下模式|线上模式|系统提示|提示词|作为AI|我是AI).*)$/gmi,"")
+        .trim();
+
+      if(!part) break;
+
+      if(!full){
+        full = part;
+      }else{
+        var body = part.replace(/^[\s\S]*?——\s*正文\s*——/,"").trim();
+        full += "\n\n" + (body || part);
+      }
+
+      var needMore = (tlen(full) < min) || (r.reason === "length") || incompleteText(full);
+      if(!needMore) break;
+
+      convo.push({role:"assistant",content:part});
+      convo.push({role:"user",content:"继续，直接接上文，不重复，补完并完整收束结尾。"});
+    }
+
+    // 最终修尾：防止最后仍断
+    if(incompleteText(full)){
+      var fix = await callChatRaw([{
+        role:"system",
+        content:"把下面文本仅补最后收尾1-3句，保持剧情连续，不重写前文。"
+      },{
+        role:"user",
+        content:full
+      }], C.model);
+      var tail = (fix.text||"").trim();
+      if(tail) full += "\n\n" + tail;
+    }
+
+    if(!full){
+      full = "『时间』：夜间\n『地点』：当前场景\n『人物』：你、我\n『关系』：按当前人设\n『状态』：对峙未散\n\n—— 正文 ——\n我看着你，没把话说死，等你接下一句。";
+    }
+
+    return full;
+  }
+
+  var _oldRequestReply = window.requestReply;
+  window.requestReply = async function(){
+    if($("#lockMask").classList.contains("show") || streaming) return;
+    var role = currentRole();
+    if(!role){ toast("先选角色"); return; }
+    if(!C.url || !C.key || !C.model){ toast("先配置API"); return; }
+
+    // 当前按钮点击时，立刻读取实时模式（修复“切换后一轮才生效”）
+    var mode = getLiveMode();
+
+    // 发送键自动入队输入框
+    var inp = $("#inp"), text = (inp && inp.value ? inp.value : "").trim();
+    if(text){
+      currentHistory().push({role:"user",type:"text",content:text,time:now(),mode:mode});
+      save("nx_hmap", HMap);
+      inp.value = "";
+      inp.style.height = "auto";
+      renderChat();
+    }
+
+    var H = currentHistory();
+    if(!H.length){ toast("先发点内容"); return; }
+
+    streaming = true;
+    $("#replyBtn").disabled = true;
+    $("#status").textContent = "输入中...";
+    addTyping();
+
+    try{
+      var M = mapHistoryForLLM(H);
+      var lastUser = getLastUserText(H);
+      var wbP = buildWBSystemPrompt(lastUser);
+      var sys = [];
+      if(role.prompt) sys.push({role:"system",content:role.prompt});
+      if(wbP) sys.push({role:"system",content:wbP});
+
+      var arr = [];
+      if(mode === "offline"){
+        var full = await genOffline(sys, M);
+        arr = [full];
+      }else{
+        arr = await genOnline(sys, M, lastUser);
+      }
+
+      removeTyping();
+      for(var k=0;k<arr.length;k++){
+        H.push({role:"assistant",type:"text",content:arr[k],time:now(),mode:mode});
+      }
+      save("nx_hmap", HMap);
+      renderChat();
+    }catch(e){
+      removeTyping();
+      H.push({role:"assistant",type:"text",content:"[请求失败] "+String(e.message||e).slice(0,220),time:now(),mode:mode});
+      save("nx_hmap", HMap);
+      renderChat();
+    }finally{
+      streaming = false;
+      $("#replyBtn").disabled = false;
+      setStatus();
+    }
+  };
 })();</script>
 </body>
 </html>
