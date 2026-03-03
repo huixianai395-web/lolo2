@@ -3342,6 +3342,460 @@ window.requestReply = function(){
   }
   boot();
 
-})();</script>
+})();/* ===== Noctis v10 final hotfix ===== */
+(function(){
+  if(window.__NX_V10__) return;
+  window.__NX_V10__ = true;
+
+  const NX = {
+    quote:null,               // {from,time,text}
+    selMode:false,
+    selected:new Set(),
+    undo:[]
+  };
+
+  function pushUndo(x){ NX.undo.push(x); if(NX.undo.length>40) NX.undo.shift(); }
+  function escHtml(s){ return String(s||"").replace(/&/g,"&").replace(/</g,"<").replace(/>/g,">"); }
+  function tlen(s){ return String(s||"").replace(/\s+/g,"").length; }
+  function nowMode(){
+    const el=document.getElementById("chatMode");
+    const m=(el?el.value:C.chatMode)||"online";
+    C.chatMode=m; save("nx_cfg",C);
+    return m==="offline"?"offline":"online";
+  }
+
+  function getOfflineRange(){
+    const minEl=document.getElementById("offlineMinChars");
+    const maxEl=document.getElementById("offlineMaxChars");
+    let min=parseInt((minEl&&minEl.value)||C.offlineMinChars||800,10);
+    let max=parseInt((maxEl&&maxEl.value)||C.offlineMaxChars||1900,10);
+    if(!min||min<200) min=800;
+    if(!max||max<min) max=Math.max(min+300,1900);
+    C.offlineMinChars=min; C.offlineMaxChars=max; save("nx_cfg",C);
+    return {min,max};
+  }
+
+  async function callRaw(messages){
+    const r=await fetch(apiUrl(C.url,"/chat/completions"),{
+      method:"POST",
+      headers:{"Content-Type":"application/json","Authorization":"Bearer "+C.key},
+      body:JSON.stringify({
+        model:C.model,
+        messages,
+        temperature:C.temp,
+        max_tokens:C.max,
+        max_completion_tokens:C.max,
+        stream:false
+      })
+    });
+    if(!r.ok){
+      const tx=await r.text();
+      throw new Error(r.status+": "+tx.slice(0,220));
+    }
+    const j=await r.json();
+    const ch=(j&&j.choices&&j.choices[0])?j.choices[0]:{};
+    return {text:((ch.message&&ch.message.content)||"").trim(), reason:(ch.finish_reason||"")};
+  }
+
+  function toLLM(H){
+    return H.filter(m=>!m.hiddenFromAI).map(m=>{
+      let c=m.content||"";
+      if(m.type==="image") c="（用户发送了一张图片）";
+      if(m.type==="sticker") c="（用户发送了一个表情包："+(m.stickerName||"未命名")+"）";
+      return {role:m.role==="assistant"?"assistant":"user",content:c};
+    });
+  }
+  function lastUser(H){
+    for(let i=H.length-1;i>=0;i--) if(H[i].role==="user") return H[i].content||"";
+    return "";
+  }
+
+  function parseMsgs(out){
+    out=String(out||"").trim();
+    let arr=[],m,reg=/<msg>([\s\S]*?)<\/msg>/g;
+    while((m=reg.exec(out))!==null){ const t=(m[1]||"").trim(); if(t) arr.push(t); }
+    if(arr.length) return arr;
+
+    arr=out.split(/\n{2,}/).map(x=>x.trim()).filter(Boolean);
+    if(arr.length>=2) return arr;
+    arr=out.split(/\n+/).map(x=>x.trim()).filter(Boolean);
+    if(arr.length>=2) return arr;
+
+    const sents=out.split(/(?<=[。！？!?])/).map(x=>x.trim()).filter(Boolean);
+    if(sents.length>=2){
+      const merged=[]; let buf="";
+      sents.forEach(s=>{
+        if((buf+s).length>40 && buf){ merged.push(buf); buf=s; } else buf+=s;
+      });
+      if(buf) merged.push(buf);
+      if(merged.length) return merged;
+    }
+    return out?[out]:[];
+  }
+
+  function cleanOnline(arr){
+    return arr.map(x=>String(x||"")
+      .replace(/^\s*\*.*\*\s*$/gm,"")
+      .replace(/^\s*（[^）]{0,60}）\s*$/gm,"")
+      .replace(/^\s*\([^)]{0,60}\)\s*$/gm,"")
+      .trim()
+    ).filter(Boolean)
+    .filter(x=>!/^继续[。？！!?…\s]*$/.test(x)); // 关键：滤掉“继续”
+  }
+
+  function suggestCount(text){
+    const s=String(text||"");
+    const n=tlen(s),q=(s.match(/[?？]/g)||[]).length,l=s.split(/\n+/).filter(Boolean).length;
+    if(q>=2||l>=2||n>50) return 3;
+    if(q>=1||n>14) return 2;
+    return 1;
+  }
+
+  async function genOnline(sysBase, convo, lastU){
+    let arr=[];
+    if(!!C.multiReplyEnabled){
+      const target=pickReplyCount();
+      let got=[],round=0,local=convo.slice(-60);
+      while(got.length<target && round<4){
+        round++;
+        const need=target-got.length;
+        const sys=sysBase.slice();
+        sys.push({role:"system",content:
+          "即时聊天。严格回复"+need+"条，每条必须<msg>...</msg>。禁止舞台说明、禁止旁白心理描写、禁止单独输出“继续”。"});
+        const r=await callRaw(sys.concat(local));
+        let chunk=cleanOnline(parseMsgs(r.text));
+        if(!chunk.length) break;
+        if(chunk.length>need) chunk=chunk.slice(0,need);
+        got=got.concat(chunk);
+        chunk.forEach(t=>local.push({role:"assistant",content:t}));
+      }
+      arr=got;
+    }else{
+      let soft=suggestCount(lastU);
+      if(Math.random()<0.3 && soft<4) soft++;
+
+      const sys=sysBase.slice();
+      sys.push({role:"system",content:
+        "即时聊天。按人设和当前剧情自然决定条数，不要长期固定1条。多条时使用<msg>...</msg>。禁止舞台说明、禁止‘他在想/他做了什么’这类旁白。"});
+      sys.push({role:"system",content:"本轮建议约"+soft+"条（建议，不强制），重点是贴人设。"});
+      const r1=await callRaw(sys.concat(convo.slice(-60)));
+      arr=cleanOnline(parseMsgs(r1.text));
+
+      if(arr.length===1 && soft>=2){
+        const r2=await callRaw(sys.concat(convo.slice(-60)).concat([
+          {role:"assistant",content:arr[0]},
+          {role:"user",content:"补一条自然跟进短消息，不重复上一条。"}
+        ]));
+        const add=cleanOnline(parseMsgs(r2.text));
+        if(add.length) arr.push(add[0]);
+      }
+    }
+    if(!arr.length) arr=["我在。把话说完。"];
+    return arr;
+  }
+
+  function endOk(s){ return /[。！？!?…】》）」』"']$/.test(String(s||"").trim()); }
+
+  async function genOffline(sysBase, convo){
+    const rg=getOfflineRange();
+    let full="",local=convo.slice(-60),round=0;
+
+    while(round<6){
+      round++;
+      const need=Math.max(0, rg.min - tlen(full));
+      const sys=sysBase.slice();
+      if(round===1){
+        sys.push({role:"system",content:
+`沉浸式角色扮演：
+1）只输出剧情，不提模式/系统/AI。
+2）先状态栏：
+『时间』：
+『地点』：
+『人物』：
+『关系』：
+『状态』：
+—— 正文 ——
+3）正文以对话推进剧情，不要整段小说旁白，不替用户下结论。
+4）承接上一轮聊天，禁止场景大跳。
+5）目标总长度${rg.min}-${rg.max}字，结尾必须完整。`});
+      }else{
+        sys.push({role:"system",content:"继续接上文，只补正文，不重复状态栏，不总结，补约"+need+"字并完整收尾。"});
+      }
+
+      const r=await callRaw(sys.concat(local));
+      let part=(r.text||"").trim();
+      if(!part) break;
+
+      if(!full) full=part;
+      else{
+        const body=part.replace(/^[\s\S]*?——\s*正文\s*——/,"").trim();
+        full += "\n\n" + (body||part);
+      }
+
+      if(tlen(full)>=rg.min && endOk(full) && r.reason!=="length") break;
+      local.push({role:"assistant",content:part});
+      local.push({role:"user",content:"继续接上文，不重复，补完并收束。"});
+    }
+
+    if(!endOk(full)){
+      const fix=await callRaw([
+        {role:"system",content:"只补最后1-2句收尾，不重写前文。"},
+        {role:"user",content:full}
+      ]);
+      if(fix.text) full += "\n\n"+fix.text.trim();
+    }
+
+    return full || "『时间』：夜间\n『地点』：当前场景\n『人物』：你、我\n『关系』：按当前人设\n『状态』：气氛未散\n\n—— 正文 ——\n我看着你，等你下一句。";
+  }
+
+  /* ---------- UI: 线上窄泡 + 线下宽泡 + 快捷工具 ---------- */
+  const sty=document.createElement("style");
+  sty.textContent=`
+    .chat.online .msg{max-width:64% !important;}
+    .chat.offline .msg{max-width:94% !important;}
+    .msg.sel{outline:2px solid rgba(201,168,124,.9);}
+    .msg.hiddenAI{opacity:.42;}
+    #nxQuick{display:flex;gap:6px;margin:6px 0;}
+    #nxQuick .qbtn{border:1px solid var(--bd);background:var(--bg3);color:var(--tx2);border-radius:10px;padding:6px 8px;font-size:12px;}
+    #quoteBar{display:none;border:1px solid var(--bd);background:var(--bg2);border-radius:10px;padding:6px 8px;font-size:12px;color:var(--tx2);}
+    #quoteBar.show{display:flex;justify-content:space-between;gap:8px;}
+    #favModal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:10000;}
+    #favModal.show{display:flex;}
+    #favCard{width:min(94vw,420px);max-height:80vh;background:var(--bg2);border:1px solid var(--bd);border-radius:14px;display:flex;flex-direction:column;}
+    #favHd{padding:10px;border-bottom:1px solid var(--bd);display:flex;justify-content:space-between;}
+    #favBd{padding:10px;overflow:auto;display:flex;flex-direction:column;gap:8px;}
+    .favIt{border:1px solid var(--bd);border-radius:10px;background:var(--bg3);padding:8px;font-size:12px;line-height:1.55;}
+  `;
+  document.head.appendChild(sty);
+
+  function ensureQuickUI(){
+    const inputBar=document.querySelector(".inputBar");
+    if(!inputBar) return;
+
+    if(!document.getElementById("quoteBar")){
+      const q=document.createElement("div");
+      q.id="quoteBar";
+      q.innerHTML=`<span id="quoteText"></span><button class="qbtn" id="quoteCancel">取消</button>`;
+      inputBar.insertBefore(q, inputBar.querySelector(".sendRow"));
+      document.getElementById("quoteCancel").onclick=()=>{NX.quote=null;refreshQuoteBar();};
+    }
+
+    if(!document.getElementById("nxQuick")){
+      const box=document.createElement("div");
+      box.id="nxQuick";
+      box.innerHTML=`
+        <button class="qbtn" id="selToggle">选择</button>
+        <button class="qbtn" id="selAll">全选</button>
+        <button class="qbtn" id="actQuote">引用</button>
+        <button class="qbtn" id="actFav">收藏</button>
+        <button class="qbtn" id="actHide">隐藏</button>
+        <button class="qbtn" id="actDel">删除</button>
+        <button class="qbtn" id="actUndo">撤销</button>
+        <button class="qbtn" id="openFav">收藏夹</button>
+      `;
+      inputBar.insertBefore(box, inputBar.querySelector(".sendRow"));
+
+      document.getElementById("selToggle").onclick=()=>{ NX.selMode=!NX.selMode; if(!NX.selMode){NX.selected.clear();paintSel();} toast(NX.selMode?"选择模式已开":"选择模式已关"); };
+      document.getElementById("selAll").onclick=()=>{ NX.selected.clear(); currentHistory().forEach((_,i)=>NX.selected.add(i)); paintSel(); };
+      document.getElementById("actQuote").onclick=actQuote;
+      document.getElementById("actFav").onclick=actFav;
+      document.getElementById("actHide").onclick=actHide;
+      document.getElementById("actDel").onclick=actDel;
+      document.getElementById("actUndo").onclick=actUndo;
+      document.getElementById("openFav").onclick=openFav;
+    }
+
+    if(!document.getElementById("favModal")){
+      const m=document.createElement("div");
+      m.id="favModal";
+      m.innerHTML=`<div id="favCard"><div id="favHd"><b>收藏夹</b><button id="favClose">关闭</button></div><div id="favBd"></div></div>`;
+      document.body.appendChild(m);
+      document.getElementById("favClose").onclick=()=>m.classList.remove("show");
+      m.addEventListener("click",e=>{ if(e.target===m) m.classList.remove("show"); });
+    }
+  }
+  function refreshQuoteBar(){
+    const q=document.getElementById("quoteBar"),t=document.getElementById("quoteText");
+    if(!q||!t) return;
+    if(!NX.quote){ q.classList.remove("show"); t.textContent=""; return; }
+    t.textContent=`引用 ${NX.quote.from} ${NX.quote.time||""}：${String(NX.quote.text||"").slice(0,60)}`;
+    q.classList.add("show");
+  }
+  function paintSel(){
+    document.querySelectorAll("#chat .msg").forEach(el=>{
+      const i=parseInt(el.dataset.idx,10);
+      el.classList.toggle("sel", NX.selected.has(i));
+    });
+  }
+
+  function selectedIdx(){
+    return Array.from(NX.selected).sort((a,b)=>a-b);
+  }
+
+  function actQuote(){
+    const idxs=selectedIdx(),H=currentHistory();
+    if(idxs.length!==1){ toast("引用需选1条"); return; }
+    const m=H[idxs[0]]; if(!m){ toast("无效消息"); return; }
+    NX.quote={from:m.role==="assistant"?"AI":"你",time:m.time||"",text:m.content||""};
+    refreshQuoteBar();
+    NX.selected.clear(); paintSel();
+  }
+  function actFav(){
+    const idxs=selectedIdx(),H=currentHistory();
+    if(!idxs.length){ toast("先选消息"); return; }
+    const memo=[];
+    idxs.forEach(i=>{ if(H[i]){ memo.push({i,prev:!!H[i].fav}); H[i].fav=true; }});
+    pushUndo({type:"fav",memo});
+    save("nx_hmap",HMap); renderChat(); toast("已收藏");
+  }
+  function actHide(){
+    const idxs=selectedIdx(),H=currentHistory();
+    if(!idxs.length){ toast("先选消息"); return; }
+    const memo=[];
+    idxs.forEach(i=>{ if(H[i]){ memo.push({i,prev:!!H[i].hiddenFromAI}); H[i].hiddenFromAI=true; }});
+    pushUndo({type:"hide",memo});
+    save("nx_hmap",HMap); renderChat(); toast("已隐藏给AI");
+  }
+  function actDel(){
+    const idxs=selectedIdx(),H=currentHistory();
+    if(!idxs.length){ toast("先选消息"); return; }
+    const removed=[];
+    for(let k=idxs.length-1;k>=0;k--){
+      const i=idxs[k];
+      if(H[i]) removed.push({i,msg:JSON.parse(JSON.stringify(H[i]))});
+      H.splice(i,1);
+    }
+    removed.sort((a,b)=>a.i-b.i);
+    pushUndo({type:"del",removed});
+    save("nx_hmap",HMap); renderChat(); toast("已删除");
+  }
+  function actUndo(){
+    const H=currentHistory(),op=NX.undo.pop();
+    if(!op){ toast("没有可撤销操作"); return; }
+    if(op.type==="fav") op.memo.forEach(x=>{ if(H[x.i]) H[x.i].fav=x.prev; });
+    if(op.type==="hide") op.memo.forEach(x=>{ if(H[x.i]) H[x.i].hiddenFromAI=x.prev; });
+    if(op.type==="del") op.removed.forEach(x=>H.splice(x.i,0,x.msg));
+    save("nx_hmap",HMap); renderChat(); toast("已撤销");
+  }
+
+  function openFav(){
+    const H=currentHistory(),box=document.getElementById("favBd"),m=document.getElementById("favModal");
+    const items=[]; H.forEach((x,i)=>{ if(x&&x.fav) items.push({x,i}); });
+    box.innerHTML = items.length ? items.map(({x,i})=>
+      `<div class="favIt">#${i} · ${x.role==="assistant"?"AI":"你"} · ${x.time||""}<br>${escHtml((x.content||"").slice(0,240))}</div>`
+    ).join("") : `<div class="favIt">还没有收藏。</div>`;
+    m.classList.add("show");
+  }
+
+  // 点击消息时在选择模式里选中
+  document.addEventListener("click",function(e){
+    const msg=e.target.closest("#chat .msg");
+    if(!msg) return;
+    const i=parseInt(msg.dataset.idx,10);
+    if(isNaN(i)) return;
+    if(NX.selMode){
+      if(NX.selected.has(i)) NX.selected.delete(i); else NX.selected.add(i);
+      paintSel();
+      e.preventDefault();
+    }
+  },true);
+
+  // render后附加idx/class
+  const _renderChat=window.renderChat;
+  window.renderChat=function(){
+    _renderChat && _renderChat();
+    ensureQuickUI();
+    const ch=document.getElementById("chat");
+    if(ch){
+      ch.classList.remove("online","offline");
+      ch.classList.add((C.chatMode==="offline")?"offline":"online");
+      const H=currentHistory();
+      ch.querySelectorAll(".line .msg").forEach((el,idx)=>{
+        el.dataset.idx=String(idx);
+        el.classList.toggle("hiddenAI", !!(H[idx]&&H[idx].hiddenFromAI));
+      });
+    }
+    paintSel();
+    refreshQuoteBar();
+  };
+
+  // 导出：带隐藏/收藏统计
+  window.exportAllData=function(){
+    const data={version:4,nx_cfg:C,nx_roles:roles,nx_active_role:activeRoleId,nx_hmap:HMap,nx_sticker_groups:stickerGroups,nx_worldbook:worldbook};
+    let hidden=0,fav=0;
+    Object.keys(HMap||{}).forEach(k=>(HMap[k]||[]).forEach(m=>{ if(m&&m.hiddenFromAI) hidden++; if(m&&m.fav) fav++; }));
+    data.nx_meta={hiddenCount:hidden,favCount:fav,exportedAt:Date.now()};
+    const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(blob);
+    a.download="noctis-backup-v4-"+Date.now()+".json";
+    a.click(); URL.revokeObjectURL(a.href);
+    toast("已导出（含隐藏/收藏标记）");
+  };
+
+  // 发消息时挂引用
+  function quoteObj(){ return NX.quote?{from:NX.quote.from,time:NX.quote.time,text:NX.quote.text}:null; }
+
+  // 改 queueMessage
+  window.queueMessage=function(){
+    if($("#lockMask").classList.contains("show")) return;
+    const inp=$("#inp"),text=(inp&&inp.value?inp.value:"").trim(); if(!text) return;
+    const role=currentRole(); if(!role){ toast("先选角色"); return; }
+    inp.value=""; inp.style.height="auto";
+    currentHistory().push({role:"user",type:"text",content:text,time:now(),mode:nowMode(),quote:quoteObj()});
+    NX.quote=null; refreshQuoteBar();
+    save("nx_hmap",HMap); renderChat(); toast("已暂存");
+  };
+
+  // 统一 requestReply：线下当轮切换 + 线上防“继续”
+  window.requestReply=async function(){
+    if($("#lockMask").classList.contains("show")||streaming) return;
+    const role=currentRole(); if(!role){toast("先选角色");return;}
+    if(!C.url||!C.key||!C.model){toast("先配置API");return;}
+
+    const mode=nowMode();
+
+    // 把输入框文本也发送
+    const inp=$("#inp"),text=(inp&&inp.value?inp.value:"").trim();
+    if(text){
+      currentHistory().push({role:"user",type:"text",content:text,time:now(),mode:mode,quote:quoteObj()});
+      NX.quote=null; refreshQuoteBar();
+      save("nx_hmap",HMap); inp.value=""; inp.style.height="auto"; renderChat();
+    }
+
+    const H=currentHistory(); if(!H.length){toast("先发点内容");return;}
+    const convo=toLLM(H),lastU=lastUser(H);
+
+    const sys=[];
+    sys.push({role:"system",content:"你当前角色名："+(role.name||"未命名")+"。必须贴合该角色人设说话。"});
+    if(role.prompt) sys.push({role:"system",content:role.prompt});
+    const wb=buildWBSystemPrompt(lastU); if(wb) sys.push({role:"system",content:wb});
+
+    streaming=true; $("#replyBtn").disabled=true; $("#status").textContent="输入中..."; addTyping();
+
+    try{
+      let arr=[];
+      if(mode==="online"){
+        arr=await genOnline(sys,convo,lastU);
+      }else{
+        arr=[await genOffline(sys,convo)];
+      }
+
+      removeTyping();
+      arr.forEach(t=>H.push({role:"assistant",type:"text",content:t,time:now(),mode:mode}));
+      save("nx_hmap",HMap); renderChat();
+    }catch(e){
+      removeTyping();
+      H.push({role:"assistant",type:"text",content:"[请求失败] "+String(e.message||e).slice(0,220),time:now(),mode:mode});
+      save("nx_hmap",HMap); renderChat();
+    }finally{
+      streaming=false; $("#replyBtn").disabled=false; setStatus();
+    }
+  };
+
+  ensureQuickUI();
+  renderChat();
+})();
+</script>
 </body>
 </html>
