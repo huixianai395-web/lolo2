@@ -1567,6 +1567,216 @@ window.requestReply = function(){
       setStatus();
     }
   };
-	})();</script>
+	})();/* ===== Noctis offline patch v4 (range real + auto-continue + anti-template) ===== */
+(function () {
+  function txtLen(s){ return String(s||"").replace(/\s+/g,"").length; }
+  function hasFrame(t){
+    return /『时间』\s*[:：]/.test(t) &&
+           /『地点』\s*[:：]/.test(t) &&
+           /『人物』\s*[:：]/.test(t) &&
+           /『关系』\s*[:：]/.test(t) &&
+           /『状态』\s*[:：]/.test(t) &&
+           /——\s*正文\s*——/.test(t);
+  }
+  function badTemplate(t){
+    return /(此刻|当前场景|你、我|按既定人设|情绪与动作持续推进)/.test(t);
+  }
+  function cleanMeta(t){
+    t = String(t||"");
+    t = t.replace(/^(.*?(线下模式|线上模式|系统提示|提示词|作为AI|我是AI).*)$/gmi, "");
+    t = t.replace(/\n{3,}/g,"\n\n").trim();
+    return t;
+  }
+  function getOfflineRange(){
+    var minEl = document.getElementById("offlineMinChars");
+    var maxEl = document.getElementById("offlineMaxChars");
+    var min = parseInt((minEl && minEl.value) || C.offlineMinChars || 900, 10);
+    var max = parseInt((maxEl && maxEl.value) || C.offlineMaxChars || 1900, 10);
+    if(!min || min < 200) min = 900;
+    if(!max || max < min) max = Math.max(min + 300, 1900);
+    return {min:min, max:max};
+  }
+
+  // 让线下字数设置可持久化（你之前这块没保存）
+  var _fillCfg = window.fillCfgForm;
+  window.fillCfgForm = function(){
+    _fillCfg && _fillCfg();
+    var rg = getOfflineRange();
+    if(document.getElementById("offlineMinChars")) document.getElementById("offlineMinChars").value = C.offlineMinChars || rg.min;
+    if(document.getElementById("offlineMaxChars")) document.getElementById("offlineMaxChars").value = C.offlineMaxChars || rg.max;
+  };
+
+  var _saveCfg = window.saveCfg;
+  window.saveCfg = function(){
+    _saveCfg && _saveCfg();
+    var rg = getOfflineRange();
+    C.offlineMinChars = rg.min;
+    C.offlineMaxChars = rg.max;
+    save("nx_cfg", C);
+  };
+
+  async function genOfflineImmersive(sysBase, convoBase, modelName, roleName){
+    var rg = getOfflineRange();
+    var min = rg.min, max = rg.max;
+
+    var convo = convoBase.slice(-60);
+    var full = "";
+    var rounds = 0;
+
+    while(rounds < 6){
+      rounds++;
+      var need = Math.max(0, min - txtLen(full));
+
+      var sys = sysBase.slice();
+      if(rounds === 1){
+        sys.push({
+          role:"system",
+          content:
+`你正在进行沉浸式角色扮演，必须严格遵守：
+1）只输出剧情，不解释规则，不提“模式/系统/AI”。
+2）先写状态栏，再写正文。格式必须是：
+『时间』：
+『地点』：
+『人物』：
+『关系』：
+『状态』：
+—— 正文 ——
+3）状态栏必须具体，禁止模板词：此刻、当前场景、你我、按既定人设、情绪与动作持续推进。
+4）正文要有动作、环境、心理、对话推进，连续叙事，不口水话。
+5）总长度目标：${min}-${max}字。`
+        });
+      }else{
+        sys.push({
+          role:"system",
+          content:
+`继续上一段剧情，直接续写正文，不要重复状态栏，不要复述前文，不要总结。继续补足约${need}字。`
+        });
+      }
+
+      var out = await callChatOnce(sys.concat(convo), modelName);
+      out = cleanMeta(normalizeAssistantText(out, "offline"));
+
+      if(!out) break;
+
+      if(!full){
+        full = out;
+      }else{
+        // 续写轮只拼正文，避免重复栏位
+        var body = out.replace(/^[\s\S]*?——\s*正文\s*——/, "").trim();
+        if(body) full += "\n\n" + body;
+      }
+
+      if(txtLen(full) >= min) break;
+
+      convo.push({role:"assistant",content:out});
+      convo.push({role:"user",content:"继续，直接接上一句写，不要重复。"});
+    }
+
+    // 不合格则做一次“重写修复”
+    if(!hasFrame(full) || badTemplate(full) || txtLen(full) < min){
+      var fixSys = sysBase.slice();
+      fixSys.push({
+        role:"system",
+        content:
+`把下面内容重写为合格线下沉浸回复：
+- 必须包含完整状态栏 + 正文
+- 状态栏具体，不能模板化
+- 保持人设与剧情连续
+- 目标长度${min}-${max}字
+- 禁止提及模式/系统/AI`
+      });
+      var fixed = await callChatOnce(fixSys.concat([
+        {role:"user",content:"请重写这段：\n\n"+(full || "（空）")}
+      ]), modelName);
+
+      fixed = cleanMeta(normalizeAssistantText(fixed, "offline"));
+      if(fixed) full = fixed;
+    }
+
+    // 最后兜底
+    if(!full){
+      full =
+`『时间』：夜间 21:42
+『地点』：客厅落地灯旁
+『人物』：你、${roleName || "我"}
+『关系』：按当前人设关系
+『状态』：气氛绷紧，话锋压低
+
+—— 正文 ——
+我看着你，没再把话说轻。你要的是继续，不是解释。`;
+    }
+
+    return full;
+  }
+
+  // 覆盖 requestReply：线上沿用原逻辑，线下走新强制逻辑
+  var _oldRequest = window.requestReply;
+  window.requestReply = async function(){
+    if((C.chatMode || "online") !== "offline"){
+      return _oldRequest ? _oldRequest() : undefined;
+    }
+
+    if($("#lockMask").classList.contains("show") || streaming) return;
+    var role = currentRole();
+    if(!role){ toast("先选角色"); return; }
+    if(!C.url || !C.key || !C.model){ toast("先配置API"); return; }
+
+    var inp = $("#inp"), text = (inp && inp.value ? inp.value : "").trim();
+    if(text){
+      currentHistory().push({role:"user",type:"text",content:text,time:now(),mode:C.chatMode});
+      save("nx_hmap", HMap);
+      inp.value = "";
+      inp.style.height = "auto";
+      renderChat();
+    }
+
+    var H = currentHistory();
+    if(!H.length){ toast("先发点内容"); return; }
+
+    streaming = true;
+    $("#replyBtn").disabled = true;
+    $("#status").textContent = "输入中...";
+    addTyping();
+
+    try{
+      var M = H.map(function(x){
+        var c = x.content || "";
+        if(x.type === "image") c = "（用户发送了一张图片）";
+        if(x.type === "sticker") c = "（用户发送了一个表情包："+(x.stickerName||"未命名")+"）";
+        return {role:x.role==="assistant"?"assistant":"user",content:c};
+      });
+
+      var lastUser = "";
+      for(var i=H.length-1;i>=0;i--){
+        if(H[i].role==="user"){ lastUser = H[i].content || ""; break; }
+      }
+
+      var sys = [];
+      if(role.prompt) sys.push({role:"system",content:role.prompt});
+      var wbP = buildWBSystemPrompt(lastUser);
+      if(wbP) sys.push({role:"system",content:wbP});
+
+      var full = await genOfflineImmersive(sys, M, C.model, role.name);
+      removeTyping();
+
+      H.push({role:"assistant",type:"text",content:full,time:now(),mode:"offline"});
+      save("nx_hmap", HMap);
+      renderChat();
+    }catch(e){
+      removeTyping();
+      H.push({
+        role:"assistant",type:"text",
+        content:"[请求失败] "+String(e.message||e).slice(0,200),
+        time:now(),mode:"offline"
+      });
+      save("nx_hmap", HMap);
+      renderChat();
+    }finally{
+      streaming = false;
+      $("#replyBtn").disabled = false;
+      setStatus();
+    }
+  };
+})();</script>
 </body>
 </html>
