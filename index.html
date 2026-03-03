@@ -2851,6 +2851,497 @@ window.requestReply = function(){
   // 初始刷新一次
   renderChat();
 })();
-</script>
+/* ===== Noctis v9 patch: undo + favorites + better quote + online free natural ===== */
+(function () {
+  if (window.__NX_V9_PATCHED__) return;
+  window.__NX_V9_PATCHED__ = true;
+
+  /* -------------------- style -------------------- */
+  const st = document.createElement("style");
+  st.textContent = `
+    .chat.online .msg{max-width:66% !important;} /* 再窄一点，像QQ微信 */
+    .chat.offline .msg{max-width:94% !important;}
+
+    .qbar{
+      display:none; align-items:center; justify-content:space-between; gap:8px;
+      border:1px solid var(--bd); background:var(--bg2); border-radius:10px;
+      padding:7px 10px; font-size:12px; color:var(--tx2);
+    }
+    .qbar.show{display:flex;}
+    .qtxt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:80%}
+    .qclose{border:none;background:var(--bg3);color:var(--tx2);border-radius:8px;padding:2px 8px}
+
+    .quoteBlock{
+      border-left:3px solid #5aa3ff; background:rgba(90,163,255,.12);
+      border-radius:8px; padding:6px 8px; margin-bottom:7px; font-size:12px; color:#cfe2ff;
+    }
+
+    .favBtn{
+      width:30px;height:30px;border:1px solid var(--bd);border-radius:10px;background:var(--bg3);color:#f8d67a;
+      display:grid;place-items:center;font-size:14px;margin-left:8px;
+    }
+
+    .favModal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;z-index:10000;align-items:center;justify-content:center}
+    .favModal.show{display:flex}
+    .favCard{width:min(94vw,430px);max-height:80vh;background:var(--bg2);border:1px solid var(--bd);border-radius:14px;display:flex;flex-direction:column;overflow:hidden}
+    .favHd{padding:10px 12px;border-bottom:1px solid var(--bd);display:flex;justify-content:space-between;align-items:center}
+    .favBd{padding:10px;overflow:auto;display:flex;flex-direction:column;gap:8px}
+    .favIt{border:1px solid var(--bd);border-radius:10px;background:var(--bg3);padding:8px 10px;font-size:12px;line-height:1.55}
+    .favMeta{font-size:11px;color:var(--tx3);margin-bottom:4px}
+  `;
+  document.head.appendChild(st);
+
+  /* -------------------- state -------------------- */
+  let __undoStack = [];
+  let __quote = null; // {idx, role, time, content}
+  const MAX_UNDO = 30;
+
+  function pushUndo(op){
+    __undoStack.push(op);
+    if(__undoStack.length > MAX_UNDO) __undoStack.shift();
+  }
+  function getSelIdx(){
+    return Array.from(document.querySelectorAll("#chat .msg.sel"))
+      .map(n => parseInt(n.dataset.idx,10))
+      .filter(n => !isNaN(n))
+      .sort((a,b)=>a-b);
+  }
+  function clearSelDom(){
+    document.querySelectorAll("#chat .msg.sel").forEach(n=>n.classList.remove("sel"));
+  }
+  function toastX(t){ try{toast(t)}catch(e){alert(t)} }
+
+  function ensureQuoteBar(){
+    if(document.getElementById("quoteBar")) return;
+    const bar = document.createElement("div");
+    bar.id = "quoteBar";
+    bar.className = "qbar";
+    bar.innerHTML = `<div id="quoteText" class="qtxt"></div><button class="qclose" id="quoteClose">取消</button>`;
+    const inputBar = document.querySelector(".inputBar");
+    if(inputBar){
+      const sendRow = inputBar.querySelector(".sendRow");
+      inputBar.insertBefore(bar, sendRow);
+    }
+    document.getElementById("quoteClose").onclick = function(){
+      __quote = null;
+      refreshQuoteBar();
+    };
+  }
+  function refreshQuoteBar(){
+    ensureQuoteBar();
+    const bar = document.getElementById("quoteBar");
+    const txt = document.getElementById("quoteText");
+    if(!bar || !txt) return;
+    if(!__quote){ bar.classList.remove("show"); txt.textContent = ""; return; }
+    txt.textContent = `引用 ${__quote.role==="assistant"?"AI":"你"} ${__quote.time||""}：${String(__quote.content||"").slice(0,60)}`;
+    bar.classList.add("show");
+  }
+
+  /* -------------------- 收藏夹 -------------------- */
+  function ensureFavModal(){
+    if(document.getElementById("favModal")) return;
+    const m = document.createElement("div");
+    m.id = "favModal";
+    m.className = "favModal";
+    m.innerHTML = `
+      <div class="favCard">
+        <div class="favHd"><b>收藏夹</b><button class="modalClose" id="favClose">✕</button></div>
+        <div id="favBody" class="favBd"></div>
+      </div>`;
+    document.body.appendChild(m);
+    document.getElementById("favClose").onclick = ()=>m.classList.remove("show");
+    m.addEventListener("click",e=>{ if(e.target===m) m.classList.remove("show"); });
+  }
+  function openFav(){
+    ensureFavModal();
+    const body = document.getElementById("favBody");
+    const H = currentHistory();
+    const items = [];
+    H.forEach((m,idx)=>{ if(m && m.fav) items.push({m,idx}); });
+
+    if(!items.length){
+      body.innerHTML = `<div class="favIt">还没有收藏消息。</div>`;
+    }else{
+      body.innerHTML = items.map(({m,idx})=>`
+        <div class="favIt">
+          <div class="favMeta">#${idx} · ${m.role==="assistant"?"AI":"你"} · ${m.time||""}</div>
+          <div>${(m.content||"").replace(/</g,"<").replace(/>/g,">").slice(0,220)}</div>
+        </div>
+      `).join("");
+    }
+    document.getElementById("favModal").classList.add("show");
+  }
+  function ensureFavBtn(){
+    const hd = document.querySelector(".hd");
+    if(!hd || document.getElementById("favOpenBtn")) return;
+    const btn = document.createElement("button");
+    btn.id = "favOpenBtn";
+    btn.className = "favBtn";
+    btn.textContent = "★";
+    btn.onclick = openFav;
+    hd.appendChild(btn);
+  }
+
+  /* -------------------- 引用渲染（QQ/微信样式） -------------------- */
+  const oldRenderMsgContent = window.renderMsgContent;
+  window.renderMsgContent = function(m){
+    if(m && m.type==="text" && m.quote && m.quote.text){
+      const q = m.quote;
+      const quoteHtml = `<div class="quoteBlock"><b>${q.from||"引用"}</b> ${q.time||""}<br>${String(q.text).replace(/</g,"<").replace(/>/g,">").slice(0,120)}</div>`;
+      return quoteHtml + markdownToHtml(m.content||"");
+    }
+    return oldRenderMsgContent ? oldRenderMsgContent(m) : markdownToHtml((m&&m.content)||"");
+  };
+
+  /* -------------------- 多选工具增强：全选/撤销/收藏 -------------------- */
+  function patchMsgTools(){
+    const tools = document.getElementById("msgTools");
+    if(!tools || tools.dataset.v9patched==="1") return;
+    tools.dataset.v9patched = "1";
+
+    const ext = document.createElement("div");
+    ext.style.display = "contents";
+    ext.innerHTML = `
+      <button class="tbtn" data-act="all">全选</button>
+      <button class="tbtn" data-act="undo">撤销</button>
+      <button class="tbtn" data-act="fav">收藏</button>
+      <button class="tbtn" data-act="unfav">取消收藏</button>
+    `;
+    tools.appendChild(ext);
+
+    tools.addEventListener("click", function(e){
+      const b = e.target.closest("button.tbtn");
+      if(!b) return;
+      const act = b.dataset.act;
+      if(!act) return;
+
+      const H = currentHistory();
+      const idxs = getSelIdx();
+
+      // 拦截新动作
+      if(["all","undo","fav","unfav","quote","hide","unhide","del","edit"].includes(act)){
+        e.preventDefault();
+        e.stopImmediatePropagation();
+      }
+
+      if(act==="all"){
+        document.querySelectorAll("#chat .msg").forEach(n=>n.classList.add("sel"));
+        return;
+      }
+      if(act==="undo"){
+        const op = __undoStack.pop();
+        if(!op){ toastX("没有可撤销操作"); return; }
+        if(op.type==="hide"){
+          op.data.forEach(x=>{ if(H[x.idx]) H[x.idx].hiddenFromAI = x.prev; });
+        }else if(op.type==="fav"){
+          op.data.forEach(x=>{ if(H[x.idx]) H[x.idx].fav = x.prev; });
+        }else if(op.type==="edit"){
+          if(H[op.idx]) H[op.idx].content = op.prev;
+        }else if(op.type==="del"){
+          // 逆序插回
+          op.items.forEach(x=>H.splice(x.idx,0,x.msg));
+        }
+        save("nx_hmap",HMap); renderChat(); toastX("已撤销");
+        return;
+      }
+      if(act==="fav" || act==="unfav"){
+        if(!idxs.length){ toastX("先选消息"); return; }
+        const to = act==="fav";
+        const memo = [];
+        idxs.forEach(i=>{ if(H[i]){ memo.push({idx:i,prev:!!H[i].fav}); H[i].fav = to; }});
+        pushUndo({type:"fav",data:memo});
+        save("nx_hmap",HMap); renderChat(); toastX(to?"已收藏":"已取消收藏");
+        return;
+      }
+
+      // 覆盖旧引用逻辑：改成引用条
+      if(act==="quote"){
+        if(idxs.length!==1){ toastX("引用需选1条"); return; }
+        const m = H[idxs[0]];
+        if(!m){ toastX("无效消息"); return; }
+        __quote = {
+          idx: idxs[0],
+          role: m.role,
+          time: m.time || "",
+          content: m.content || ""
+        };
+        refreshQuoteBar();
+        clearSelDom();
+        return;
+      }
+
+      // hide/unhide/del/edit 做撤销记录
+      if(act==="hide" || act==="unhide"){
+        if(!idxs.length){ toastX("先选消息"); return; }
+        const target = (act==="hide");
+        const memo = [];
+        idxs.forEach(i=>{ if(H[i]){ memo.push({idx:i,prev:!!H[i].hiddenFromAI}); H[i].hiddenFromAI = target; }});
+        pushUndo({type:"hide",data:memo});
+        save("nx_hmap",HMap); renderChat(); toastX(target?"已隐藏给AI":"已取消隐藏");
+        return;
+      }
+      if(act==="edit"){
+        if(idxs.length!==1){ toastX("编辑需选1条"); return; }
+        const i = idxs[0], m = H[i];
+        if(!m || m.type!=="text"){ toastX("仅文本可编辑"); return; }
+        const nv = prompt("编辑消息", m.content||"");
+        if(nv==null) return;
+        pushUndo({type:"edit",idx:i,prev:m.content||""});
+        m.content = nv.trim();
+        save("nx_hmap",HMap); renderChat(); toastX("已编辑");
+        return;
+      }
+      if(act==="del"){
+        if(!idxs.length){ toastX("先选消息"); return; }
+        const removed = [];
+        for(let k=idxs.length-1;k>=0;k--){
+          const i = idxs[k];
+          if(H[i]) removed.push({idx:i,msg:JSON.parse(JSON.stringify(H[i]))});
+          H.splice(i,1);
+        }
+        removed.sort((a,b)=>a.idx-b.idx);
+        pushUndo({type:"del",items:removed});
+        save("nx_hmap",HMap); renderChat(); toastX("已删除");
+        return;
+      }
+    }, true);
+  }
+
+  /* -------------------- 发送时挂载引用 -------------------- */
+  function buildQuoteObj(){
+    if(!__quote) return null;
+    return {
+      from: __quote.role==="assistant" ? "AI" : "你",
+      time: __quote.time || "",
+      text: String(__quote.content||"")
+    };
+  }
+
+  // 覆盖 queueMessage（点+暂存时也能带引用）
+  const oldQueue = window.queueMessage;
+  window.queueMessage = function(){
+    const inp = document.getElementById("inp");
+    const text = (inp && inp.value ? inp.value : "").trim();
+    if(!text) return oldQueue && oldQueue();
+
+    const role = currentRole();
+    if(!role){ toastX("先选角色"); return; }
+
+    const H = currentHistory();
+    H.push({
+      role:"user", type:"text", content:text, time:now(), mode:C.chatMode||"online",
+      quote: buildQuoteObj()
+    });
+    save("nx_hmap",HMap);
+    inp.value=""; inp.style.height="auto";
+    __quote = null; refreshQuoteBar();
+    renderChat(); toastX("已暂存");
+  };
+
+  /* -------------------- 线上自由模式重写（更自然 + 禁出戏 + 动态条数） -------------------- */
+  function parseMsgs(out){
+    out = String(out||"").trim();
+    const arr = [];
+    let m, reg = /<msg>([\s\S]*?)<\/msg>/g;
+    while((m=reg.exec(out))!==null){
+      const t = (m[1]||"").trim();
+      if(t) arr.push(t);
+    }
+    if(arr.length) return arr;
+
+    let lines = out.split(/\n{2,}/).map(x=>x.trim()).filter(Boolean);
+    if(lines.length>=2) return lines;
+    lines = out.split(/\n+/).map(x=>x.trim()).filter(Boolean);
+    if(lines.length>=2) return lines;
+
+    const sents = out.split(/(?<=[。！？!?])/).map(x=>x.trim()).filter(Boolean);
+    if(sents.length>=2){
+      const merged=[]; let buf="";
+      sents.forEach(s=>{
+        if((buf+s).length>38 && buf){ merged.push(buf); buf=s; }
+        else buf += s;
+      });
+      if(buf) merged.push(buf);
+      if(merged.length) return merged;
+    }
+    return out ? [out] : [];
+  }
+
+  function cleanOnline(arr){
+    return arr.map(x=>String(x||"")
+      .replace(/^\s*\*.*\*\s*$/gm,"")
+      .replace(/^\s*（[^）]{0,40}）\s*$/gm,"")
+      .replace(/^\s*\([^)]{0,40}\)\s*$/gm,"")
+      .trim()
+    ).filter(Boolean);
+  }
+
+  function suggestCountByContext(lastUser){
+    const s = String(lastUser||"");
+    const n = s.replace(/\s+/g,"").length;
+    const q = (s.match(/[?？]/g)||[]).length;
+    const l = s.split(/\n+/).filter(Boolean).length;
+    if(q>=2 || l>=2 || n>55) return 3;
+    if(q>=1 || n>16) return 2;
+    return 1;
+  }
+
+  async function callRaw(messages){
+    const r = await fetch(apiUrl(C.url,"/chat/completions"),{
+      method:"POST",
+      headers:{"Content-Type":"application/json","Authorization":"Bearer "+C.key},
+      body:JSON.stringify({
+        model:C.model, messages:messages, temperature:C.temp, stream:false,
+        max_tokens:C.max, max_completion_tokens:C.max
+      })
+    });
+    if(!r.ok){
+      const tx = await r.text();
+      throw new Error(r.status+": "+tx.slice(0,200));
+    }
+    const j = await r.json();
+    const ch = j && j.choices && j.choices[0] ? j.choices[0] : {};
+    return (ch.message && ch.message.content) ? ch.message.content : "";
+  }
+
+  const oldRequest = window.requestReply;
+  window.requestReply = async function(){
+    const modeEl = document.getElementById("chatMode");
+    const liveMode = (modeEl ? modeEl.value : C.chatMode) || "online";
+    const freeOnline = (liveMode==="online" && !C.multiReplyEnabled);
+
+    // 非自由线上，走原有逻辑（你现在线下/区间都稳定）
+    if(!freeOnline) return oldRequest && oldRequest();
+
+    if($("#lockMask").classList.contains("show") || streaming) return;
+    const role = currentRole();
+    if(!role){ toastX("先选角色"); return; }
+    if(!C.url || !C.key || !C.model){ toastX("先配置API"); return; }
+
+    // 输入自动入队（带引用）
+    const inp = document.getElementById("inp");
+    const text = (inp && inp.value ? inp.value : "").trim();
+    if(text){
+      currentHistory().push({
+        role:"user", type:"text", content:text, time:now(), mode:"online",
+        quote: buildQuoteObj()
+      });
+      save("nx_hmap",HMap);
+      inp.value=""; inp.style.height="auto";
+      __quote = null; refreshQuoteBar();
+      renderChat();
+    }
+
+    const H = currentHistory();
+    if(!H.length){ toastX("先发点内容"); return; }
+
+    streaming = true;
+    $("#replyBtn").disabled = true;
+    $("#status").textContent = "输入中...";
+    addTyping();
+
+    try{
+      // 过滤 hidden
+      const conv = H.filter(x=>!x.hiddenFromAI).map(x=>{
+        let c = x.content||"";
+        if(x.type==="image") c="（用户发送了一张图片）";
+        if(x.type==="sticker") c="（用户发送了一个表情包："+(x.stickerName||"未命名")+"）";
+        return {role:x.role==="assistant"?"assistant":"user",content:c};
+      });
+
+      let lastUser = "";
+      for(let i=H.length-1;i>=0;i--){ if(H[i].role==="user"){ lastUser = H[i].content||""; break; } }
+
+      let soft = suggestCountByContext(lastUser);
+      if(Math.random()<0.35 && soft<4) soft += 1; // 轻扰动，避免机械
+
+      const sys = [];
+      sys.push({role:"system",content:"你当前扮演角色名："+(role.name||"未命名角色")+"。必须始终贴合该角色人设。"});
+      if(role.prompt) sys.push({role:"system",content:role.prompt});
+      const wbP = buildWBSystemPrompt(lastUser);
+      if(wbP) sys.push({role:"system",content:wbP});
+
+      sys.push({
+        role:"system",
+        content:"即时聊天。按人设与当前剧情自然决定条数，不要长期固定1条。简单确认1条；有追问、情绪推进、转折时常用2-4条。多条时每条用<msg>...</msg>。禁止舞台说明、禁止旁白内心戏。"
+      });
+      sys.push({role:"system",content:"本轮建议约"+soft+"条（建议，不强制）。核心：贴人设。"});
+      const out1 = await callRaw(sys.concat(conv.slice(-60)));
+      let arr = cleanOnline(parseMsgs(out1));
+
+      // 第一轮太短太单薄时，自动补1条，不再出现“继续”口癖
+      if(arr.length===1 && soft>=2 && (arr[0].length<18 || /^(好|嗯|行|知道了|收到)[。！!？?]?$/.test(arr[0]))){
+        const sys2 = [];
+        sys2.push({role:"system",content:"补1条自然跟进短消息，不重复上一条，必须<msg>...</msg>，仍贴人设。"});
+        const out2 = await callRaw(sys.concat(sys2).concat(conv.slice(-60)).concat([{role:"assistant",content:arr[0]}]));
+        const add = cleanOnline(parseMsgs(out2));
+        if(add.length) arr.push(add[0]);
+      }
+
+      if(!arr.length) arr = ["我在。你继续说重点。"]; // 不再用“继续。”
+
+      removeTyping();
+      arr.forEach(t=>H.push({role:"assistant",type:"text",content:t,time:now(),mode:"online"}));
+      save("nx_hmap",HMap);
+      renderChat();
+
+    }catch(e){
+      removeTyping();
+      H.push({role:"assistant",type:"text",content:"[请求失败] "+String(e.message||e).slice(0,220),time:now(),mode:"online"});
+      save("nx_hmap",HMap);
+      renderChat();
+    }finally{
+      streaming=false;
+      $("#replyBtn").disabled=false;
+      setStatus();
+    }
+  };
+
+  /* -------------------- 导出：显式带隐藏/收藏统计 -------------------- */
+  const oldExport = window.exportAllData;
+  window.exportAllData = function(){
+    const data = {
+      version: 3,
+      nx_cfg: C,
+      nx_roles: roles,
+      nx_active_role: activeRoleId,
+      nx_hmap: HMap,               // 本体已包含 hiddenFromAI / fav / quote
+      nx_sticker_groups: stickerGroups,
+      nx_worldbook: worldbook
+    };
+
+    // 补一个可读统计
+    let hiddenCount=0,favCount=0;
+    Object.keys(HMap||{}).forEach(rid=>{
+      (HMap[rid]||[]).forEach(m=>{
+        if(m && m.hiddenFromAI) hiddenCount++;
+        if(m && m.fav) favCount++;
+      });
+    });
+    data.nx_meta = { hiddenCount, favCount, exportedAt: Date.now() };
+
+    const blob = new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "noctis-backup-v3-"+Date.now()+".json";
+    a.click();
+    URL.revokeObjectURL(a.href);
+    toastX("已导出（含隐藏/收藏标记）");
+  };
+
+  /* -------------------- init hooks -------------------- */
+  function boot(){
+    ensureQuoteBar();
+    ensureFavBtn();
+    ensureFavModal();
+    patchMsgTools();
+    refreshQuoteBar();
+    // 防止工具栏后创建，轮询轻补丁
+    setTimeout(patchMsgTools, 600);
+    setTimeout(patchMsgTools, 1400);
+  }
+  boot();
+
+})();</script>
 </body>
 </html>
