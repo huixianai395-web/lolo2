@@ -4865,5 +4865,248 @@ window.requestReply = function(){
   renderChat();
   toastX("QQ操作补丁已加载");
 })();
+</script><script>
+/* ===== NX Menu Killer + Single Menu (FULL) ===== */
+(function () {
+  if (window.__NX_MENU_KILLER__) return;
+  window.__NX_MENU_KILLER__ = true;
+
+  function q(s){ return document.querySelector(s); }
+  function qa(s){ return Array.from(document.querySelectorAll(s)); }
+  function toastX(t){ try{ toast(t);}catch(e){} }
+
+  // 1) 样式：隐藏旧菜单 + 禁系统复制气泡
+  var st = document.createElement("style");
+  st.textContent = `
+    #nxCtx,#nxCtxMask,#nxLPMask,#lpSheetMask,#nxOps,#nxFab,#nxQqMask,#nxQqPanel,#nxMultiTop,#nxMultiBottom{display:none!important;}
+    #chat .msg,#chat .msg *{
+      -webkit-user-select:none!important;
+      user-select:none!important;
+      -webkit-touch-callout:none!important;
+    }
+
+    #nxOneMask{
+      position:fixed;inset:0;background:rgba(0,0,0,.38);
+      display:none;z-index:13000;
+    }
+    #nxOneMask.show{display:block;}
+
+    #nxOneMenu{
+      position:fixed;left:10px;right:10px;bottom:10px;z-index:13001;
+      display:none;background:#262c38;border:1px solid rgba(255,255,255,.08);
+      border-radius:16px;overflow:hidden;box-shadow:0 16px 40px rgba(0,0,0,.35);
+    }
+    #nxOneMenu.show{display:block;}
+    #nxOneMenu .hd{padding:10px 12px;font-size:13px;color:#d0d5e2;border-bottom:1px solid rgba(255,255,255,.08);}
+    #nxOneMenu .row{display:grid;grid-template-columns:repeat(4,1fr);}
+    #nxOneMenu button{
+      border:none;background:transparent;color:#fff;padding:12px 6px;font-size:14px;
+      border-right:1px solid rgba(255,255,255,.06);
+      border-bottom:1px solid rgba(255,255,255,.06);
+    }
+    #nxOneMenu button:nth-child(4n){border-right:none;}
+    #nxOneMenu .wide{grid-column:span 2;}
+    #nxOneMenu .full{grid-column:span 4;}
+    #nxOneMenu .cancel{color:#ffd9d9;}
+  `;
+  document.head.appendChild(st);
+
+  // 2) 持续清理旧菜单节点（防旧补丁重建）
+  function killOldNodes(){
+    [
+      "nxCtx","nxCtxMask","nxLPMask","lpSheetMask","nxOps","nxFab",
+      "nxQqMask","nxQqPanel","nxMultiTop","nxMultiBottom","nxLPCard","nxLPMask"
+    ].forEach(function(id){
+      var el = document.getElementById(id);
+      if(el) el.remove();
+    });
+  }
+  killOldNodes();
+  setInterval(killOldNodes, 1200);
+
+  // 3) 状态
+  var M = { idx:-1, undo:null, hold:null };
+
+  function H(){
+    return (typeof currentHistory==="function") ? currentHistory() : [];
+  }
+
+  function saveAndRender(){
+    try{ save("nx_hmap", HMap); }catch(e){}
+    if(typeof renderChat==="function") renderChat();
+  }
+
+  // 4) 自定义菜单
+  function ensureMenu(){
+    if(q("#nxOneMenu")) return;
+
+    var mask = document.createElement("div");
+    mask.id = "nxOneMask";
+    mask.onclick = closeMenu;
+
+    var menu = document.createElement("div");
+    menu.id = "nxOneMenu";
+    menu.innerHTML =
+      '<div class="hd" id="nxOneHd">消息操作</div>'+
+      '<div class="row">'+
+        '<button data-a="quote">引用</button>'+
+        '<button data-a="copy">复制</button>'+
+        '<button data-a="fav">收藏</button>'+
+        '<button data-a="hide">隐藏</button>'+
+        '<button data-a="unhide">取消隐藏</button>'+
+        '<button data-a="edit">编辑</button>'+
+        '<button data-a="regen">重刷</button>'+
+        '<button data-a="del">删除</button>'+
+        '<button class="wide" data-a="undo">撤销</button>'+
+        '<button class="wide cancel" data-a="cancel">取消</button>'+
+      '</div>';
+    menu.addEventListener("click", onMenuClick);
+
+    document.body.appendChild(mask);
+    document.body.appendChild(menu);
+  }
+
+  function openMenu(idx){
+    ensureMenu();
+    M.idx = idx;
+    var m = H()[idx];
+    var hd = q("#nxOneHd");
+    if(hd) hd.textContent = (m ? ((m.role==="assistant"?"AI":"你")+"消息") : "消息操作");
+    q("#nxOneMask").classList.add("show");
+    q("#nxOneMenu").classList.add("show");
+  }
+
+  function closeMenu(){
+    var a=q("#nxOneMask"), b=q("#nxOneMenu");
+    if(a) a.classList.remove("show");
+    if(b) b.classList.remove("show");
+  }
+
+  function onMenuClick(e){
+    var btn = e.target.closest("button[data-a]");
+    if(!btn) return;
+    var act = btn.dataset.a;
+    if(act==="cancel"){ closeMenu(); return; }
+
+    var hs = H();
+    var i = M.idx;
+    var m = hs[i];
+    if(!m){ closeMenu(); return; }
+
+    if(act==="quote"){
+      var inp = q("#inp");
+      if(inp){
+        var qtxt = "> "+(m.role==="assistant"?"AI":"你")+"："+String(m.content||"").replace(/\n/g," ").slice(0,90)+"\n";
+        inp.value = qtxt + (inp.value||"");
+        inp.focus();
+        if(typeof autoGrow==="function") autoGrow(inp);
+      }
+      toastX("已引用");
+    }
+    else if(act==="copy"){
+      var txt = String(m.content||"");
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(txt);
+      }else{
+        prompt("复制文本：", txt);
+      }
+      toastX("已复制");
+    }
+    else if(act==="fav"){
+      M.undo = {type:"fav", idx:i, prev:!!m.fav};
+      m.fav = true;
+      saveAndRender();
+      toastX("已收藏");
+    }
+    else if(act==="hide"){
+      M.undo = {type:"hide", idx:i, prev:!!m.hiddenFromAI};
+      m.hiddenFromAI = true;
+      saveAndRender();
+      toastX("已隐藏给AI");
+    }
+    else if(act==="unhide"){
+      M.undo = {type:"hide", idx:i, prev:!!m.hiddenFromAI};
+      m.hiddenFromAI = false;
+      saveAndRender();
+      toastX("已取消隐藏");
+    }
+    else if(act==="edit"){
+      if(m.type!=="text"){ toastX("仅文本可编辑"); closeMenu(); return; }
+      var nv = prompt("编辑消息", m.content||"");
+      if(nv!=null){
+        M.undo = {type:"edit", idx:i, prev:m.content||""};
+        m.content = nv.trim();
+        saveAndRender();
+      }
+    }
+    else if(act==="regen"){
+      if(m.role!=="assistant"){ toastX("请选AI消息"); closeMenu(); return; }
+      M.undo = {type:"del", idx:i, item:JSON.parse(JSON.stringify(m))};
+      hs.splice(i,1);
+      saveAndRender();
+      if(typeof requestReply==="function") requestReply();
+    }
+    else if(act==="del"){
+      M.undo = {type:"del", idx:i, item:JSON.parse(JSON.stringify(m))};
+      hs.splice(i,1);
+      saveAndRender();
+      toastX("已删除");
+    }
+    else if(act==="undo"){
+      if(!M.undo){ toastX("没有可撤销操作"); closeMenu(); return; }
+      var u = M.undo, h2 = H();
+      if(u.type==="fav" && h2[u.idx]) h2[u.idx].fav = u.prev;
+      if(u.type==="hide" && h2[u.idx]) h2[u.idx].hiddenFromAI = u.prev;
+      if(u.type==="edit" && h2[u.idx]) h2[u.idx].content = u.prev;
+      if(u.type==="del") h2.splice(u.idx,0,u.item);
+      M.undo = null;
+      saveAndRender();
+      toastX("已撤销");
+    }
+
+    closeMenu();
+  }
+
+  // 5) 渲染后给消息打 idx
+  var _render = window.renderChat;
+  window.renderChat = function(){
+    _render && _render();
+    qa("#chat .line .msg").forEach(function(el, idx){ el.dataset.idx = idx; });
+  };
+
+  // 6) 抢占长按事件（捕获阶段）
+  document.addEventListener("touchstart", function(e){
+    var msg = e.target.closest && e.target.closest(".msg");
+    if(!msg) return;
+    var idx = parseInt(msg.dataset.idx,10);
+    if(isNaN(idx)) return;
+
+    try{
+      var sel = window.getSelection && window.getSelection();
+      if(sel && sel.removeAllRanges) sel.removeAllRanges();
+    }catch(_){}
+
+    e.stopImmediatePropagation();
+    clearTimeout(M.hold);
+    M.hold = setTimeout(function(){ openMenu(idx); }, 320);
+  }, {capture:true, passive:false});
+
+  document.addEventListener("touchend", function(){
+    clearTimeout(M.hold);
+  }, {capture:true, passive:true});
+
+  document.addEventListener("touchmove", function(){
+    clearTimeout(M.hold);
+  }, {capture:true, passive:true});
+
+  // 7) 彻底拦截系统 contextmenu
+  document.addEventListener("contextmenu", function(e){
+    if(e.target.closest && e.target.closest(".msg")) e.preventDefault();
+  }, true);
+
+  ensureMenu();
+  if(typeof renderChat==="function") renderChat();
+  toastX("单菜单已接管");
+})();
 </script></body>
 </html>
