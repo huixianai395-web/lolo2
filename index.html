@@ -5884,5 +5884,103 @@ window.requestReply = function(){
   setTimeout(fixStatusText, 120);
   setTimeout(fixStatusText, 600);
 })();
+</script><script>
+/* ===== FINAL UX TUNE: mode instant + QQ bubble width + single favorites ===== */
+(function () {
+  if (window.__NX_FINAL_UX_TUNE__) return;
+  window.__NX_FINAL_UX_TUNE__ = true;
+
+  function $(s){ return document.querySelector(s); }
+  function saveCfgSafe(){ try{ save("nx_cfg", C); }catch(e){} }
+
+  /* 1) 切模式立即生效（当前这条就生效） */
+  function syncLiveModeNow(){
+    var el = $("#chatMode");
+    if(!el || !window.C) return;
+    var v = (el.value === "offline") ? "offline" : "online";
+    C.chatMode = v;
+    saveCfgSafe();
+  }
+
+  // 切换下拉时立刻写回
+  document.addEventListener("change", function(e){
+    if(e.target && e.target.id === "chatMode"){
+      syncLiveModeNow();
+    }
+  }, true);
+
+  // 发送暂存前同步（回车=暂存也吃到）
+  if (typeof window.queueMessage === "function" && !window.__NX_WRAP_QUEUE__) {
+    window.__NX_WRAP_QUEUE__ = true;
+    var _queue = window.queueMessage;
+    window.queueMessage = function(){
+      syncLiveModeNow();
+      return _queue.apply(this, arguments);
+    };
+  }
+
+  // 请求前同步（点发送箭头这条就按当前模式）
+  if (typeof window.requestReply === "function" && !window.__NX_WRAP_REQ__) {
+    window.__NX_WRAP_REQ__ = true;
+    var _req = window.requestReply;
+    window.requestReply = function(){
+      syncLiveModeNow();
+      return _req.apply(this, arguments);
+    };
+  }
+
+  /* 2) 线上气泡改 QQ 正常宽度（线下不动） */
+  var st = document.createElement("style");
+  st.textContent = `
+    .chat.online .msg{
+      max-width: 62% !important;
+    }
+  `;
+  document.head.appendChild(st);
+
+  // render 后补 class，确保 online/offline 样式能命中
+  if (typeof window.renderChat === "function" && !window.__NX_WRAP_RENDER_MODE__) {
+    window.__NX_WRAP_RENDER_MODE__ = true;
+    var _render = window.renderChat;
+    window.renderChat = function(){
+      _render.apply(this, arguments);
+      var ch = $("#chat");
+      if(!ch) return;
+      ch.classList.remove("online","offline");
+      ch.classList.add((window.C && C.chatMode === "offline") ? "offline" : "online");
+    };
+  }
+
+  /* 3) 收藏夹只留黄色那套（删白色那套） */
+  function keepYellowFavOnly(){
+    // 白色按钮（one-shot那套）
+    var whiteBtn = document.getElementById("nxTopFavBtn");
+    if(whiteBtn) whiteBtn.remove();
+
+    // 白色那套 modal
+    var whiteModal = document.getElementById("nxFavModal");
+    if(whiteModal) whiteModal.remove();
+
+    // 保留黄色按钮（v9那套）
+    var yellowBtn = document.getElementById("favOpenBtn");
+    if(!yellowBtn && typeof window.openFav === "function"){
+      var hd = document.querySelector(".hd");
+      if(hd){
+        var b = document.createElement("button");
+        b.id = "favOpenBtn";
+        b.className = "favBtn";
+        b.textContent = "★";
+        b.onclick = window.openFav;
+        hd.appendChild(b);
+      }
+    }
+  }
+  keepYellowFavOnly();
+  setTimeout(keepYellowFavOnly, 300);
+  setTimeout(keepYellowFavOnly, 1200);
+
+  // 首次就同步一次模式
+  syncLiveModeNow();
+})();
 </script></body>
 </html>
