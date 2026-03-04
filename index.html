@@ -4477,5 +4477,116 @@ window.requestReply = function(){
   }
   boot();
 })();
+</script><script>
+/* ===== add edit action ===== */
+(function(){
+  if(window.__NX_ADD_EDIT__) return;
+  window.__NX_ADD_EDIT__ = true;
+
+  function $(s){ return document.querySelector(s); }
+  function $all(s){ return Array.from(document.querySelectorAll(s)); }
+
+  // 1) 确保消息有 idx（防止你当前版本没打 idx）
+  function ensureMsgIdx(){
+    $all("#chat .line .msg").forEach(function(el,i){ el.dataset.idx = String(i); });
+  }
+
+  // 2) 注入“编辑”按钮到你现有菜单
+  function injectEditBtn(){
+    var box = document.getElementById("nxLPCard");
+    if(!box) return;
+    if(box.querySelector('.op[data-act="edit"]')) return; // 已有就不重复加
+
+    var btn = document.createElement("button");
+    btn.className = "op";
+    btn.dataset.act = "edit";
+    btn.textContent = "编辑";
+
+    // 优先插在“删除”前
+    var del = Array.from(box.querySelectorAll(".op")).find(function(x){
+      return x.dataset.act==="del" || (x.textContent||"").indexOf("删除")>=0;
+    });
+    if(del) box.insertBefore(btn, del);
+    else box.appendChild(btn);
+  }
+
+  // 3) 大编辑弹窗
+  function ensureEditModal(){
+    if(document.getElementById("nxEditMask2")) return;
+    var m = document.createElement("div");
+    m.id = "nxEditMask2";
+    m.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,.52);display:none;z-index:20000;align-items:flex-end;justify-content:center;";
+    m.innerHTML = `
+      <div style="width:100%;max-width:560px;background:#fff;color:#111;border-radius:16px 16px 0 0;padding:14px 12px;">
+        <h3 style="margin:0 0 8px;font-size:20px;">编辑消息</h3>
+        <textarea id="nxEditText2" style="width:100%;min-height:46vh;max-height:65vh;resize:vertical;padding:10px;font-size:16px;line-height:1.5;border:1px solid #ddd;border-radius:10px;"></textarea>
+        <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:10px;">
+          <button id="nxEditCancel2" style="border:none;padding:8px 14px;border-radius:10px;background:#e9ebf2;color:#222;">取消</button>
+          <button id="nxEditOk2" style="border:none;padding:8px 14px;border-radius:10px;background:#1677ff;color:#fff;">保存</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(m);
+    m.addEventListener("click", function(e){ if(e.target===m) m.style.display="none"; });
+    document.getElementById("nxEditCancel2").onclick = function(){ m.style.display="none"; };
+  }
+
+  function getCurrentTargetIdx(){
+    // 优先用当前选中
+    var sel = document.querySelector("#chat .msg.sel");
+    if(sel && sel.dataset.idx!=null) return parseInt(sel.dataset.idx,10);
+
+    // 其次用最后一条消息
+    ensureMsgIdx();
+    var all = $all("#chat .line .msg");
+    if(!all.length) return -1;
+    var idx = parseInt(all[all.length-1].dataset.idx,10);
+    return isNaN(idx)?-1:idx;
+  }
+
+  function openEdit(){
+    ensureMsgIdx();
+    var idx = getCurrentTargetIdx();
+    if(idx<0){ if(window.toast) toast("没找到可编辑消息"); return; }
+
+    var H = (typeof currentHistory==="function") ? currentHistory() : [];
+    var m = H[idx];
+    if(!m){ if(window.toast) toast("消息不存在"); return; }
+    if(m.type!=="text"){ if(window.toast) toast("仅文本消息可编辑"); return; }
+
+    ensureEditModal();
+    var mask = document.getElementById("nxEditMask2");
+    var ta = document.getElementById("nxEditText2");
+    ta.value = m.content || "";
+    mask.style.display = "flex";
+    ta.focus();
+
+    document.getElementById("nxEditOk2").onclick = function(){
+      m.content = (ta.value||"").trim();
+      if(typeof save==="function") save("nx_hmap", HMap);
+      if(typeof renderChat==="function") renderChat();
+      mask.style.display = "none";
+      if(window.toast) toast("已保存");
+    };
+  }
+
+  // 4) 接管菜单里的“编辑”点击
+  document.addEventListener("click", function(e){
+    var btn = e.target.closest("#nxLPCard .op");
+    if(!btn) return;
+
+    var isEdit = (btn.dataset.act==="edit") || ((btn.textContent||"").trim()==="编辑");
+    if(!isEdit) return;
+
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    openEdit();
+  }, true);
+
+  // 初始化 + 防止菜单重建后丢按钮
+  injectEditBtn();
+  setTimeout(injectEditBtn, 400);
+  setInterval(injectEditBtn, 1200);
+})();
 </script></body>
 </html>
