@@ -4699,5 +4699,182 @@ window.requestReply = function(){
   }, 120);
 
 })();
+</script><script>
+/* ===== 终极接管：修复“第二次长按不出菜单” + 编辑/取消稳定 ===== */
+(function () {
+  if (window.__NX_FORCE_MENU_V2__) return;
+  window.__NX_FORCE_MENU_V2__ = true;
+
+  const MENU_MASK_IDS = ["nxLPMask","lpSheetMask","nxMask","nxOneMask","nxQqMask"];
+  let holdTimer = null;
+  let activeIdx = -1;
+
+  function $all(sel){ return Array.from(document.querySelectorAll(sel)); }
+  function getH(){ return (typeof currentHistory === "function") ? currentHistory() : []; }
+
+  function clearSel(){
+    $all("#chat .msg.sel, #chat .msg.nxActive").forEach(el=>el.classList.remove("sel","nxActive"));
+  }
+
+  function markIdx(idx){
+    clearSel();
+    const el = document.querySelector('#chat .msg[data-idx="'+idx+'"]');
+    if (el) el.classList.add("sel");
+  }
+
+  function forceOpenMenu(idx){
+    activeIdx = idx;
+    markIdx(idx);
+
+    // 强制打开你现有菜单层（谁存在开谁）
+    MENU_MASK_IDS.forEach(id=>{
+      const el = document.getElementById(id);
+      if(!el) return;
+      el.classList.add("show");
+      // 关键：每次都重置，避免被旧补丁锁死
+      el.style.display = (id==="nxLPMask" || id==="lpSheetMask") ? "flex" : "block";
+      el.style.pointerEvents = "auto";
+      el.style.visibility = "visible";
+    });
+
+    // 卡片本体也放开
+    ["nxLPCard","lpSheet","nxOneMenu","nxSMenu","nxQqPanel"].forEach(id=>{
+      const el = document.getElementById(id);
+      if(!el) return;
+      el.style.pointerEvents = "auto";
+      el.style.display = "";
+      el.style.visibility = "visible";
+    });
+  }
+
+  function forceCloseMenu(){
+    MENU_MASK_IDS.forEach(id=>{
+      const el = document.getElementById(id);
+      if(!el) return;
+      el.classList.remove("show");
+      el.style.display = "none";
+    });
+    clearSel();
+  }
+
+  function ensureEditor(){
+    if (document.getElementById("nxFinalEditMask")) return;
+
+    const m = document.createElement("div");
+    m.id = "nxFinalEditMask";
+    m.style.cssText = "position:fixed;inset:0;z-index:31000;display:none;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.52)";
+    m.innerHTML = `
+      <div style="width:100%;max-width:560px;background:#fff;color:#111;border-radius:16px 16px 0 0;padding:14px 12px;">
+        <h3 style="margin:0 0 8px;font-size:20px;">编辑消息</h3>
+        <textarea id="nxFinalEditText" style="width:100%;min-height:46vh;max-height:66vh;resize:vertical;padding:10px;font-size:16px;line-height:1.5;border:1px solid #ddd;border-radius:10px;"></textarea>
+        <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:10px;">
+          <button id="nxFinalEditCancel" style="border:none;padding:8px 14px;border-radius:10px;background:#e9ebf2;color:#222;">取消</button>
+          <button id="nxFinalEditOk" style="border:none;padding:8px 14px;border-radius:10px;background:#1677ff;color:#fff;">保存</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(m);
+
+    m.addEventListener("click", function(e){ if(e.target===m) m.style.display="none"; });
+    document.getElementById("nxFinalEditCancel").onclick = function(){ m.style.display="none"; };
+  }
+
+  function openEditorByIdx(idx){
+    const H = getH();
+    const msg = H[idx];
+    if (!msg) { if (window.toast) toast("没找到消息"); return; }
+    if (msg.type !== "text") { if (window.toast) toast("仅文本可编辑"); return; }
+
+    ensureEditor();
+    const mask = document.getElementById("nxFinalEditMask");
+    const ta = document.getElementById("nxFinalEditText");
+    ta.value = msg.content || "";
+    mask.style.display = "flex";
+    ta.focus();
+
+    document.getElementById("nxFinalEditOk").onclick = function(){
+      msg.content = (ta.value || "").trim();
+      if (typeof save === "function") save("nx_hmap", HMap);
+      if (typeof renderChat === "function") renderChat();
+      mask.style.display = "none";
+      forceCloseMenu(); // 保存后一次退出
+      if (window.toast) toast("已保存");
+    };
+  }
+
+  // 1) 强制接管长按：每次都能弹
+  document.addEventListener("touchstart", function(e){
+    const msg = e.target.closest && e.target.closest(".msg");
+    if (!msg) return;
+
+    const idx = parseInt(msg.dataset.idx, 10);
+    if (isNaN(idx)) return;
+
+    clearTimeout(holdTimer);
+    holdTimer = setTimeout(function(){
+      forceOpenMenu(idx);
+    }, 360);
+
+    // 阻止后面一堆旧监听互相打架
+    e.stopImmediatePropagation();
+  }, {capture:true, passive:true});
+
+  document.addEventListener("touchend", function(){ clearTimeout(holdTimer); }, {capture:true, passive:true});
+  document.addEventListener("touchmove", function(){ clearTimeout(holdTimer); }, {capture:true, passive:true});
+
+  // 2) 强制接管菜单里的“取消 / 编辑”
+  document.addEventListener("click", function(e){
+    const btn = e.target.closest && e.target.closest("button");
+    if (!btn) return;
+
+    const inMenu = btn.closest("#nxLPCard, #lpSheet, #nxOneMenu, #nxSMenu, #nxQqPanel, #nxMenu");
+    if (!inMenu) return;
+
+    const txt = (btn.textContent || "").replace(/\s+/g,"");
+    const act = (btn.dataset && (btn.dataset.act || btn.dataset.a)) || "";
+
+    if (act === "cancel" || txt === "取消") {
+      e.preventDefault(); e.stopImmediatePropagation();
+      forceCloseMenu();
+      return;
+    }
+
+    if (act === "edit" || txt === "编辑") {
+      e.preventDefault(); e.stopImmediatePropagation();
+      let idx = activeIdx;
+      if (idx < 0) {
+        const sel = document.querySelector("#chat .msg.sel");
+        if (sel) {
+          const s = parseInt(sel.dataset.idx,10);
+          if (!isNaN(s)) idx = s;
+        }
+      }
+      if (idx < 0) {
+        const nodes = $all("#chat .line .msg");
+        if (nodes.length) {
+          const s = parseInt(nodes[nodes.length-1].dataset.idx,10);
+          if (!isNaN(s)) idx = s;
+        }
+      }
+      if (idx < 0) { if (window.toast) toast("先点一条消息"); return; }
+      openEditorByIdx(idx);
+      return;
+    }
+  }, true);
+
+  // 3) 周期解锁（防旧补丁把菜单层锁死）
+  setInterval(function(){
+    MENU_MASK_IDS.forEach(id=>{
+      const el = document.getElementById(id);
+      if(!el) return;
+      if (el.classList.contains("show")) {
+        el.style.pointerEvents = "auto";
+        if (id==="nxLPMask" || id==="lpSheetMask") el.style.display = "flex";
+      }
+    });
+  }, 250);
+
+  if (window.toast) toast("菜单终极修复已接管");
+})();
 </script></body>
 </html>
