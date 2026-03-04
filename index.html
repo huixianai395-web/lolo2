@@ -5272,5 +5272,444 @@ window.requestReply = function(){
   renderChat();
   tip("聊天交互已切到QQ/微信风格");
 })();
+</script><script>
+/* ===== FINAL UNIFIED PATCH v12 (single menu only) ===== */
+(function () {
+  if (window.__NX_FINAL_V12__) return;
+  window.__NX_FINAL_V12__ = true;
+
+  const $ = s => document.querySelector(s);
+  const $$ = s => Array.from(document.querySelectorAll(s));
+  const esc = s => String(s||"").replace(/&/g,"&").replace(/</g,"<").replace(/>/g,">");
+  const H = () => (typeof currentHistory === "function" ? currentHistory() : []);
+  const saveH = () => { try{ save("nx_hmap", HMap); }catch(e){} };
+  const tip = t => { try{ toast(t); }catch(e){ alert(t); } };
+
+  const S = {
+    selectMode:false,
+    selected:new Set(),
+    quote:null,         // {from,time,text}
+    holdTimer:null,
+    lastIdx:-1
+  };
+
+  /* ---------- 1) 杀掉旧面板 ---------- */
+  const OLD_IDS = [
+    "uOpsMask","msgTools","nxLPMask","nxOps","nxQuick","nxFab",
+    "imMenu","imSelectBar","imEditMask","imQuoteBar",
+    "nxLPSheet","nxLPCard","nxLPMask"
+  ];
+  function killOldPanels(){
+    OLD_IDS.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.remove();
+    });
+  }
+  killOldPanels();
+
+  const stKill = document.createElement("style");
+  stKill.textContent = `
+    #uOpsMask,#msgTools,#nxLPMask,#nxOps,#nxQuick,#nxFab,#imMenu,#imSelectBar,#imEditMask,#imQuoteBar{
+      display:none !important; pointer-events:none !important; visibility:hidden !important; opacity:0 !important;
+    }
+  `;
+  document.head.appendChild(stKill);
+
+  /* ---------- 2) 新UI样式 ---------- */
+  const st = document.createElement("style");
+  st.textContent = `
+    #v12Menu{
+      position:fixed; z-index:12010; display:none; min-width:170px;
+      background:var(--bg2); border:1px solid var(--bd); border-radius:12px; padding:6px;
+      box-shadow:0 12px 30px rgba(0,0,0,.35);
+    }
+    #v12Menu.show{display:block}
+    #v12Menu .mi{
+      width:100%; text-align:left; margin:4px 0; padding:9px 10px;
+      border:1px solid var(--bd); border-radius:9px; background:var(--bg3); color:var(--tx); font-size:13px;
+    }
+
+    #v12Bar{
+      position:fixed; left:10px; right:10px; bottom:74px; z-index:12000;
+      display:none; gap:8px; flex-wrap:wrap; background:rgba(17,24,39,.94);
+      border:1px solid var(--bd); border-radius:12px; padding:8px;
+    }
+    #v12Bar.show{display:flex}
+    #v12Bar .bi{
+      border:1px solid var(--bd); background:var(--bg3); color:var(--tx);
+      border-radius:9px; padding:8px 10px; font-size:12px;
+    }
+
+    #chat .msg.v12-sel{outline:2px solid rgba(201,168,124,.95)}
+    #chat .msg.hiddenAI{opacity:.42}
+
+    #v12QuoteBar{
+      display:none; align-items:center; justify-content:space-between; gap:8px;
+      border:1px solid var(--bd); background:var(--bg2); border-radius:10px;
+      padding:7px 10px; font-size:12px; color:var(--tx2); margin-bottom:6px;
+    }
+    #v12QuoteBar.show{display:flex}
+    #v12QuoteText{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:80%}
+    #v12QuoteClose{
+      border:1px solid var(--bd); background:var(--bg3); color:var(--tx2);
+      border-radius:8px; padding:2px 8px;
+    }
+
+    .v12Quote{
+      border-left:3px solid #66aaff; background:rgba(102,170,255,.14);
+      border-radius:9px; padding:6px 8px; margin-bottom:6px; font-size:12px; color:#dbe9ff;
+    }
+    .v12Quote .m{opacity:.78;font-size:11px;margin-bottom:2px}
+
+    #v12EditMask{
+      position:fixed; inset:0; background:rgba(0,0,0,.55);
+      z-index:12100; display:none; align-items:center; justify-content:center; padding:12px;
+    }
+    #v12EditMask.show{display:flex}
+    #v12EditCard{
+      width:min(95vw,760px); max-height:88vh; background:var(--bg2); border:1px solid var(--bd);
+      border-radius:14px; overflow:hidden; display:flex; flex-direction:column;
+    }
+    #v12EditHd{padding:12px 14px; border-bottom:1px solid var(--bd); font-weight:700}
+    #v12EditBd{padding:12px; display:flex; flex-direction:column; gap:10px}
+    #v12EditTa{
+      width:100%; min-height:42vh; max-height:60vh; resize:none;
+      background:var(--bg3); color:var(--tx); border:1px solid var(--bd);
+      border-radius:10px; padding:12px; font-size:15px; line-height:1.6; outline:none;
+    }
+    #v12EditFt{display:flex;justify-content:flex-end;gap:8px}
+    #v12EditFt button{
+      border:1px solid var(--bd); background:var(--bg3); color:var(--tx);
+      border-radius:9px; padding:8px 12px;
+    }
+    #v12EditOk{background:linear-gradient(135deg,var(--ac1),var(--ac2));color:#111;border:none}
+  `;
+  document.head.appendChild(st);
+
+  /* ---------- 3) 构建UI ---------- */
+  function ensureUI(){
+    if (!$("#v12Menu")) {
+      const m = document.createElement("div");
+      m.id = "v12Menu";
+      m.innerHTML = `
+        <button class="mi" data-a="quote">引用</button>
+        <button class="mi" data-a="copy">复制</button>
+        <button class="mi" data-a="edit">编辑</button>
+        <button class="mi" data-a="fav">收藏/取消收藏</button>
+        <button class="mi" data-a="hide">隐藏给AI</button>
+        <button class="mi" data-a="unhide">取消隐藏</button>
+        <button class="mi" data-a="del">删除</button>
+        <button class="mi" data-a="multi">多选</button>
+      `;
+      document.body.appendChild(m);
+      m.addEventListener("click", e => {
+        const b = e.target.closest(".mi"); if(!b) return;
+        runSingle(b.dataset.a, S.lastIdx);
+        hideMenu();
+      });
+    }
+
+    if (!$("#v12Bar")) {
+      const b = document.createElement("div");
+      b.id = "v12Bar";
+      b.innerHTML = `
+        <button class="bi" data-a="all">全选</button>
+        <button class="bi" data-a="quote">引用</button>
+        <button class="bi" data-a="fav">收藏</button>
+        <button class="bi" data-a="hide">隐藏给AI</button>
+        <button class="bi" data-a="unhide">取消隐藏</button>
+        <button class="bi" data-a="del">删除</button>
+        <button class="bi" data-a="cancel">取消</button>
+      `;
+      document.body.appendChild(b);
+      b.addEventListener("click", e => {
+        const x = e.target.closest(".bi"); if(!x) return;
+        runMulti(x.dataset.a);
+      });
+    }
+
+    if (!$("#v12QuoteBar")) {
+      const ib = document.querySelector(".inputBar");
+      if (ib) {
+        const q = document.createElement("div");
+        q.id = "v12QuoteBar";
+        q.innerHTML = `<span id="v12QuoteText"></span><button id="v12QuoteClose">取消</button>`;
+        ib.insertBefore(q, ib.querySelector(".sendRow"));
+        $("#v12QuoteClose").onclick = () => { S.quote = null; refreshQuoteBar(); };
+      }
+    }
+
+    if (!$("#v12EditMask")) {
+      const e = document.createElement("div");
+      e.id = "v12EditMask";
+      e.innerHTML = `
+        <div id="v12EditCard">
+          <div id="v12EditHd">编辑消息</div>
+          <div id="v12EditBd">
+            <textarea id="v12EditTa"></textarea>
+            <div id="v12EditFt">
+              <button id="v12EditCancel">取消</button>
+              <button id="v12EditOk">保存</button>
+            </div>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(e);
+      $("#v12EditCancel").onclick = ()=> e.classList.remove("show");
+    }
+  }
+
+  function refreshQuoteBar(){
+    ensureUI();
+    const bar = $("#v12QuoteBar"), txt = $("#v12QuoteText");
+    if(!bar || !txt) return;
+    if(!S.quote){ bar.classList.remove("show"); txt.textContent = ""; return; }
+    txt.textContent = `引用 ${S.quote.from} ${S.quote.time||""}：${String(S.quote.text||"").slice(0,60)}`;
+    bar.classList.add("show");
+  }
+
+  function showMenu(x,y,idx){
+    ensureUI();
+    S.lastIdx = idx;
+    const m = $("#v12Menu");
+    m.style.left = Math.max(8, Math.min(window.innerWidth - 190, x)) + "px";
+    m.style.top  = Math.max(70, Math.min(window.innerHeight - 320, y)) + "px";
+    m.classList.add("show");
+  }
+  function hideMenu(){ $("#v12Menu")?.classList.remove("show"); }
+
+  function openEdit(text, onOk){
+    ensureUI();
+    const mask = $("#v12EditMask"), ta = $("#v12EditTa");
+    ta.value = text || "";
+    mask.classList.add("show");
+    setTimeout(()=>ta.focus(),10);
+    $("#v12EditOk").onclick = ()=>{ onOk(ta.value); mask.classList.remove("show"); };
+  }
+
+  function repaint(){
+    const hh = H();
+    $$("#chat .line .msg").forEach((el,idx)=>{
+      el.classList.toggle("v12-sel", S.selected.has(idx));
+      el.classList.toggle("hiddenAI", !!(hh[idx] && hh[idx].hiddenFromAI));
+    });
+    $("#v12Bar")?.classList.toggle("show", S.selectMode);
+  }
+
+  function exitMulti(){
+    S.selectMode = false;
+    S.selected.clear();
+    repaint();
+  }
+
+  function selectedIdxs(){
+    return Array.from(S.selected).sort((a,b)=>a-b);
+  }
+
+  /* ---------- 4) 行为 ---------- */
+  function runSingle(a, idx){
+    const hh = H(), m = hh[idx];
+    if(!m){ tip("无效消息"); return; }
+
+    if(a==="quote"){
+      S.quote = {from:m.role==="assistant"?"AI":"你", time:m.time||"", text:m.content||""};
+      refreshQuoteBar(); return;
+    }
+    if(a==="copy"){
+      navigator.clipboard?.writeText(String(m.content||""))
+        .then(()=>tip("已复制")).catch(()=>tip("复制失败"));
+      return;
+    }
+    if(a==="edit"){
+      if(m.type!=="text"){ tip("仅文本可编辑"); return; }
+      openEdit(m.content||"", (v)=>{
+        m.content = (v||"").trim();
+        saveH(); renderChat(); tip("已保存");
+      });
+      return;
+    }
+    if(a==="fav"){
+      m.fav = !m.fav;
+      saveH(); renderChat(); tip(m.fav ? "已收藏" : "已取消收藏");
+      return;
+    }
+    if(a==="hide"){
+      m.hiddenFromAI = true; saveH(); renderChat(); tip("已隐藏给AI"); return;
+    }
+    if(a==="unhide"){
+      m.hiddenFromAI = false; saveH(); renderChat(); tip("已取消隐藏"); return;
+    }
+    if(a==="del"){
+      hh.splice(idx,1); saveH(); renderChat(); tip("已删除"); return;
+    }
+    if(a==="multi"){
+      S.selectMode = true;
+      S.selected.clear();
+      S.selected.add(idx);
+      repaint();
+      return;
+    }
+  }
+
+  function runMulti(a){
+    const hh = H();
+    let idxs = selectedIdxs();
+
+    if(a==="cancel"){ exitMulti(); return; }
+    if(a==="all"){
+      S.selected.clear();
+      for(let i=0;i<hh.length;i++) S.selected.add(i);
+      repaint(); return;
+    }
+    if(!idxs.length){ tip("先选消息"); return; }
+
+    if(a==="quote"){
+      if(idxs.length!==1){ tip("引用需选1条"); return; }
+      const m = hh[idxs[0]];
+      S.quote = {from:m.role==="assistant"?"AI":"你", time:m.time||"", text:m.content||""};
+      refreshQuoteBar(); exitMulti(); return;
+    }
+    if(a==="fav"){
+      idxs.forEach(i=>{ if(hh[i]) hh[i].fav = true; });
+      saveH(); renderChat(); exitMulti(); tip("已收藏"); return;
+    }
+    if(a==="hide"){
+      idxs.forEach(i=>{ if(hh[i]) hh[i].hiddenFromAI = true; });
+      saveH(); renderChat(); exitMulti(); tip("已隐藏给AI"); return;
+    }
+    if(a==="unhide"){
+      idxs.forEach(i=>{ if(hh[i]) hh[i].hiddenFromAI = false; });
+      saveH(); renderChat(); exitMulti(); tip("已取消隐藏"); return;
+    }
+    if(a==="del"){
+      for(let k=idxs.length-1;k>=0;k--) hh.splice(idxs[k],1);
+      saveH(); renderChat(); exitMulti(); tip("已删除"); return;
+    }
+  }
+
+  /* ---------- 5) 引用渲染 ---------- */
+  const oldRenderMsgContent = window.renderMsgContent;
+  window.renderMsgContent = function(m){
+    const base = oldRenderMsgContent
+      ? oldRenderMsgContent(m)
+      : (typeof markdownToHtml==="function" ? markdownToHtml((m&&m.content)||"") : esc((m&&m.content)||""));
+    if(!m || m.type!=="text" || !m.quote || !m.quote.text) return base;
+    return `
+      <div class="v12Quote">
+        <div class="m">${esc(m.quote.from||"引用")} ${esc(m.quote.time||"")}</div>
+        <div>${esc(String(m.quote.text||"").slice(0,140))}</div>
+      </div>
+    ` + base;
+  };
+
+  /* ---------- 6) 发送时附带引用 ---------- */
+  function quoteObj(){
+    return S.quote ? {from:S.quote.from,time:S.quote.time,text:S.quote.text} : null;
+  }
+
+  const oldQueue = window.queueMessage;
+  window.queueMessage = function(){
+    const inp = $("#inp");
+    const text = (inp?.value||"").trim();
+    if(!text) return oldQueue && oldQueue();
+
+    const hh = H();
+    hh.push({
+      role:"user", type:"text", content:text, time:(typeof now==="function"?now():""),
+      mode:(window.C?.chatMode)||"online",
+      quote: quoteObj()
+    });
+    saveH();
+    inp.value=""; inp.style.height="auto";
+    S.quote = null; refreshQuoteBar();
+    renderChat(); tip("已暂存");
+  };
+
+  const oldRequest = window.requestReply;
+  window.requestReply = async function(){
+    // 如果输入框有字且有引用，先手动入队（保引用）
+    const inp = $("#inp");
+    const text = (inp?.value||"").trim();
+    if(text && S.quote){
+      const hh = H();
+      hh.push({
+        role:"user", type:"text", content:text, time:(typeof now==="function"?now():""),
+        mode:(window.C?.chatMode)||"online",
+        quote: quoteObj()
+      });
+      saveH();
+      inp.value=""; inp.style.height="auto";
+      S.quote = null; refreshQuoteBar();
+      renderChat();
+    }
+    return oldRequest ? oldRequest.apply(this, arguments) : undefined;
+  };
+
+  /* ---------- 7) 渲染挂钩 ---------- */
+  const oldRenderChat = window.renderChat;
+  window.renderChat = function(){
+    oldRenderChat && oldRenderChat();
+    ensureUI();
+    const hh = H();
+    $$("#chat .line .msg").forEach((el,idx)=>{
+      el.dataset.idx = String(idx);
+      el.classList.toggle("hiddenAI", !!(hh[idx] && hh[idx].hiddenFromAI));
+      el.classList.toggle("v12-sel", S.selected.has(idx));
+    });
+    refreshQuoteBar();
+    repaint();
+  };
+
+  /* ---------- 8) 长按绑定 ---------- */
+  function bindLongPress(){
+    const chat = $("#chat");
+    if(!chat) return;
+
+    // 关键：克隆节点，清掉旧监听器
+    if(!chat.dataset.v12Rebound){
+      const clone = chat.cloneNode(true);
+      chat.parentNode.replaceChild(clone, chat);
+      window.chatEl = clone; // 全局 chatEl 指向新节点
+      clone.dataset.v12Rebound = "1";
+    }
+
+    const c = $("#chat");
+    if(c.dataset.v12Bound === "1") return;
+    c.dataset.v12Bound = "1";
+
+    c.addEventListener("touchstart", (e)=>{
+      const msg = e.target.closest(".msg"); if(!msg) return;
+      const idx = parseInt(msg.dataset.idx,10); if(Number.isNaN(idx)) return;
+      S.lastIdx = idx;
+      const t = e.touches[0];
+      S.holdTimer = setTimeout(()=> showMenu(t.clientX, t.clientY, idx), 360);
+    }, {passive:true});
+
+    ["touchmove","touchend","touchcancel"].forEach(ev=>{
+      c.addEventListener(ev, ()=>{ if(S.holdTimer) clearTimeout(S.holdTimer); }, {passive:true});
+    });
+
+    c.addEventListener("click", (e)=>{
+      const msg = e.target.closest(".msg");
+      if(!msg){ hideMenu(); return; }
+
+      if(!S.selectMode) return;
+      const idx = parseInt(msg.dataset.idx,10); if(Number.isNaN(idx)) return;
+      if(S.selected.has(idx)) S.selected.delete(idx); else S.selected.add(idx);
+      repaint();
+      e.preventDefault();
+    }, true);
+
+    document.addEventListener("click", (e)=>{
+      if(!e.target.closest("#v12Menu")) hideMenu();
+    });
+  }
+
+  /* ---------- boot ---------- */
+  ensureUI();
+  bindLongPress();
+  renderChat();
+  tip("已切换为单面板模式");
+})();
 </script></body>
 </html>
