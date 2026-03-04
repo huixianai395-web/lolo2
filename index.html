@@ -4688,5 +4688,45 @@ window.requestReply = function(){
     if(typeof toast==="function") toast("已保存");
   }, true);
 })();
+</script><script>
+(function(){
+  if(window.__NX_FORCE_EDIT_CLOSE__) return;
+  window.__NX_FORCE_EDIT_CLOSE__ = true;
+
+  function closePanels(){
+    [
+      "nxEditMask","nxEditMask2","qqEditMask",
+      "nxLPMask","lpSheetMask","nxMask","nxOneMask","nxQqMask"
+    ].forEach(function(id){
+      var el = document.getElementById(id);
+      if(!el) return;
+      el.style.display = "none";
+      if(el.classList) el.classList.remove("show");
+    });
+  }
+
+  function isSaveBtn(el){
+    if(!el) return false;
+    var id = el.id || "";
+    if(["nxEditOk","nxEditOk2","qqEditOk"].indexOf(id) >= 0) return true;
+    var t = (el.textContent || "").trim();
+    return t === "保存" || t === "好" || t === "确定";
+  }
+
+  // 捕获阶段监听，确保不会被其他补丁吞掉
+  document.addEventListener("click", function(e){
+    var btn = e.target.closest("button");
+    if(!isSaveBtn(btn)) return;
+
+    // 让原保存逻辑先跑，再关面板
+    setTimeout(function(){
+      closePanels();
+      try{ document.activeElement && document.activeElement.blur(); }catch(_){}
+    }, 40);
+  }, true);
+
+  // 给你一个反馈
+  if(typeof toast === "function") toast("编辑自动关闭已接管");
+})();
 </script></body>
 </html>
