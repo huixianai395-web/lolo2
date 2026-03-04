@@ -3568,7 +3568,66 @@ window.requestReply = function(){
   `;
   document.head.appendChild(sty);
 
-  
+  // 改 queueMessage
+  window.queueMessage=function(){
+    if($("#lockMask").classList.contains("show")) return;
+    const inp=$("#inp"),text=(inp&&inp.value?inp.value:"").trim(); if(!text) return;
+    const role=currentRole(); if(!role){ toast("先选角色"); return; }
+    inp.value=""; inp.style.height="auto";
+    currentHistory().push({role:"user",type:"text",content:text,time:now(),mode:nowMode(),quote:quoteObj()});
+    NX.quote=null; refreshQuoteBar();
+    save("nx_hmap",HMap); renderChat(); toast("已暂存");
+  };
+
+  // 统一 requestReply：线下当轮切换 + 线上防“继续”
+  window.requestReply=async function(){
+    if($("#lockMask").classList.contains("show")||streaming) return;
+    const role=currentRole(); if(!role){toast("先选角色");return;}
+    if(!C.url||!C.key||!C.model){toast("先配置API");return;}
+
+    const mode=nowMode();
+
+    // 把输入框文本也发送
+    const inp=$("#inp"),text=(inp&&inp.value?inp.value:"").trim();
+    if(text){
+      currentHistory().push({role:"user",type:"text",content:text,time:now(),mode:mode,quote:quoteObj()});
+      NX.quote=null; refreshQuoteBar();
+      save("nx_hmap",HMap); inp.value=""; inp.style.height="auto"; renderChat();
+    }
+
+    const H=currentHistory(); if(!H.length){toast("先发点内容");return;}
+    const convo=toLLM(H),lastU=lastUser(H);
+
+    const sys=[];
+    sys.push({role:"system",content:"你当前角色名："+(role.name||"未命名")+"。必须贴合该角色人设说话。"});
+    if(role.prompt) sys.push({role:"system",content:role.prompt});
+    const wb=buildWBSystemPrompt(lastU); if(wb) sys.push({role:"system",content:wb});
+
+    streaming=true; $("#replyBtn").disabled=true; $("#status").textContent="输入中..."; addTyping();
+
+    try{
+      let arr=[];
+      if(mode==="online"){
+        arr=await genOnline(sys,convo,lastU);
+      }else{
+        arr=[await genOffline(sys,convo)];
+      }
+
+      removeTyping();
+      arr.forEach(t=>H.push({role:"assistant",type:"text",content:t,time:now(),mode:mode}));
+      save("nx_hmap",HMap); renderChat();
+    }catch(e){
+      removeTyping();
+      H.push({role:"assistant",type:"text",content:"[请求失败] "+String(e.message||e).slice(0,220),time:now(),mode:mode});
+      save("nx_hmap",HMap); renderChat();
+    }finally{
+      streaming=false; $("#replyBtn").disabled=false; setStatus();
+    }
+  };
+
+  ensureQuickUI();
+  renderChat();
+})();
   /* ---------- 我的人设 ---------- */
   var meProfiles = load("nx_me_profiles_fix", []);
   var roleMeMap = load("nx_role_me_map_fix", {});
