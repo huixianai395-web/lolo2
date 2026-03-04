@@ -4896,5 +4896,109 @@ window.requestReply = function(){
 
   if(window.toast) toast("取消/编辑已强制修复");
 })();
+</script><script>
+(function(){
+  if(window.__NX_EDIT_ONLY_FIX__) return;
+  window.__NX_EDIT_ONLY_FIX__ = true;
+
+  function closePanels(){
+    ["nxLPMask","lpSheetMask","nxMask","nxOneMask","nxQqMask","nxSMenu","nxOneMenu"].forEach(function(id){
+      var el = document.getElementById(id);
+      if(!el) return;
+      el.classList && el.classList.remove("show");
+      el.style.display = "none";
+      el.style.pointerEvents = "none";
+    });
+  }
+
+  // 记录最近点到的消息索引（给编辑用）
+  document.addEventListener("touchstart", function(e){
+    var msg = e.target.closest && e.target.closest(".msg");
+    if(!msg) return;
+    var idx = parseInt(msg.dataset.idx,10);
+    if(!isNaN(idx)) window.__NX_LAST_MSG_IDX__ = idx;
+  }, {capture:true, passive:true});
+
+  document.addEventListener("click", function(e){
+    var msg = e.target.closest && e.target.closest(".msg");
+    if(!msg) return;
+    var idx = parseInt(msg.dataset.idx,10);
+    if(!isNaN(idx)) window.__NX_LAST_MSG_IDX__ = idx;
+  }, true);
+
+  function openEdit(idx){
+    var H = (typeof currentHistory==="function") ? currentHistory() : [];
+    var m = H[idx];
+    if(!m){ if(window.toast) toast("没找到消息"); return; }
+    if(m.type!=="text"){ if(window.toast) toast("仅文本可编辑"); return; }
+
+    var mask = document.getElementById("nxEditOnlyMask");
+    if(!mask){
+      mask = document.createElement("div");
+      mask.id = "nxEditOnlyMask";
+      mask.style.cssText = "position:fixed;inset:0;z-index:22000;display:none;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.52)";
+      mask.innerHTML = `
+        <div style="width:100%;max-width:560px;background:#fff;color:#111;border-radius:16px 16px 0 0;padding:14px 12px;">
+          <h3 style="margin:0 0 8px;font-size:20px;">编辑消息</h3>
+          <textarea id="nxEditOnlyText" style="width:100%;min-height:46vh;max-height:66vh;resize:vertical;padding:10px;font-size:16px;line-height:1.5;border:1px solid #ddd;border-radius:10px;"></textarea>
+          <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:10px;">
+            <button id="nxEditOnlyCancel" style="border:none;padding:8px 14px;border-radius:10px;background:#e9ebf2;color:#222;">取消</button>
+            <button id="nxEditOnlyOk" style="border:none;padding:8px 14px;border-radius:10px;background:#1677ff;color:#fff;">保存</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(mask);
+
+      mask.addEventListener("click", function(ev){
+        if(ev.target===mask) mask.style.display="none";
+      });
+      document.getElementById("nxEditOnlyCancel").onclick = function(){
+        mask.style.display="none";
+      };
+    }
+
+    var ta = document.getElementById("nxEditOnlyText");
+    ta.value = m.content || "";
+    mask.style.display = "flex";
+    ta.focus();
+
+    document.getElementById("nxEditOnlyOk").onclick = function(){
+      m.content = (ta.value || "").trim();
+      if(typeof save==="function") save("nx_hmap", HMap);
+      if(typeof renderChat==="function") renderChat();
+      mask.style.display = "none";
+      closePanels();
+      if(window.toast) toast("已保存");
+    };
+  }
+
+  // 强制接管“编辑”按钮（文本匹配，避免 data-act 不一致）
+  document.addEventListener("click", function(e){
+    var btn = e.target.closest("button");
+    if(!btn) return;
+
+    var txt = (btn.textContent || "").replace(/\s+/g,"");
+    var inMenu = btn.closest("#nxLPCard, #lpSheet, #nxOneMenu, #nxSMenu, #nxQqPanel, #nxMenu");
+    if(!inMenu) return;
+    if(txt.indexOf("编辑") < 0) return;
+
+    e.preventDefault();
+    e.stopImmediatePropagation();
+
+    var idx = Number.isInteger(window.__NX_LAST_MSG_IDX__) ? window.__NX_LAST_MSG_IDX__ : -1;
+    if(idx < 0){
+      var all = Array.from(document.querySelectorAll("#chat .line .msg"));
+      if(all.length){
+        var last = parseInt(all[all.length-1].dataset.idx,10);
+        if(!isNaN(last)) idx = last;
+      }
+    }
+    if(idx < 0){ if(window.toast) toast("先点一下要编辑的消息"); return; }
+
+    openEdit(idx);
+  }, true);
+
+  if(window.toast) toast("编辑按钮已强制接管");
+})();
 </script></body>
 </html>
