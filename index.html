@@ -4104,5 +4104,45 @@ window.requestReply = function(){
   }
   boot();
 })();
-</script>
+</script><script>
+(function () {
+  // A. 强制禁用聊天区文本选中/系统菜单
+  var st = document.createElement("style");
+  st.textContent = `
+    #chat, #chat * {
+      -webkit-user-select: none !important;
+      user-select: none !important;
+      -webkit-touch-callout: none !important;
+    }
+  `;
+  document.head.appendChild(st);
+
+  // B. 拦截系统 contextmenu
+  document.addEventListener("contextmenu", function(e){
+    if (e.target && e.target.closest && e.target.closest(".msg")) {
+      e.preventDefault();
+    }
+  }, true);
+
+  // C. 一旦在消息上出现系统选区，立即清掉（防“拷贝/查询”条）
+  document.addEventListener("selectionchange", function(){
+    var sel = window.getSelection && window.getSelection();
+    if (!sel || !sel.rangeCount) return;
+    var n = sel.anchorNode;
+    var el = n && (n.nodeType === 3 ? n.parentElement : n);
+    if (el && el.closest && el.closest(".msg")) {
+      try { sel.removeAllRanges(); } catch(e){}
+    }
+  }, true);
+
+  // D. 让你自己的底部菜单触摸时不被外层误关
+  ["#lpSheet", "#nxLPCard", "#nxOneMenu", "#nxSMenu", "#nxQqPanel"].forEach(function(sel){
+    var box = document.querySelector(sel);
+    if (!box) return;
+    box.addEventListener("touchstart", function(e){ e.stopPropagation(); }, {passive:true});
+    box.addEventListener("touchmove", function(e){ e.stopPropagation(); }, {passive:true});
+    box.addEventListener("touchend", function(e){ e.stopPropagation(); }, {passive:true});
+  });
+})();
+</script></body>
 </html>
