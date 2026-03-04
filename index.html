@@ -5831,5 +5831,58 @@ window.requestReply = function(){
     }
   })();
 })();
+</script><script>
+/* 一键屏蔽 FIX-OK + “修复补丁已加载” */
+(function () {
+  if (window.__HIDE_DEBUG_TOASTS__) return;
+  window.__HIDE_DEBUG_TOASTS__ = true;
+
+  // 1) 屏蔽 toast 文案
+  var _toast = window.toast;
+  if (typeof _toast === "function") {
+    window.toast = function (msg) {
+      var s = String(msg || "");
+      if (s.indexOf("修复补丁已加载") >= 0) return;
+      if (s.indexOf("FIX-OK") >= 0) return;
+      return _toast.apply(this, arguments);
+    };
+  }
+
+  // 2) 屏蔽 alert 兜底文案（防止有的补丁用 alert）
+  var _alert = window.alert;
+  if (typeof _alert === "function") {
+    window.alert = function (msg) {
+      var s = String(msg || "");
+      if (s.indexOf("修复补丁已加载") >= 0) return;
+      if (s.indexOf("FIX-OK") >= 0) return;
+      return _alert.apply(this, arguments);
+    };
+  }
+
+  // 3) 强制把顶部状态从 FIX-OK 改回正常状态
+  function fixStatusText() {
+    var st = document.getElementById("status");
+    if (!st) return;
+    if (String(st.textContent || "").indexOf("FIX-OK") >= 0) {
+      var ok = !!(window.C && C.url && C.key && C.model);
+      st.textContent = ok ? "在线" : "未配置";
+      st.className = ok ? "st" : "st off";
+    }
+  }
+
+  // 包装 setStatus，防止后续又被写成 FIX-OK
+  var _setStatus = window.setStatus;
+  if (typeof _setStatus === "function") {
+    window.setStatus = function () {
+      _setStatus.apply(this, arguments);
+      fixStatusText();
+    };
+  }
+
+  // 立即修一次 + 延迟再修一次（覆盖后续补丁写入）
+  fixStatusText();
+  setTimeout(fixStatusText, 120);
+  setTimeout(fixStatusText, 600);
+})();
 </script></body>
 </html>
