@@ -7426,5 +7426,133 @@ window.requestReply = function(){
   const homeTab = document.querySelector('.tab[data-page="home"]');
   if (homeTab) switchTab("home", homeTab);
 })();
+</script><script>
+/* ===== HOME APP CLICK HOTFIX ===== */
+(function () {
+  if (window.__NX_HOME_CLICK_FIX__) return;
+  window.__NX_HOME_CLICK_FIX__ = true;
+
+  const $ = s => document.querySelector(s);
+  const $$ = s => Array.from(document.querySelectorAll(s));
+  const tip = t => { try { toast(t); } catch(e) { console.log(t); } };
+
+  function runAny(cands){
+    for (var i=0;i<cands.length;i++){
+      var fn = window[cands[i]];
+      if (typeof fn === "function"){
+        fn();
+        return true;
+      }
+    }
+    return false;
+  }
+
+  // 消息列表页兜底（防止 openQQListPage 被别的补丁吃掉）
+  function ensureQQPage(){
+    if ($("#page-qq")) return;
+    var sec = document.createElement("section");
+    sec.id = "page-qq";
+    sec.className = "page";
+    sec.innerHTML = `
+      <div style="height:54px;display:flex;align-items:center;justify-content:space-between;padding:0 12px;background:#fff;border-bottom:1px solid #ececf2;">
+        <button id="qqBackBtn2" style="border:none;background:none;color:#1677ff;font-size:24px;">‹</button>
+        <div style="font-size:20px;font-weight:700;">消息</div>
+        <div style="width:20px"></div>
+      </div>
+      <div id="qqListWrap2" style="background:#fff;"></div>
+    `;
+    document.querySelector(".main").appendChild(sec);
+    $("#qqBackBtn2").onclick = function(){
+      var homeTab = document.querySelector('.tab[data-page="home"]');
+      switchTab("home", homeTab || null);
+    };
+  }
+
+  function renderQQList(){
+    ensureQQPage();
+    var box = $("#qqListWrap2");
+    if (!window.roles || !roles.length){
+      box.innerHTML = '<div style="padding:12px;color:#999;">暂无角色</div>';
+      return;
+    }
+    function preview(roleId){
+      var list = (window.HMap && HMap[roleId]) || [];
+      if (!list.length) return "[暂无消息]";
+      var m = list[list.length-1];
+      if (m.type === "image") return "[图片]";
+      if (m.type === "sticker") return "[表情包]";
+      return String(m.content || "").replace(/\n/g," ").slice(0,28);
+    }
+
+    box.innerHTML = roles.map(function(r){
+      return `
+        <div class="qq-item2" data-id="${r.id}" style="display:flex;gap:10px;align-items:center;padding:11px 12px;border-bottom:1px solid #f0f0f2;">
+          <div style="width:46px;height:46px;border-radius:50%;overflow:hidden;background:#eef0f4;display:grid;place-items:center;flex-shrink:0;font-weight:700;color:#555;">
+            ${r.avatarImg ? `<img src="${r.avatarImg}" style="width:100%;height:100%;object-fit:cover;display:block;">` : (r.avatar || "AI").slice(0,2)}
+          </div>
+          <div style="min-width:0;">
+            <div style="font-size:17px;font-weight:700;color:#111;">${r.name || "未命名"}</div>
+            <div style="margin-top:4px;font-size:14px;color:#9a9aa0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:65vw;">${preview(r.id)}</div>
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    $$("#qqListWrap2 .qq-item2").forEach(function(it){
+      it.onclick = function(){
+        var rid = this.dataset.id;
+        if (typeof pickRole === "function") pickRole(rid);
+        window.__NX_FROM_QQ_LIST__ = true;
+        switchTab("chat", null);
+      };
+    });
+  }
+
+  window.openQQListPage = function(){
+    renderQQList();
+    switchTab("qq", null);
+  };
+
+  // 强制接管首页图标点击
+  document.addEventListener("click", function(e){
+    var app = e.target.closest("#page-home .homeApp");
+    if (!app) return;
+
+    var name = (app.querySelector(".homeName")?.textContent || "").trim();
+
+    // 拦截旧监听器
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+
+    if (name === "消息" || name === "QQ" || name === "聊天" || name === "人物列表"){
+      window.openQQListPage();
+      return;
+    }
+
+    if (name === "收藏夹"){
+      // 优先点已有按钮，再兜底函数
+      var b = document.getElementById("favOpenBtn") || document.getElementById("openFav");
+      if (b) { b.click(); return; }
+      if (runAny(["openFav","openFavModal"])) return;
+      tip("收藏夹未就绪");
+      return;
+    }
+
+    if (name === "表情包"){
+      if (runAny(["openStickerManager"])) return;
+      tip("表情包未就绪");
+      return;
+    }
+
+    if (name === "导出数据"){
+      if (runAny(["exportAllData"])) return;
+      tip("导出未就绪");
+      return;
+    }
+  }, true);
+
+  tip("首页点击已修复");
+})();
 </script></body>
 </html>
