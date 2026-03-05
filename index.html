@@ -499,6 +499,18 @@ function pickReplyCount(){var a=parseInt(C.multiReplyMin,10)||1,b=parseInt(C.mul
   if(!min || min < 120) min = 320;
   if(!max || max < min) max = Math.max(min + 200, 900);
   return {min:min, max:max};
+}function getLiveMode(){function getLiveMode(){
+  var sel = $("#chatMode");
+  var m = (sel && sel.value === "offline") ? "offline" : "online";
+  C.chatMode = m;
+  save("nx_cfg", C);
+  return m;
+}
+  var sel = $("#chatMode");
+  var m = (sel && sel.value === "offline") ? "offline" : "online";
+  C.chatMode = m;
+  save("nx_cfg", C);
+  return m;
 }
 
 function injectModeControls(){
@@ -875,122 +887,47 @@ function callChatOnce(messages,modelName){
   });
 }
 function splitOnlineBubbles(out, limit){
-  out=(out||"").trim();
-  var arr=[];
+  out = (out || "").trim();
+  var arr = [], m;
 
-  // 先吃 <msg> 包裹
-  var reg=/<msg>([\s\S]*?)<\/msg>/g,m;
-  while((m=reg.exec(out))!==null){
-    var t=(m[1]||"").trim();
+  // 优先吃 <msg>...</msg>
+  var reg = /<msg>([\s\S]*?)<\/msg>/g;
+  while((m = reg.exec(out)) !== null){
+    var t = (m[1] || "").trim();
     if(t) arr.push(t);
   }
 
-  // 没有 <msg> 就按换行拆
+  // 没有标签：按空行/换行拆
   if(!arr.length){
-    arr=out.split(/\n{1,}/).map(function(x){return x.trim()}).filter(Boolean);
+    arr = out.split(/\n{2,}|\n+/).map(function(x){ return x.trim(); }).filter(Boolean);
   }
 
-  // 还没有就整条
-  if(!arr.length && out) arr=[out];
-
-  // 保底
-  if(!arr.length) arr=["继续。"];
-
-  if(limit && arr.length>limit) arr=arr.slice(0,limit);
-  return arr;
-	}
-	function splitOnlineBubbles(out, limit){
-  out=(out||"").trim();
-  var arr=[];
-
-  var reg=/<msg>([\s\S]*?)<\/msg>/g,m;
-  while((m=reg.exec(out))!==null){
-    var t=(m[1]||"").trim();
-    if(t) arr.push(t);
-  }
-
-  if(!arr.length){
-    arr=out.split(/\n+/).map(function(x){return x.trim()}).filter(Boolean);
-  }
-
-  if(!arr.length && out) arr=[out];
-  if(!arr.length) arr=["继续。"];
-
-  if(limit && arr.length>limit) arr=arr.slice(0,limit);
-  return arr;
-	}function requestReply(){
-  if($("#lockMask").classList.contains("show")||streaming)return;
-  var role=currentRole();if(!role){toast("先选角色");return}
-  if(!C.url||!C.key||!C.model){toast("先配置API");return}
-
-  // 关键：发送键自动把输入框内容入队（不再需要先点+）
-  var inp=$("#inp"),text=(inp&&inp.value?inp.value:"").trim();
-  if(text){
-    currentHistory().push({role:"user",type:"text",content:text,time:now(),mode:C.chatMode});
-    save("nx_hmap",HMap);
-    inp.value="";inp.style.height="auto";
-    renderChat();
-  }
-
-  var H=currentHistory();if(!H.length){toast("先发点内容");return}
-  var mode=(C.chatMode==="offline")?"offline":"online";
-  var modelName=C.model; // 不再走线上/线下可空模型
-
-  streaming=true;$("#replyBtn").disabled=true;$("#status").textContent="输入中...";addTyping();
-
-  var M=H.map(function(x){
-    var c=x.content||"";
-    if(x.type==="image") c="（用户发送了一张图片）";
-    if(x.type==="sticker") c="（用户发送了一个表情包："+(x.stickerName||"未命名")+"）";
-    return {role:x.role==="assistant"?"assistant":"user",content:c};
-  });
-
-  var lastUser="";
-  for(var i=H.length-1;i>=0;i--){if(H[i].role==="user"){lastUser=H[i].content||"";break}}
-  var wbP=buildWBSystemPrompt(lastUser),sys=[];
-  if(role.prompt)sys.push({role:"system",content:role.prompt});
-
-  var forcedCount=1;
-  if(mode==="online"){
-    if(!!C.multiReplyEnabled) forcedCount=pickReplyCount();
-    sys.push({role:"system",content:"你在即时聊天模式。自然、贴人设、像真人发消息。多条请使用<msg>内容</msg>包裹每条。不要舞台说明，不要模板腔。"});
-    if(!!C.multiReplyEnabled){
-      sys.push({role:"system",content:"这次请回复"+forcedCount+"条，严格使用<msg>...</msg>包裹每条。"});
-    }
-  }else{
-    var rg=pickCharsRange();
-    sys.push({role:"system",content:"你在线下沉浸模式。只输出一条长文本，不分条。紧贴角色人设和情绪递进，强化动作、心理、环境细节。目标字数"+rg.min+"~"+rg.max+"字。禁止只回省略号。"});
-  }
-
-  if(wbP)sys.push({role:"system",content:wbP});
-
-  callChatOnce(sys.concat(M.slice(-60)),modelName).then(function(out){
-    removeTyping();
-    var arr=[];
-
-    if(mode==="offline"){
-      var t=normalizeAssistantText(out,"offline");
-      if(!t || /^(\.{2,}|…{1,}|。{2,})$/.test(t)){
-        t="我在，别只给省略号。把场景、情绪、动作说完整。";
+  // 还只有一条时，按句号切成更像聊天气泡
+  if(arr.length <= 1){
+    var sents = out.split(/(?<=[。！？!?])/).map(function(x){ return x.trim(); }).filter(Boolean);
+    if(sents.length >= 2){
+      var merged = [], buf = "";
+      for(var i=0;i<sents.length;i++){
+        if((buf + sents[i]).length > 42 && buf){
+          merged.push(buf); buf = sents[i];
+        }else{
+          buf += sents[i];
+        }
       }
-      arr=[t];
-    }else{
-      var limit=!!C.multiReplyEnabled?forcedCount:3;
-      arr=splitOnlineBubbles(out,limit).map(function(x){return normalizeAssistantText(x,"online")});
+      if(buf) merged.push(buf);
+      if(merged.length) arr = merged;
     }
+  }
 
-    for(var k=0;k<arr.length;k++){
-      H.push({role:"assistant",type:"text",content:arr[k],time:now(),mode:mode});
-    }
-    save("nx_hmap",HMap);renderChat();
-  }).catch(function(e){
-    removeTyping();
-    H.push({role:"assistant",type:"text",content:"[请求失败] "+String(e.message||e).slice(0,200),time:now(),mode:mode});
-    save("nx_hmap",HMap);renderChat();
-  }).finally(function(){
-    streaming=false;$("#replyBtn").disabled=false;setStatus();
-  });
-	}
+  if(!arr.length && out) arr = [out];
+  if(!arr.length) arr = ["我在。你继续说重点。"];
+
+  if(typeof limit === "number" && limit > 0 && arr.length > limit){
+    arr = arr.slice(0, limit);
+  }
+  return arr;
+}
+	
 
 function init(){
   C=load("nx_cfg",C);roles=load("nx_roles",[]);activeRoleId=load("nx_active_role","");
@@ -1204,164 +1141,174 @@ window.requestReply = function(){
     return arr;
   };
 
-  // 2) 覆盖 requestReply：自动补齐多条；线下状态栏模板
-  window.requestReply = async function(){
-    if($("#lockMask").classList.contains("show") || streaming) return;
+  // 2) 覆盖 requestReply：自动补齐多条；线下状态栏
+	async function requestReply(){
+  if($("#lockMask").classList.contains("show") || streaming) return;
 
-    var role = currentRole();
-    if(!role){ toast("先选角色"); return; }
-    if(!C.url || !C.key || !C.model){ toast("先配置API"); return; }
+  var role = currentRole();
+  if(!role){ toast("先选角色"); return; }
+  if(!C.url || !C.key || !C.model){ toast("先配置API"); return; }
 
-    // 发送键自动把输入框内容入队
-    var inp = $("#inp"), text = (inp && inp.value ? inp.value : "").trim();
-    if(text){
-      currentHistory().push({role:"user",type:"text",content:text,time:now(),mode:C.chatMode});
-      save("nx_hmap", HMap);
-      inp.value = "";
-      inp.style.height = "auto";
-      renderChat();
+  // 关键：实时读取模式，切换后当条生效
+  var mode = getLiveMode();
+
+  // 发送键自动入队输入框
+  var inp = $("#inp"), text = (inp && inp.value ? inp.value : "").trim();
+  if(text){
+    currentHistory().push({role:"user",type:"text",content:text,time:now(),mode:mode});
+    save("nx_hmap", HMap);
+    inp.value = "";
+    inp.style.height = "auto";
+    renderChat();
+  }
+
+  var H = currentHistory();
+  if(!H.length){ toast("先发点内容"); return; }
+
+  streaming = true;
+  $("#replyBtn").disabled = true;
+  $("#status").textContent = "输入中...";
+  addTyping();
+
+  try{
+    var M = H.map(function(x){
+      var c = x.content || "";
+      if(x.type === "image") c = "（用户发送了一张图片）";
+      if(x.type === "sticker") c = "（用户发送了一个表情包："+(x.stickerName||"未命名")+"）";
+      return { role: x.role === "assistant" ? "assistant" : "user", content: c };
+    });
+
+    var lastUser = "";
+    for(var i=H.length-1;i>=0;i--){
+      if(H[i].role === "user"){ lastUser = H[i].content || ""; break; }
     }
 
-    var H = currentHistory();
-    if(!H.length){ toast("先发点内容"); return; }
+    var wbP = buildWBSystemPrompt(lastUser), sys = [];
+    if(role.prompt) sys.push({role:"system",content:role.prompt});
+    if(wbP) sys.push({role:"system",content:wbP});
 
-    var mode = (C.chatMode === "offline") ? "offline" : "online";
-    var modelName = C.model;
+    var arr = [];
 
-    streaming = true;
-    $("#replyBtn").disabled = true;
-    $("#status").textContent = "输入中...";
-    addTyping();
+    if(mode === "online"){
+      // 线上：贴人设 + 自然聊天 + 多条可控
+      if(!!C.multiReplyEnabled){
+        var target = pickReplyCount();
+        var got = [], rounds = 0;
+        var convo = M.slice(-60);
 
-    try{
-      var M = H.map(function(x){
-        var c = x.content || "";
-        if(x.type === "image") c = "（用户发送了一张图片）";
-        if(x.type === "sticker") c = "（用户发送了一个表情包："+(x.stickerName||"未命名")+"）";
-        return { role: x.role === "assistant" ? "assistant" : "user", content: c };
-      });
+        while(got.length < target && rounds < 4){
+          rounds++;
+          var need = target - got.length;
+          var s1 = sys.slice();
+          s1.push({
+            role:"system",
+            content:
+              "你在即时聊天。必须严格回复"+need+"条，每条必须使用<msg>...</msg>包裹。" +
+              "语气自然，贴合角色人设和当前关系，不要模板腔，不要舞台说明，不要旁白式心理描写。"
+          });
 
-      var lastUser = "";
-      for(var i=H.length-1;i>=0;i--){
-        if(H[i].role === "user"){ lastUser = H[i].content || ""; break; }
-      }
+          var out1 = await callChatOnce(s1.concat(convo), C.model);
+          var chunk = splitOnlineBubbles(out1, need).map(function(x){
+            return normalizeAssistantText(x, "online");
+          }).filter(Boolean);
 
-      var wbP = buildWBSystemPrompt(lastUser), sys = [];
-      if(role.prompt) sys.push({role:"system",content:role.prompt});
-      if(wbP) sys.push({role:"system",content:wbP});
+          if(!chunk.length) break;
+          got = got.concat(chunk);
 
-      var arr = [];
-
-      if(mode === "online"){
-        // —— 线上模式 ——
-        if(!!C.multiReplyEnabled){
-          // 区间模式：自动补齐，不需要你再按一次
-          var target = pickReplyCount();
-          var got = [];
-          var rounds = 0;
-          var convo = M.slice(-60);
-
-          while(got.length < target && rounds < 4){
-            rounds++;
-            var need = target - got.length;
-
-            var s2 = sys.slice();
-            if(rounds === 1){
-              s2.push({
-                role:"system",
-                content:"你在即时聊天。严格回复"+target+"条，每条必须用<msg>...</msg>包裹。语气自然，贴人设，不要舞台说明。"
-              });
-            }else{
-              s2.push({
-                role:"system",
-                content:"继续上一轮回复，不要重复，仍需补齐"+need+"条。每条必须用<msg>...</msg>包裹。"
-              });
-            }
-
-            var out1 = await callChatOnce(s2.concat(convo), modelName);
-            var chunk = extractMsgTags(out1);
-            if(!chunk.length){
-              // 模型不听话时兜底
-              chunk = splitLines(out1);
-              if(!chunk.length && out1.trim()) chunk = [out1.trim()];
-            }
-
-            chunk = chunk.map(function(x){ return normalizeAssistantText(x, "online"); }).filter(Boolean);
-            if(!chunk.length) break;
-            if(chunk.length > need) chunk = chunk.slice(0, need);
-
-            got = got.concat(chunk);
-            // 把已回复内容喂回去，避免下一轮重复
-            for(var c=0;c<chunk.length;c++){
-              convo.push({role:"assistant", content:chunk[c]});
-            }
+          // 防重复：把已回内容喂回上下文
+          for(var c=0;c<chunk.length;c++){
+            convo.push({role:"assistant",content:chunk[c]});
           }
+        }
 
-          arr = got.length ? got : ["继续。"];
-        }else{
-          // 自由模式：不限制条数；无 <msg> 时视为单条完整消息，不乱拆
+        arr = got.length ? got : ["我在。你继续说重点。"];
+      }else{
+        var s2 = sys.slice();
+        s2.push({
+          role:"system",
+          content:
+            "你在即时聊天。按人设和当前情境自由决定回复条数与长短，避免长期固定单条。" +
+            "如需多条，必须使用<msg>...</msg>；若只回一条，就输出完整自然的一条。" +
+            "必须贴合人设，不要浮于表面，不要舞台说明。"
+        });
+
+        var out2 = await callChatOnce(s2.concat(M.slice(-60)), C.model);
+        arr = splitOnlineBubbles(out2, 0).map(function(x){
+          return normalizeAssistantText(x, "online");
+        }).filter(Boolean);
+
+        // 太短太敷衍，自动补一条
+        if(arr.length === 1 && arr[0].replace(/\s+/g,"").length < 18){
           var s3 = sys.slice();
           s3.push({
             role:"system",
-            content:"你在即时聊天模式。根据情境和人设自由决定回复长度与条数。若分多条，用<msg>...</msg>包裹；若不分条，就直接输出完整一条。不要舞台说明，不要模板腔。"
+            content:"补一条自然跟进短消息，不要重复上一条，仍贴合人设。用<msg>...</msg>输出。"
           });
-
-          var out2 = await callChatOnce(s3.concat(M.slice(-60)), modelName);
-          var tags = extractMsgTags(out2);
-          if(tags.length){
-            arr = tags.map(function(x){ return normalizeAssistantText(x, "online"); }).filter(Boolean);
-          }else{
-            arr = [normalizeAssistantText(out2, "online")];
-          }
+          var out3 = await callChatOnce(s3.concat(M.slice(-60)).concat([{role:"assistant",content:arr[0]}]), C.model);
+          var add = splitOnlineBubbles(out3, 1).map(function(x){
+            return normalizeAssistantText(x, "online");
+          }).filter(Boolean);
+          if(add.length) arr.push(add[0]);
         }
-      }else{
-        // —— 线下模式：状态栏 + 正文（单条） ——
-        var s4 = sys.slice();
-        s4.push({
-          role:"system",
-          content:
-`你在线下沉浸式角色扮演模式。必须只输出一条完整内容，使用以下格式：
 
-『时间』：
-『地点』：
-『人物』：
-『关系』：
-『状态』：
-
-—— 正文 ——
-（正文里写动作、心理、环境、对话推进，贴合人设与上下文，不要只回省略号，不要跳出角色）`
-        });
-
-        var out3 = await callChatOnce(s4.concat(M.slice(-60)), modelName);
-        var t = normalizeAssistantText(out3, "offline");
-        if(!t || /^(\.{2,}|…{1,}|。{2,})$/.test(t)) t = "『状态』：对方沉默中\n\n—— 正文 ——\n我在，说完整一点。";
-        arr = [t];
+        if(!arr.length) arr = ["我在。你继续说重点。"];
       }
 
-      removeTyping();
-      for(var k=0;k<arr.length;k++){
-        H.push({role:"assistant",type:"text",content:arr[k],time:now(),mode:mode});
-      }
-      save("nx_hmap", HMap);
-      renderChat();
-    }catch(e){
-      removeTyping();
-      H.push({
-        role:"assistant",
-        type:"text",
-        content:"[请求失败] " + String(e.message || e).slice(0,200),
-        time:now(),
-        mode:mode
+    }else{
+      // 线下：强制单条沉浸格式
+      var rg = pickCharsRange();
+      var s4 = sys.slice();
+      s4.push({
+        role:"system",
+        content:
+          "你在线下沉浸模式。只允许输出一条完整长文本，不分条、不使用<msg>标签。" +
+          "可用结构：状态栏+正文；重点是动作、情绪、环境与对话推进。" +
+          "必须贴合角色人设与关系，不要模板腔，不要系统解释，不要省略号敷衍。" +
+          "目标字数："+rg.min+"~"+rg.max+"字。"
       });
-      save("nx_hmap", HMap);
-      renderChat();
-    }finally{
-      streaming = false;
-      $("#replyBtn").disabled = false;
-      setStatus();
-    }
-  };
 
+      var out4 = await callChatOnce(s4.concat(M.slice(-60)), C.model);
+      var t = normalizeAssistantText(out4, "offline");
+
+      // AI不听话：二次重写强制成线下单条
+      if(/<msg>|<\/msg>/i.test(t) || t.split(/\n/).length > 14){
+        var rewrite = await callChatOnce([
+          {role:"system",content:"把下面内容重写为线下沉浸模式的一条完整回复，不分条，不加<msg>标签。"},
+          {role:"user",content:t}
+        ], C.model);
+        t = normalizeAssistantText(rewrite, "offline");
+      }
+
+      if(!t || /^(\.{2,}|…{1,}|。{2,})$/.test(t)){
+        t = "我在。把场景、动作、情绪说完整。";
+      }
+      arr = [t];
+    }
+
+    removeTyping();
+    for(var k=0;k<arr.length;k++){
+      H.push({role:"assistant",type:"text",content:arr[k],time:now(),mode:mode});
+    }
+    save("nx_hmap", HMap);
+    renderChat();
+
+  }catch(e){
+    removeTyping();
+    H.push({
+      role:"assistant",
+      type:"text",
+      content:"[请求失败] "+String(e.message||e).slice(0,220),
+      time:now(),
+      mode:getLiveMode()
+    });
+    save("nx_hmap", HMap);
+    renderChat();
+  }finally{
+    streaming = false;
+    $("#replyBtn").disabled = false;
+    setStatus();
+  }
+}
   // 立即应用一次外观
   renderChat();
 })();
