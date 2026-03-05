@@ -474,7 +474,13 @@ var chatEl=$("#chat");
 function load(k,d){try{var v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}}
 function save(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
 function now(){var d=new Date();return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0")}
-function esc(s){s=s||"";return s.replace(/&/g,"&").replace(/</g,"<").replace(/>/g,">")}
+function esc(s){
+  s = s || "";
+  return s
+    .replace(/&/g,"&")
+    .replace(/</g,"<")
+    .replace(/>/g,">");
+}
 function normBaseUrl(u){u=u||"";return u.trim().replace(/\/+$/,"").replace(/\/v1$/,"")}
 function apiUrl(base,path){return normBaseUrl(base)+"/v1"+path}
 function uid(){return "r_"+Math.random().toString(36).slice(2,10)}
@@ -485,7 +491,15 @@ function hotKey(e){if(e.key==="Enter"&&!e.shiftKey&&!e.isComposing){e.preventDef
 function shapeRadius(shape){if(shape==="square")return "4px";if(shape==="round")return "12px";return "50%"}
 function applyAvatarShape(){document.documentElement.style.setProperty("--avRadius",shapeRadius(C.avatarShape||"circle"))}
 function toggleMultiReplyUI(){var on=!!($("#multiReplyEnabled")&&$("#multiReplyEnabled").checked);if($("#multiReplyMin"))$("#multiReplyMin").disabled=!on;if($("#multiReplyMax"))$("#multiReplyMax").disabled=!on}
-function pickReplyCount(){var a=parseInt(C.multiReplyMin,10)||1,b=parseInt(C.multiReplyMax,10)||1;if(a<1)a=1;if(b<1)b=1;if(a>b){var t=a;a=b;b=t}return Math.floor(Math.random()*(b-a+1))+a}
+function pickReplyCount(){var a=parseInt(C.multiReplyMin,10)||1,b=parseInt(C.multiReplyMax,10)||1;if(a<1)a=1;if(b<1)b=1;if(a>b){var t=a;a=b;b=t}return Math.floor(Math.random()*(b-a+1))+a}function pickCharsRange(){
+  var minEl = $("#offlineMinChars");
+  var maxEl = $("#offlineMaxChars");
+  var min = parseInt((minEl && minEl.value) || C.offlineMinChars || 320, 10);
+  var max = parseInt((maxEl && maxEl.value) || C.offlineMaxChars || 900, 10);
+  if(!min || min < 120) min = 320;
+  if(!max || max < min) max = Math.max(min + 200, 900);
+  return {min:min, max:max};
+}
 
 function injectModeControls(){
   if($("#chatMode")) return;
@@ -757,7 +771,7 @@ function renderGroupMgrList(){
 }
 function updateImportGroupSel(){var html="";for(var i=0;i<stickerGroups.length;i++)html+='<option value="'+stickerGroups[i].id+'">'+esc(stickerGroups[i].name)+"</option>";$("#importGroupSel").innerHTML=html}
 function addStickerGroup(){var name=$("#newGroupName").value.trim();if(!name){toast("名称不能为空");return}var id="sg_"+Math.random().toString(36).slice(2,8);stickerGroups.push({id:id,name:name,stickers:[]});save("nx_sticker_groups",stickerGroups);$("#newGroupName").value="";renderGroupMgrList();updateImportGroupSel();toast("分组已创建")}
-function deleteGroup(id){if(!confirm("删除此分组？"))return;stickerGroups=stickerGroups.filter(function(g){return g.id!==id});if(activeStickerGroup===id)activeStickerGroup=stickerGroups.length?stickerGroups[0].id:"default";ensureDefaultGroup();save("nx_sticker_groups",stickerGroups);rederGroupMgrList();updateImportGroupSel();toast("已删除")}function clearGroupStickers(id){var g=null;for(var i=0;i<stickerGroups.length;i++){if(stickerGroups[i].id===id)g=stickerGroups[i]}if(!g)return;if(!confirm("清空「"+g.name+"」的表情包？"))return;g.stickers=[];save("nx_sticker_groups",stickerGroups);renderGroupMgrList();toast("已清空")}
+function deleteGroup(id){if(!confirm("删除此分组？"))return;stickerGroups=stickerGroups.filter(function(g){return g.id!==id});if(activeStickerGroup===id)activeStickerGroup=stickerGroups.length?stickerGroups[0].id:"default";ensureDefaultGroup();save("nx_sticker_groups",stickerGroups);renderGroupMgrList();;updateImportGroupSel();toast("已删除")}function clearGroupStickers(id){var g=null;for(var i=0;i<stickerGroups.length;i++){if(stickerGroups[i].id===id)g=stickerGroups[i]}if(!g)return;if(!confirm("清空「"+g.name+"」的表情包？"))return;g.stickers=[];save("nx_sticker_groups",stickerGroups);renderGroupMgrList();toast("已清空")}
 function importStickerURLs(){
   var gid=$("#importGroupSel").value,grp=null;for(var i=0;i<stickerGroups.length;i++){if(stickerGroups[i].id===gid)grp=stickerGroups[i]}
   if(!grp){toast("先选分组");return}
@@ -999,7 +1013,9 @@ function init(){
   buildEmojiPanel();renderStickerPanel();renderWB();fillCfgForm();renderRoles();refreshHeader();setStatus();renderChat();applyAvatarShape();
   if(C.lockEnabled&&/^\d{4,8}$/.test(C.lockPin||""))$("#lockMask").classList.add("show");
 }
-init();/* ===== Noctis mobile hotfix: 覆盖多条限制 + 线下自由长度 ===== */
+init();
+</script>
+<!-- PATCHES_DISABLED_START: 覆盖多条限制 + 线下自由长度 ===== */
 window.splitOnlineBubbles = function(out, limit){
   out = (out || "").trim();
   var arr = [];
@@ -6501,5 +6517,5 @@ window.requestReply = function(){
   const root = $("#homeGroups");
   if (root) mo.observe(root, {childList:true, subtree:true});
 })();
-</script></body>
+</script>PATCHES_DISABLED_END --></body>
 </html>
