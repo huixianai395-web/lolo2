@@ -1,518 +1,1019 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>Noctis Clean v1</title>
-<style>
-:root{
-  --bg:#0b1020;--card:#151d33;--card2:#1b2642;--bd:#2d3b61;
-  --tx:#eef2ff;--sub:#9fb0d6;--ac:#d8b489;--ac2:#f2d6af;--ok:#6fe0a5;
-}
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html,body{height:100%;overflow:hidden}
-body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--tx)}
-.app{height:100%;display:flex;flex-direction:column}
-.hd{height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 12px;border-bottom:1px solid rgba(255,255,255,.08);background:rgba(10,14,26,.7)}
-.hd .left{display:flex;align-items:center;gap:8px}
-.btn{border:1px solid var(--bd);background:var(--card2);color:var(--tx);border-radius:10px;padding:8px 10px;font-size:12px}
-.main{flex:1;overflow:hidden;position:relative}
-.page{display:none;height:100%;overflow:auto;padding:12px}
-.page.active{display:block}
-.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:12px;margin-bottom:10px}
-.sub{color:var(--sub);font-size:12px}
-.tabs{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid rgba(255,255,255,.08);background:#0f162a}
-.tab{border:none;background:none;color:var(--sub);padding:10px 0;font-size:12px}
-.tab.active{color:var(--ac2)}
-.input,.ta,.sel{
-  width:100%;border:1px solid var(--bd);background:var(--card2);color:var(--tx);border-radius:10px;padding:10px;font-size:13px
-}
-.ta{min-height:88px;resize:vertical}
-.row{display:flex;gap:8px}
-.row>div{flex:1}
-.homeClock{font-size:34px;font-weight:800}
-.homeGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
-.appIcon{border:1px solid var(--bd);background:var(--card2);border-radius:12px;padding:10px 4px;display:flex;flex-direction:column;align-items:center;gap:6px}
-.appIcon .i{font-size:22px}
-.appIcon .t{font-size:12px}
-.chatList{display:flex;flex-direction:column;gap:8px;padding-bottom:8px}
-.line{display:flex;gap:8px;align-items:flex-start}
-.line.me{justify-content:flex-end}
-.bubble{max-width:76%;padding:9px 11px;border-radius:12px;line-height:1.55;font-size:14px}
-.ai{background:var(--card2);border:1px solid var(--bd)}
-.meB{background:linear-gradient(135deg,var(--ac),var(--ac2));color:#1a1a1a}
-.tm{font-size:10px;opacity:.6;margin-top:4px}
-.inputBar{border-top:1px solid rgba(255,255,255,.08);padding:8px;display:flex;gap:8px;background:#0f162a}
-#inp{flex:1;min-height:42px;max-height:120px;resize:none}
-.roleItem{border:1px solid var(--bd);background:var(--card2);border-radius:10px;padding:10px;margin-bottom:8px;display:flex;justify-content:space-between;gap:8px}
-.badge{font-size:11px;color:var(--ok)}
-.small{font-size:11px}
-.status{font-size:11px}
-.ok{color:var(--ok)}
-.off{color:var(--sub)}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>API小手机</title>
+  <meta name="theme-color" content="#dbe9f5" />
+  <style>
+    :root{
+      --bg:#dbe9f5;
+      --card:#e6f0fa;
+      --card-2:#d9e8f7;
+      --text:#10131a;
+      --muted:#5a6475;
+      --line:rgba(255,255,255,.6);
+      --shadow:0 10px 25px rgba(80,110,140,.18);
+      --radius:24px;
+      --safe-top:env(safe-area-inset-top);
+      --safe-bottom:env(safe-area-inset-bottom);
+      --accent:#5f8fbc;
+      --accent-2:#79a8d3;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0}
+    body{
+      background:#eef3f8;
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+      color:var(--text);
+      user-select:none;
+      -webkit-user-select:none;
+    }
+
+    .phone{
+      position:relative;
+      width:100%;
+      max-width:430px;
+      height:100dvh;
+      margin:0 auto;
+      overflow:hidden;
+      background:var(--bg);
+    }
+
+    .wallpaper{
+      position:absolute; inset:0;
+      background:linear-gradient(180deg,#d9e8f6 0%,#cfe1f1 42%,#dbe9f5 100%);
+      background-size:cover;
+      background-position:center;
+      z-index:0;
+    }
+
+    #snow{
+      position:absolute; inset:0; z-index:1; pointer-events:none;
+    }
+
+    .page{
+      position:absolute; inset:0;
+      z-index:2;
+      opacity:0; transform:translateX(100%);
+      transition:.3s ease;
+      pointer-events:none;
+    }
+    .page.active{
+      opacity:1; transform:translateX(0);
+      pointer-events:auto;
+    }
+
+    .statusbar{
+      padding:calc(var(--safe-top) + 8px) 16px 8px;
+      display:flex; align-items:center; justify-content:space-between;
+      font-weight:700; font-size:18px;
+    }
+    .status-right{display:flex; align-items:center; gap:8px}
+    .icon-signal,.icon-wifi,.icon-battery{display:block}
+    .icon-battery text{font-size:11px; font-weight:800; fill:#fff}
+
+    .home-scroll{
+      height:calc(100dvh - 64px - var(--safe-top));
+      overflow:auto;
+      padding:6px 16px calc(110px + var(--safe-bottom));
+      scrollbar-width:none;
+    }
+    .home-scroll::-webkit-scrollbar{display:none}
+
+    .date-line{
+      text-align:center;
+      margin-top:10px;
+      font-size:18px; font-weight:700; letter-spacing:.6px;
+    }
+    .clock-big{
+      text-align:center;
+      font-size:86px; line-height:1;
+      margin:6px 0 18px;
+      font-weight:300;
+      letter-spacing:1.5px;
+    }
+
+    .widgets{
+      display:grid;
+      grid-template-columns:1.1fr .9fr;
+      gap:14px;
+      margin-bottom:18px;
+    }
+
+    .glass{
+      border:1px solid var(--line);
+      background:rgba(238,247,255,.42);
+      backdrop-filter:blur(12px);
+      -webkit-backdrop-filter:blur(12px);
+      border-radius:24px;
+      box-shadow:var(--shadow);
+    }
+
+    .couple-card{
+      min-height:130px;
+      overflow:hidden;
+      position:relative;
+      padding:0;
+    }
+    .couple-card img{
+      width:100%; height:100%; object-fit:cover; display:block;
+    }
+
+    .small-actions{
+      display:grid; grid-template-columns:1fr 1fr; gap:12px;
+    }
+
+    .icon-item{
+      text-align:center;
+      cursor:pointer;
+    }
+    .icon-box{
+      width:74px; height:74px;
+      margin:0 auto 8px;
+      display:grid; place-items:center;
+      border-radius:20px;
+      border:1px solid rgba(255,255,255,.75);
+      background:rgba(230,240,251,.72);
+      backdrop-filter:blur(8px);
+      box-shadow:0 8px 16px rgba(80,100,130,.2);
+      transition:transform .12s ease, filter .2s ease;
+    }
+    .icon-item:active .icon-box{transform:scale(.9)}
+    .icon-emoji{font-size:32px}
+    .icon-title{font-size:14px; font-weight:700}
+
+    .anniv{
+      min-height:160px;
+      display:grid; place-items:center;
+      text-align:center;
+      color:#6f7d92;
+      font-weight:700;
+    }
+
+    .app-grid{
+      margin-top:8px;
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      gap:16px 10px;
+    }
+
+    .dock{
+      position:absolute;
+      left:16px; right:16px; bottom:calc(16px + var(--safe-bottom));
+      z-index:3;
+      padding:14px 16px;
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      gap:8px;
+      border-radius:30px;
+      border:1px solid rgba(255,255,255,.7);
+      background:rgba(220,233,247,.82);
+      box-shadow:0 12px 26px rgba(80,100,130,.22);
+      backdrop-filter:blur(12px);
+      -webkit-backdrop-filter:blur(12px);
+    }
+
+    .fab{
+      position:absolute;
+      right:12px;
+      bottom:calc(145px + var(--safe-bottom));
+      width:60px;height:60px;border-radius:999px;
+      border:0;
+      background:rgba(132,169,204,.75);
+      color:#fff;
+      font-size:26px; font-weight:700;
+      box-shadow:0 8px 18px rgba(72,102,136,.26);
+      z-index:3;
+      cursor:pointer;
+    }
+
+    .topbar{
+      padding:calc(var(--safe-top) + 8px) 12px 10px;
+      display:flex; align-items:center; gap:8px;
+    }
+    .back-btn, .tool-btn{
+      border:0; background:rgba(225,238,252,.88);
+      width:38px; height:38px; border-radius:12px;
+      box-shadow:0 6px 14px rgba(80,100,130,.16);
+      font-size:18px; cursor:pointer;
+    }
+    .bar-title{
+      flex:1; text-align:center; font-weight:800; font-size:17px;
+      margin-right:46px;
+    }
+
+    .chat-wrap{
+      height:calc(100dvh - 62px - var(--safe-top));
+      display:grid;
+      grid-template-rows:1fr auto;
+      padding:0 12px calc(10px + var(--safe-bottom));
+      gap:10px;
+    }
+
+    .chat-list{
+      overflow:auto;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      padding:6px 2px;
+      scrollbar-width:none;
+    }
+    .chat-list::-webkit-scrollbar{display:none}
+    .msg{
+      max-width:84%;
+      padding:10px 12px;
+      border-radius:14px;
+      line-height:1.45;
+      white-space:pre-wrap;
+      word-break:break-word;
+      border:1px solid rgba(255,255,255,.65);
+      backdrop-filter:blur(8px);
+      -webkit-backdrop-filter:blur(8px);
+      font-size:14px;
+      user-select:text;
+      -webkit-user-select:text;
+    }
+    .msg.user{
+      align-self:flex-end;
+      background:rgba(112,160,204,.3);
+    }
+    .msg.assistant{
+      align-self:flex-start;
+      background:rgba(233,242,252,.65);
+    }
+    .msg.system{
+      align-self:center;
+      background:rgba(230,236,246,.75);
+      color:#445062;
+      font-size:12px;
+    }
+
+    .composer{
+      padding:8px;
+      border-radius:16px;
+      border:1px solid rgba(255,255,255,.75);
+      background:rgba(225,238,252,.8);
+      display:grid;
+      grid-template-columns:1fr auto;
+      gap:8px;
+      align-items:end;
+      box-shadow:0 8px 16px rgba(80,100,130,.15);
+    }
+    .composer textarea{
+      border:1px solid rgba(170,192,215,.8);
+      background:rgba(248,252,255,.88);
+      border-radius:12px;
+      min-height:42px; max-height:124px;
+      resize:none;
+      padding:10px;
+      font-size:14px;
+      outline:none;
+    }
+    .send-btn{
+      border:0; border-radius:12px;
+      background:linear-gradient(135deg,var(--accent),var(--accent-2));
+      color:#fff; font-weight:800;
+      padding:11px 14px;
+      cursor:pointer;
+    }
+    .send-btn:disabled{opacity:.55; cursor:not-allowed}
+
+    .settings-scroll{
+      height:calc(100dvh - 62px - var(--safe-top));
+      overflow:auto;
+      padding:0 12px calc(16px + var(--safe-bottom));
+      scrollbar-width:none;
+    }
+    .settings-scroll::-webkit-scrollbar{display:none}
+
+    .card{
+      margin-top:10px;
+      padding:12px;
+      border-radius:18px;
+      border:1px solid rgba(255,255,255,.75);
+      background:rgba(233,244,255,.75);
+      box-shadow:0 8px 18px rgba(80,100,130,.15);
+    }
+    .card h3{
+      margin:0 0 10px;
+      font-size:15px;
+    }
+
+    .field{margin-bottom:10px}
+    .field label{
+      display:block;
+      margin-bottom:5px;
+      font-size:12px;
+      color:#415066;
+      font-weight:700;
+    }
+    .input, .select{
+      width:100%;
+      border:1px solid rgba(165,188,212,.85);
+      background:rgba(250,253,255,.95);
+      border-radius:10px;
+      height:40px;
+      padding:0 10px;
+      font-size:14px;
+      outline:none;
+    }
+    .input:focus, .select:focus{border-color:#7ea8ce}
+    .row{display:grid; grid-template-columns:1fr 1fr; gap:8px}
+    .switch{
+      display:flex; align-items:center; justify-content:space-between;
+      font-size:14px; font-weight:700;
+      padding:8px 0;
+    }
+    .actions{display:flex; gap:8px; flex-wrap:wrap}
+    .btn{
+      border:0; border-radius:10px; padding:9px 12px;
+      background:#7ea8ce; color:#fff; font-weight:700; cursor:pointer;
+    }
+    .btn.secondary{background:#8b97ab}
+    .btn.danger{background:#d76767}
+    .hint{font-size:12px; color:#607089}
+  </style>
 </head>
 <body>
-<div class="app">
-  <div class="hd">
-    <div class="left">
-      <button id="backBtn" class="btn">返回</button>
-      <div id="titleTxt">首页</div>
-    </div>
-    <div id="statusTxt" class="status off">未配置</div>
-  </div>
+  <div class="phone">
+    <div id="wallpaper" class="wallpaper"></div>
+    <canvas id="snow"></canvas>
 
-  <div class="main">
-    <section id="page-home" class="page active">
-      <div class="card">
-        <div class="homeClock" id="clockTxt">00:00</div>
-        <div class="sub" id="dateTxt">--</div>
-      </div>
-      <div class="card">
-        <div style="font-weight:700" id="pfName">Noctis 用户</div>
-        <div class="sub" id="pfSign">还没写签名</div>
-      </div>
-      <div class="card">
-        <div class="homeGrid" id="homeGrid"></div>
-      </div>
-    </section>
-
-    <section id="page-chat" class="page">
-      <div id="chatList" class="chatList"></div>
-    </section>
-
-    <section id="page-roles" class="page">
-      <div class="card">
-        <div style="font-weight:700;margin-bottom:8px">角色列表</div>
-        <div id="roleList"></div>
-      </div>
-      <div class="card">
-        <div style="font-weight:700;margin-bottom:8px">新建/编辑</div>
-        <input type="hidden" id="rId">
-        <div class="row">
-          <div><input id="rName" class="input" placeholder="角色名"></div>
-          <div><input id="rAvatar" class="input" placeholder="头像字(2字内)"></div>
-        </div>
-        <div style="height:8px"></div>
-        <input id="rGreeting" class="input" placeholder="开场白">
-        <div style="height:8px"></div>
-        <textarea id="rPrompt" class="ta" placeholder="System Prompt"></textarea>
-        <div style="height:8px"></div>
-        <div class="row">
-          <button id="saveRoleBtn" class="btn">保存</button>
-          <button id="resetRoleBtn" class="btn">清空</button>
-          <button id="delRoleBtn" class="btn">删除</button>
+    <!-- HOME -->
+    <section class="page active" id="page-home">
+      <div class="statusbar">
+        <div id="status-time">23:33</div>
+        <div class="status-right">
+          <svg class="icon-signal" width="22" height="16" viewBox="0 0 22 16" fill="none" aria-hidden="true">
+            <rect x="1" y="10" width="3" height="5" rx="1" fill="#111"/>
+            <rect x="6" y="8" width="3" height="7" rx="1" fill="#111"/>
+            <rect x="11" y="5" width="3" height="10" rx="1" fill="#111"/>
+            <rect x="16" y="2" width="3" height="13" rx="1" fill="#111"/>
+          </svg>
+          <svg class="icon-wifi" width="20" height="16" viewBox="0 0 20 16" fill="none" aria-hidden="true">
+            <path d="M2 6.2a12 12 0 0 1 16 0" stroke="#111" stroke-width="2" stroke-linecap="round"/>
+            <path d="M5 9a8 8 0 0 1 10 0" stroke="#111" stroke-width="2" stroke-linecap="round"/>
+            <path d="M8.1 11.7a4 4 0 0 1 3.8 0" stroke="#111" stroke-width="2" stroke-linecap="round"/>
+            <circle cx="10" cy="14" r="1.3" fill="#111"/>
+          </svg>
+          <svg class="icon-battery" width="33" height="16" viewBox="0 0 33 16" aria-hidden="true">
+            <rect x="1" y="1.4" width="28" height="13.2" rx="3.2" stroke="#111" stroke-width="1.6" fill="none"/>
+            <rect x="30" y="5.3" width="2.2" height="5.4" rx="1" fill="#111"/>
+            <rect id="battery-fill" x="3.2" y="3.6" width="18" height="8.8" rx="2.2" fill="#111"/>
+          </svg>
         </div>
       </div>
-    </section>
 
-    <section id="page-settings" class="page">
-      <div class="card">
-        <div style="font-weight:700;margin-bottom:8px">个人资料</div>
-        <input id="pfNameInp" class="input" placeholder="昵称">
-        <div style="height:8px"></div>
-        <input id="pfSignInp" class="input" placeholder="签名">
-        <div style="height:8px"></div>
-        <button id="savePfBtn" class="btn">保存资料</button>
-      </div>
+      <div class="home-scroll">
+        <div class="date-line" id="date-line">3月5日 星期四</div>
+        <div class="clock-big" id="clock-big">23:33</div>
 
-      <div class="card">
-        <div style="font-weight:700;margin-bottom:8px">API设置</div>
-        <input id="cUrl" class="input" placeholder="反代地址(不带/v1)">
-        <div style="height:8px"></div>
-        <input id="cKey" class="input" type="password" placeholder="API Key">
-        <div style="height:8px"></div>
-        <input id="cModel" class="input" placeholder="模型名，如 gpt-4o-mini">
-        <div style="height:8px"></div>
-        <div class="row">
-          <div><input id="cTemp" class="input" type="number" step="0.1" min="0" max="2" placeholder="Temperature"></div>
-          <div><input id="cMax" class="input" type="number" min="64" max="4096" placeholder="Max Tokens"></div>
-        </div>
-        <div style="height:8px"></div>
-        <div class="row">
-          <div>
-            <select id="chatMode" class="sel">
-              <option value="online">线上模式（即时聊天）</option>
-              <option value="offline">线下模式（沉浸单条）</option>
-            </select>
+        <div class="widgets">
+          <div class="glass couple-card" title="上传主图可在设置里修改">
+            <img id="couple-img" alt="封面图" src="data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='400'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23b8d0ea'/%3E%3Cstop offset='1' stop-color='%239fc0df'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='url(%23g)'/%3E%3Ctext x='50%25' y='52%25' fill='white' font-size='36' text-anchor='middle' font-family='Arial'%3EAPI%20Phone%3C/text%3E%3C/svg%3E">
+          </div>
+          <div class="small-actions">
+            <div class="icon-item" data-open="chat">
+              <div class="icon-box"><span class="icon-emoji">💬</span></div>
+              <div class="icon-title">Chat</div>
+            </div>
+            <div class="icon-item">
+              <div class="icon-box"><span class="icon-emoji">🌍</span></div>
+              <div class="icon-title">世界书</div>
+            </div>
+            <div class="icon-item">
+              <div class="icon-box"><span class="icon-emoji">❤️</span></div>
+              <div class="icon-title">纪念日</div>
+            </div>
+            <div class="icon-item">
+              <div class="icon-box"><span class="icon-emoji">🫧</span></div>
+              <div class="icon-title">论坛</div>
+            </div>
           </div>
         </div>
-        <div style="height:8px"></div>
-        <div class="row">
-          <label class="small"><input id="multiOn" type="checkbox"> 线上区间多条</label>
+
+        <div class="app-grid">
+          <div class="icon-item" data-open="chat"><div class="icon-box"><span class="icon-emoji">📨</span></div><div class="icon-title">短信</div></div>
+          <div class="icon-item" data-open="settings"><div class="icon-box"><span class="icon-emoji">⚙️</span></div><div class="icon-title">设置</div></div>
+          <div class="icon-item"><div class="icon-box"><span class="icon-emoji">🧠</span></div><div class="icon-title">记忆</div></div>
+          <div class="icon-item"><div class="icon-box"><span class="icon-emoji">🎨</span></div><div class="icon-title">主题</div></div>
+          <div class="icon-item"><div class="icon-box"><span class="icon-emoji">📘</span></div><div class="icon-title">角色档案</div></div>
+          <div class="icon-item"><div class="icon-box"><span class="icon-emoji">🖼️</span></div><div class="icon-title">外观设置</div></div>
+          <div class="icon-item"><div class="icon-box"><span class="icon-emoji">🔤</span></div><div class="icon-title">字体</div></div>
+          <div class="icon-item"><div class="icon-box"><span class="icon-emoji">📞</span></div><div class="icon-title">Cphone</div></div>
         </div>
-        <div style="height:8px"></div>
-        <div class="row">
-          <div><input id="multiMin" class="input" type="number" min="1" max="6" placeholder="最少条"></div>
-          <div><input id="multiMax" class="input" type="number" min="1" max="6" placeholder="最多条"></div>
+
+        <div class="card anniv" style="margin-top:14px">
+          <div>
+            <div style="font-size:36px;opacity:.65;">♡</div>
+            <div id="anniv-text">暂无纪念日</div>
+          </div>
         </div>
-        <div style="height:8px"></div>
-        <div class="row">
-          <button id="saveCfgBtn" class="btn">保存配置</button>
-          <button id="testBtn" class="btn">测试连接</button>
+      </div>
+
+      <div class="dock">
+        <div class="icon-item" data-open="chat"><div class="icon-box" style="width:64px;height:64px"><span class="icon-emoji">💬</span></div><div class="icon-title">聊天</div></div>
+        <div class="icon-item" data-open="settings"><div class="icon-box" style="width:64px;height:64px"><span class="icon-emoji">🛠️</span></div><div class="icon-title">API</div></div>
+        <div class="icon-item"><div class="icon-box" style="width:64px;height:64px"><span class="icon-emoji">📚</span></div><div class="icon-title">世界书</div></div>
+        <div class="icon-item"><div class="icon-box" style="width:64px;height:64px"><span class="icon-emoji">👥</span></div><div class="icon-title">论坛</div></div>
+      </div>
+      <button class="fab" id="fab-menu">≡</button>
+    </section>
+
+    <!-- CHAT -->
+    <section class="page" id="page-chat">
+      <div class="topbar">
+        <button class="back-btn" data-back>‹</button>
+        <div class="bar-title">Chat</div>
+        <button class="tool-btn" id="chat-clear">⌫</button>
+      </div>
+      <div class="chat-wrap">
+        <div class="chat-list" id="chat-list"></div>
+        <div class="composer">
+          <textarea id="chat-input" placeholder="输入消息，回车发送（Shift+Enter换行）"></textarea>
+          <button id="chat-send" class="send-btn">发送</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section class="page" id="page-settings">
+      <div class="topbar">
+        <button class="back-btn" data-back>‹</button>
+        <div class="bar-title">设置</div>
+        <button class="tool-btn" id="save-all">✓</button>
+      </div>
+      <div class="settings-scroll">
+        <div class="card">
+          <h3>API 配置</h3>
+          <div class="field">
+            <label>配置名（可保存多套）</label>
+            <div class="row">
+              <select id="profile-select" class="select"></select>
+              <input id="profile-name" class="input" placeholder="例如：默认 / 反代A" />
+            </div>
+          </div>
+
+          <div class="field">
+            <label>请求URL（优先级最高，支持直接填反代地址）</label>
+            <input id="request-url" class="input" placeholder="https://xxx.com/v1/chat/completions" />
+          </div>
+
+          <div class="field">
+            <label>Base URL（未填请求URL时生效）</label>
+            <input id="base-url" class="input" placeholder="https://api.example.com" />
+          </div>
+
+          <div class="field">
+            <label>Chat Path</label>
+            <input id="chat-path" class="input" placeholder="/v1/chat/completions" />
+          </div>
+
+          <div class="row">
+            <div class="field">
+              <label>API Key</label>
+              <input id="api-key" class="input" placeholder="sk-..." />
+            </div>
+            <div class="field">
+              <label>模型</label>
+              <input id="model" class="input" placeholder="gpt-4o-mini" />
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="field">
+              <label>温度</label>
+              <input id="temperature" class="input" type="number" min="0" max="2" step="0.1" />
+            </div>
+            <div class="field">
+              <label>max_tokens</label>
+              <input id="max-tokens" class="input" type="number" min="1" max="8192" step="1" />
+            </div>
+          </div>
+
+          <div class="switch">
+            <span>流式输出（stream）</span>
+            <input id="stream" type="checkbox" />
+          </div>
+          <div class="switch">
+            <span>在消息中显示时间戳</span>
+            <input id="show-time" type="checkbox" />
+          </div>
+
+          <div class="actions" style="margin-top:10px">
+            <button class="btn" id="btn-save-profile">保存配置</button>
+            <button class="btn secondary" id="btn-new-profile">新建配置</button>
+            <button class="btn secondary" id="btn-load-models">拉取模型</button>
+            <button class="btn danger" id="btn-delete-profile">删除配置</button>
+          </div>
+          <div class="hint" id="api-status" style="margin-top:8px">状态：就绪</div>
+        </div>
+
+        <div class="card">
+          <h3>外观</h3>
+          <div class="field">
+            <label>上传壁纸</label>
+            <input id="wallpaper-file" type="file" accept="image/*" class="input" style="padding-top:8px" />
+          </div>
+          <div class="field">
+            <label>主卡片图片</label>
+            <input id="cover-file" type="file" accept="image/*" class="input" style="padding-top:8px" />
+          </div>
+          <div class="actions">
+            <button class="btn secondary" id="btn-reset-look">恢复默认外观</button>
+          </div>
         </div>
       </div>
     </section>
   </div>
 
-  <div id="chatInputBar" class="inputBar" style="display:none">
-    <textarea id="inp" class="input" placeholder="说点什么"></textarea>
-    <button id="sendBtn" class="btn">发送</button>
-  </div>
+  <script>
+    const KEY_APP = "api_phone_app_v2";
+    const KEY_MSG = "api_phone_msgs_v2";
 
-  <div class="tabs">
-    <button class="tab active" data-page="home">首页</button>
-    <button class="tab" data-page="chat">聊天</button>
-    <button class="tab" data-page="roles">角色</button>
-    <button class="tab" data-page="settings">设置</button>
-  </div>
-</div>
+    const defaultProfile = {
+      name: "默认",
+      requestUrl: "",
+      baseUrl: "",
+      chatPath: "/v1/chat/completions",
+      apiKey: "",
+      model: "gpt-4o-mini",
+      temperature: 0.7,
+      maxTokens: 1024,
+      stream: true,
+      showTime: false
+    };
 
-<script>
-(function(){
-  var CFG_KEY='nx_cfg', ROLE_KEY='nx_roles', ACT_KEY='nx_active_role', HMAP_KEY='nx_hmap', PF_KEY='nx_profile';
-  var C={url:'',key:'',model:'',temp:0.8,max:800,chatMode:'online',multiOn:false,multiMin:2,multiMax:3};
-  var roles=[],activeRoleId='',HMap={},PF={name:'Noctis 用户',sign:'还没写签名'};
-  var streaming=false;
+    const defaultState = {
+      profiles: [defaultProfile],
+      currentProfile: "默认",
+      wallpaper: "",
+      cover: "",
+      anniversary: ""
+    };
 
-  function $(s){ return document.querySelector(s); }
-  function $$(s){ return Array.prototype.slice.call(document.querySelectorAll(s)); }
-  function load(k,d){ try{ var v=localStorage.getItem(k); return v?JSON.parse(v):d; }catch(e){ return d; } }
-  function save(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
-  function now(){
-    var d=new Date(); return (d.getHours()<10?'0':'')+d.getHours()+':'+(d.getMinutes()<10?'0':'')+d.getMinutes();
-  }
-  function esc(s){
-    s = s || '';
-    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  }
-  function uid(){ return 'r_'+Math.random().toString(36).slice(2,10); }
-  function toast(msg){
-    var t=document.createElement('div');
-    t.style.cssText='position:fixed;top:60px;left:50%;transform:translateX(-50%);background:#151d33;border:1px solid #2d3b61;padding:8px 14px;border-radius:20px;font-size:12px;z-index:99999';
-    t.textContent=msg; document.body.appendChild(t); setTimeout(function(){t.remove();},1800);
-  }
-  function norm(u){ return String(u||'').trim().replace(/\/+$/,'').replace(/\/v1$/,''); }
-  function api(base,p){ return norm(base)+'/v1'+p; }
+    const app = load(KEY_APP, defaultState);
+    let messages = load(KEY_MSG, []);
 
-  function currentRole(){
-    for(var i=0;i<roles.length;i++) if(roles[i].id===activeRoleId) return roles[i];
-    return null;
-  }
-  function currentHistory(){
-    if(!activeRoleId) return [];
-    if(!HMap[activeRoleId]) HMap[activeRoleId]=[];
-    return HMap[activeRoleId];
-  }
+    const el = {
+      pages: {
+        home: document.getElementById("page-home"),
+        chat: document.getElementById("page-chat"),
+        settings: document.getElementById("page-settings")
+      },
+      statusTime: document.getElementById("status-time"),
+      dateLine: document.getElementById("date-line"),
+      clockBig: document.getElementById("clock-big"),
+      batteryFill: document.getElementById("battery-fill"),
+      wallpaper: document.getElementById("wallpaper"),
+      coupleImg: document.getElementById("couple-img"),
+      annivText: document.getElementById("anniv-text"),
+      chatList: document.getElementById("chat-list"),
+      chatInput: document.getElementById("chat-input"),
+      chatSend: document.getElementById("chat-send"),
+      chatClear: document.getElementById("chat-clear"),
+      profileSelect: document.getElementById("profile-select"),
+      profileName: document.getElementById("profile-name"),
+      requestUrl: document.getElementById("request-url"),
+      baseUrl: document.getElementById("base-url"),
+      chatPath: document.getElementById("chat-path"),
+      apiKey: document.getElementById("api-key"),
+      model: document.getElementById("model"),
+      temperature: document.getElementById("temperature"),
+      maxTokens: document.getElementById("max-tokens"),
+      stream: document.getElementById("stream"),
+      showTime: document.getElementById("show-time"),
+      apiStatus: document.getElementById("api-status"),
+      wallpaperFile: document.getElementById("wallpaper-file"),
+      coverFile: document.getElementById("cover-file"),
+      saveAll: document.getElementById("save-all"),
+      btnSaveProfile: document.getElementById("btn-save-profile"),
+      btnNewProfile: document.getElementById("btn-new-profile"),
+      btnDeleteProfile: document.getElementById("btn-delete-profile"),
+      btnLoadModels: document.getElementById("btn-load-models"),
+      btnResetLook: document.getElementById("btn-reset-look"),
+      fabMenu: document.getElementById("fab-menu")
+    };
 
-  function setStatus(){
-    var ok=!!(C.url&&C.key&&C.model);
-    $('#statusTxt').textContent=ok?'在线':'未配置';
-    $('#statusTxt').className='status '+(ok?'ok':'off');
-  }
-
-  function syncModeNow(){
-    var sel=$('#chatMode');
-    var m=(sel&&sel.value==='offline')?'offline':'online';
-    C.chatMode=m; save(CFG_KEY,C);
-    return m;
-  }
-
-  function switchPage(name){
-    $$('.page').forEach(function(p){ p.classList.remove('active'); });
-    $('#page-'+name).classList.add('active');
-    $$('.tab').forEach(function(b){ b.classList.remove('active'); if(b.getAttribute('data-page')===name) b.classList.add('active'); });
-    $('#titleTxt').textContent = name==='home'?'首页':(name==='chat'?'聊天':(name==='roles'?'角色':'设置'));
-    $('#chatInputBar').style.display = (name==='chat')?'flex':'none';
-  }
-
-  function renderClock(){
-    var d=new Date();
-    $('#clockTxt').textContent=now();
-    $('#dateTxt').textContent=(d.getMonth()+1)+'月'+d.getDate()+'日 星期'+'日一二三四五六'.charAt(d.getDay());
-  }
-
-  function renderProfile(){
-    $('#pfName').textContent=PF.name||'Noctis 用户';
-    $('#pfSign').textContent=PF.sign||'还没写签名';
-    $('#pfNameInp').value=PF.name||'';
-    $('#pfSignInp').value=PF.sign||'';
-  }
-
-  function renderHomeApps(){
-    var apps=[
-      {name:'消息',icon:'💬',page:'chat'},
-      {name:'角色',icon:'👥',page:'roles'},
-      {name:'设置',icon:'⚙️',page:'settings'},
-      {name:'世界书',icon:'📘',tip:'v2加'},
-      {name:'预设',icon:'🧷',tip:'v2加'},
-      {name:'表情包',icon:'🧩',tip:'v2加'},
-      {name:'导出',icon:'📤',tip:'v2加'},
-      {name:'论坛',icon:'🌐',tip:'预留'}
-    ];
-    var h='';
-    for(var i=0;i<apps.length;i++){
-      h+='<button class="appIcon" data-i="'+i+'" type="button"><div class="i">'+apps[i].icon+'</div><div class="t">'+apps[i].name+'</div></button>';
+    function load(key, fallback){
+      try{
+        const raw = localStorage.getItem(key);
+        if(!raw) return structuredClone(fallback);
+        return Object.assign(structuredClone(fallback), JSON.parse(raw));
+      }catch{
+        return structuredClone(fallback);
+      }
     }
-    $('#homeGrid').innerHTML=h;
-    $$('#homeGrid .appIcon').forEach(function(el){
-      el.addEventListener('click',function(){
-        var a=apps[parseInt(el.getAttribute('data-i'),10)];
-        if(a.page){ switchPage(a.page); return; }
-        toast(a.tip||'预留入口');
+    function save(key, value){ localStorage.setItem(key, JSON.stringify(value)); }
+
+    function getCurrentProfile(){
+      let p = app.profiles.find(i => i.name === app.currentProfile);
+      if(!p){ p = structuredClone(defaultProfile); app.profiles=[p]; app.currentProfile=p.name; }
+      return p;
+    }
+
+    function go(page){
+      Object.values(el.pages).forEach(p => p.classList.remove("active"));
+      el.pages[page].classList.add("active");
+    }
+
+    function escapeHtml(s){
+      return String(s)
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;");
+    }
+
+    function formatNow(){
+      const d = new Date();
+      const hh = String(d.getHours()).padStart(2,"0");
+      const mm = String(d.getMinutes()).padStart(2,"0");
+      const week = "日一二三四五六"[d.getDay()];
+      return {
+        time: `${hh}:${mm}`,
+        date: `${d.getMonth()+1}月${d.getDate()}日 星期${week}`
+      };
+    }
+
+    function tick(){
+      const t = formatNow();
+      el.statusTime.textContent = t.time;
+      el.clockBig.textContent = t.time;
+      el.dateLine.textContent = t.date;
+      const fakeBattery = 35 + Math.floor((Date.now()/1000)%60);
+      const w = Math.max(6, Math.min(24, fakeBattery * 0.26));
+      el.batteryFill.setAttribute("width", String(w));
+    }
+
+    function renderProfiles(){
+      el.profileSelect.innerHTML = "";
+      app.profiles.forEach(p => {
+        const op = document.createElement("option");
+        op.value = p.name; op.textContent = p.name;
+        el.profileSelect.appendChild(op);
       });
-    });
-  }
-
-  function renderRoles(){
-    var box=$('#roleList');
-    if(!roles.length){ box.innerHTML='<div class="sub">还没有角色</div>'; return; }
-    var h='';
-    for(var i=0;i<roles.length;i++){
-      var r=roles[i];
-      h+='<div class="roleItem">'+
-         '<div><div>'+esc(r.name||'未命名')+'</div><div class="sub">'+(r.prompt?'已设人设':'无人设')+'</div></div>'+
-         '<div>'+
-         '<button class="btn small" data-act="use" data-id="'+r.id+'">使用</button> '+
-         '<button class="btn small" data-act="edit" data-id="'+r.id+'">编辑</button>'+
-         '</div></div>';
+      el.profileSelect.value = app.currentProfile;
+      fillProfileForm(getCurrentProfile());
     }
-    box.innerHTML=h;
-    $$('#roleList button').forEach(function(b){
-      b.addEventListener('click',function(){
-        var id=b.getAttribute('data-id'),act=b.getAttribute('data-act');
-        if(act==='use'){
-          activeRoleId=id; save(ACT_KEY,activeRoleId); renderRoles(); renderChat(); toast('已切换角色');
-        }else{
-          for(var i=0;i<roles.length;i++){
-            if(roles[i].id===id){
-              $('#rId').value=roles[i].id;
-              $('#rName').value=roles[i].name||'';
-              $('#rAvatar').value=roles[i].avatar||'';
-              $('#rGreeting').value=roles[i].greeting||'';
-              $('#rPrompt').value=roles[i].prompt||'';
-              break;
+
+    function fillProfileForm(p){
+      el.profileName.value = p.name || "";
+      el.requestUrl.value = p.requestUrl || "";
+      el.baseUrl.value = p.baseUrl || "";
+      el.chatPath.value = p.chatPath || "/v1/chat/completions";
+      el.apiKey.value = p.apiKey || "";
+      el.model.value = p.model || "gpt-4o-mini";
+      el.temperature.value = p.temperature ?? 0.7;
+      el.maxTokens.value = p.maxTokens ?? 1024;
+      el.stream.checked = !!p.stream;
+      el.showTime.checked = !!p.showTime;
+    }
+
+    function readProfileForm(){
+      const p = {
+        name: (el.profileName.value || "默认").trim(),
+        requestUrl: el.requestUrl.value.trim(),
+        baseUrl: el.baseUrl.value.trim().replace(/\/+$/,""),
+        chatPath: (el.chatPath.value.trim() || "/v1/chat/completions"),
+        apiKey: el.apiKey.value.trim(),
+        model: (el.model.value.trim() || "gpt-4o-mini"),
+        temperature: Number(el.temperature.value || 0.7),
+        maxTokens: Number(el.maxTokens.value || 1024),
+        stream: !!el.stream.checked,
+        showTime: !!el.showTime.checked
+      };
+      if(!p.chatPath.startsWith("/")) p.chatPath = "/" + p.chatPath;
+      return p;
+    }
+
+    function saveCurrentProfile(){
+      const profile = readProfileForm();
+      const oldName = app.currentProfile;
+      const idx = app.profiles.findIndex(i => i.name === oldName);
+      if(idx >= 0) app.profiles.splice(idx,1);
+      const duplicate = app.profiles.find(i => i.name === profile.name);
+      if(duplicate){
+        Object.assign(duplicate, profile);
+      }else{
+        app.profiles.push(profile);
+      }
+      app.currentProfile = profile.name;
+      save(KEY_APP, app);
+      renderProfiles();
+      setApiStatus("状态：配置已保存");
+    }
+
+    function setApiStatus(t){ el.apiStatus.textContent = t; }
+
+    function getChatUrl(profile){
+      if(profile.requestUrl) return profile.requestUrl;
+      if(!profile.baseUrl) throw new Error("请填写请求URL或Base URL");
+      return profile.baseUrl + (profile.chatPath || "/v1/chat/completions");
+    }
+
+    function addMsg(role, content, time){
+      const div = document.createElement("div");
+      div.className = "msg " + role;
+      const p = getCurrentProfile();
+      let text = String(content ?? "");
+      if(p.showTime && role !== "system"){
+        text = `${time || formatNow().time}\n${text}`;
+      }
+      div.innerHTML = escapeHtml(text);
+      el.chatList.appendChild(div);
+      el.chatList.scrollTop = el.chatList.scrollHeight;
+      return div;
+    }
+
+    function renderMsgs(){
+      el.chatList.innerHTML = "";
+      if(!messages.length){
+        addMsg("system","欢迎使用 API 小手机。先在设置里填好 URL / Key / 模型。");
+        return;
+      }
+      messages.forEach(m => addMsg(m.role, m.content, m.time));
+    }
+
+    function autoGrow(){
+      el.chatInput.style.height = "auto";
+      el.chatInput.style.height = Math.min(124, el.chatInput.scrollHeight) + "px";
+    }
+
+    async function sendMessage(){
+      const text = el.chatInput.value.trim();
+      if(!text) return;
+      const profile = getCurrentProfile();
+
+      const time = formatNow().time;
+      messages.push({ role:"user", content:text, time });
+      save(KEY_MSG, messages);
+      addMsg("user", text, time);
+      el.chatInput.value = "";
+      autoGrow();
+
+      let replyNode = addMsg("assistant", profile.stream ? "..." : "");
+      el.chatSend.disabled = true;
+      setApiStatus("状态：请求中...");
+
+      try{
+        const url = getChatUrl(profile);
+        const headers = { "Content-Type":"application/json" };
+        if(profile.apiKey) headers["Authorization"] = "Bearer " + profile.apiKey;
+
+        const body = {
+          model: profile.model,
+          temperature: Math.max(0, Math.min(2, profile.temperature ?? 0.7)),
+          max_tokens: Math.max(1, profile.maxTokens ?? 1024),
+          stream: !!profile.stream,
+          messages: messages.map(m => ({ role: m.role, content: m.content }))
+        };
+
+        const res = await fetch(url, {
+          method:"POST",
+          headers,
+          body: JSON.stringify(body)
+        });
+
+        if(!res.ok){
+          const t = await res.text().catch(()=> "");
+          throw new Error(`HTTP ${res.status} ${t}`);
+        }
+
+        let reply = "";
+        if(profile.stream && res.body){
+          const reader = res.body.getReader();
+          const decoder = new TextDecoder("utf-8");
+          let buffer = "";
+
+          while(true){
+            const {done, value} = await reader.read();
+            if(done) break;
+            buffer += decoder.decode(value, {stream:true});
+
+            const lines = buffer.split("\n");
+            buffer = lines.pop() || "";
+
+            for(const lineRaw of lines){
+              const line = lineRaw.trim();
+              if(!line.startsWith("data:")) continue;
+              const data = line.slice(5).trim();
+              if(data === "[DONE]") continue;
+              try{
+                const json = JSON.parse(data);
+                const delta = json?.choices?.[0]?.delta?.content ?? "";
+                if(delta){
+                  reply += delta;
+                  replyNode.textContent = profile.showTime ? `${formatNow().time}\n${reply}` : reply;
+                  el.chatList.scrollTop = el.chatList.scrollHeight;
+                }
+              }catch{}
             }
           }
-        }
-      });
-    });
-  }
-
-  function renderChat(){
-    var list=$('#chatList'), r=currentRole(), H=currentHistory();
-    if(!r){
-      list.innerHTML='<div class="card">先去角色页创建角色。</div>'; return;
-    }
-    if(!H.length){
-      list.innerHTML='<div class="card"><div style="font-weight:700">'+esc(r.name)+'</div><div class="sub" style="margin-top:6px">'+esc(r.greeting||'可以开始聊天了。')+'</div></div>';
-      return;
-    }
-    var h='';
-    for(var i=0;i<H.length;i++){
-      var m=H[i], me=(m.role==='user');
-      h+='<div class="line '+(me?'me':'')+'"><div class="bubble '+(me?'meB':'ai')+'">'+
-      '<div>'+esc(m.content||'').replace(/\n/g,'<br>')+'</div><div class="tm">'+(m.time||'')+'</div></div></div>';
-    }
-    list.innerHTML=h;
-    list.scrollTop=list.scrollHeight;
-  }
-
-  function resetRoleForm(){
-    $('#rId').value=''; $('#rName').value=''; $('#rAvatar').value=''; $('#rGreeting').value=''; $('#rPrompt').value='';
-  }
-
-  function saveRole(){
-    var id=$('#rId').value||uid();
-    var obj={
-      id:id,
-      name:($('#rName').value||'').trim(),
-      avatar:($('#rAvatar').value||'AI').slice(0,2),
-      greeting:($('#rGreeting').value||'').trim(),
-      prompt:($('#rPrompt').value||'').trim()
-    };
-    if(!obj.name){ toast('角色名不能为空'); return; }
-    var idx=-1;
-    for(var i=0;i<roles.length;i++) if(roles[i].id===id){ idx=i; break; }
-    if(idx>=0) roles[idx]=obj; else roles.unshift(obj);
-    if(!activeRoleId) activeRoleId=id;
-    save(ROLE_KEY,roles); save(ACT_KEY,activeRoleId);
-    renderRoles(); renderChat(); resetRoleForm(); toast('角色已保存');
-  }
-
-  function delRole(){
-    var id=$('#rId').value||activeRoleId;
-    if(!id){ toast('无角色'); return; }
-    roles=roles.filter(function(x){ return x.id!==id; });
-    delete HMap[id];
-    if(activeRoleId===id) activeRoleId=roles.length?roles[0].id:'';
-    save(ROLE_KEY,roles); save(ACT_KEY,activeRoleId); save(HMAP_KEY,HMap);
-    resetRoleForm(); renderRoles(); renderChat(); toast('已删除');
-  }
-
-  async function callChat(messages){
-    var res=await fetch(api(C.url,'/chat/completions'),{
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+C.key},
-      body:JSON.stringify({model:C.model,messages:messages,temperature:C.temp,max_tokens:C.max,stream:false})
-    });
-    if(!res.ok){
-      var t=await res.text();
-      throw new Error(String(res.status)+' '+t.slice(0,120));
-    }
-    var j=await res.json();
-    return (((j||{}).choices||[])[0]||{}).message ? ((((j||{}).choices||[])[0]||{}).message.content||'') : '';
-  }
-
-  function pickReplyCount(){
-    var a=parseInt(C.multiMin,10)||1,b=parseInt(C.multiMax,10)||1;
-    if(a<1) a=1; if(b<1) b=1; if(a>b){ var t=a;a=b;b=t; }
-    return Math.floor(Math.random()*(b-a+1))+a;
-  }
-
-  function parseMsgs(out){
-    out=String(out||'').trim();
-    var arr=[],m,reg=/<msg>([\s\S]*?)<\/msg>/gi;
-    while((m=reg.exec(out))!==null){ var t=(m[1]||'').trim(); if(t) arr.push(t); }
-    if(arr.length) return arr;
-    var x=out.split(/\n{2,}|\n+/).map(function(s){return s.trim();}).filter(Boolean);
-    return x.length?x:[out];
-  }
-
-  async function requestReply(){
-    if(streaming) return;
-    var r=currentRole();
-    if(!r){ toast('先选角色'); return; }
-    if(!(C.url&&C.key&&C.model)){ toast('先配置API'); return; }
-
-    var mode=syncModeNow();
-    var inp=$('#inp'),txt=(inp.value||'').trim();
-    if(txt){
-      currentHistory().push({role:'user',content:txt,time:now(),mode:mode});
-      inp.value=''; inp.style.height='42px';
-      save(HMAP_KEY,HMap); renderChat();
-    }
-    var H=currentHistory();
-    if(!H.length){ toast('先发消息'); return; }
-
-    streaming=true; $('#sendBtn').disabled=true; $('#statusTxt').textContent='输入中...';
-
-    try{
-      var M=H.map(function(x){ return {role:x.role==='assistant'?'assistant':'user',content:x.content||''}; });
-      var sys=[];
-      if(r.prompt) sys.push({role:'system',content:r.prompt});
-
-      if(mode==='online'){
-        if(C.multiOn){
-          var n=pickReplyCount();
-          sys.push({role:'system',content:'当前线上即时聊天。严格回复'+n+'条，每条用<msg>...</msg>包裹，贴合人设自然聊天。'});
-          var out=await callChat(sys.concat(M.slice(-40)));
-          var arr=parseMsgs(out).slice(0,n);
-          for(var i=0;i<arr.length;i++){
-            H.push({role:'assistant',content:arr[i],time:now(),mode:'online'});
+          if(!reply){
+            reply = "（流式返回为空）";
+            replyNode.textContent = reply;
           }
         }else{
-          sys.push({role:'system',content:'当前线上即时聊天。按人设和语境自由回复，若多条可用<msg>包裹。'});
-          var out2=await callChat(sys.concat(M.slice(-40)));
-          var arr2=parseMsgs(out2);
-          for(var j=0;j<arr2.length;j++){
-            H.push({role:'assistant',content:arr2[j],time:now(),mode:'online'});
-          }
+          const data = await res.json();
+          reply = data?.choices?.[0]?.message?.content ?? data?.reply ?? data?.output_text ?? "（接口返回为空）";
+          replyNode.textContent = profile.showTime ? `${formatNow().time}\n${reply}` : reply;
         }
-      }else{
-        sys.push({role:'system',content:'当前线下沉浸模式。只输出一条完整回复，不使用<msg>，不分条，贴合人设推进。'});
-        var out3=await callChat(sys.concat(M.slice(-40)));
-        out3=String(out3||'').replace(/<\/?msg>/gi,'').trim();
-        H.push({role:'assistant',content:out3||'我在。',time:now(),mode:'offline'});
+
+        messages.push({ role:"assistant", content:String(reply), time: formatNow().time });
+        save(KEY_MSG, messages);
+        setApiStatus("状态：完成");
+      }catch(err){
+        replyNode.className = "msg system";
+        replyNode.textContent = "请求失败：" + (err?.message || String(err));
+        setApiStatus("状态：失败");
+      }finally{
+        el.chatSend.disabled = false;
+      }
+    }
+
+    async function loadModels(){
+      const p = getCurrentProfile();
+      let root = p.baseUrl;
+      if(!root && p.requestUrl){
+        try{
+          const u = new URL(p.requestUrl);
+          root = u.origin;
+        }catch{}
+      }
+      if(!root){
+        setApiStatus("状态：拉取模型失败，未配置Base URL");
+        return;
       }
 
-      save(HMAP_KEY,HMap); renderChat();
-    }catch(e){
-      H.push({role:'assistant',content:'[请求失败] '+String(e.message||e),time:now(),mode:mode});
-      save(HMAP_KEY,HMap); renderChat();
-    }finally{
-      streaming=false; $('#sendBtn').disabled=false; setStatus();
+      try{
+        const headers = {};
+        if(p.apiKey) headers["Authorization"] = "Bearer " + p.apiKey;
+        const res = await fetch(root.replace(/\/+$/,"") + "/v1/models", { headers });
+        if(!res.ok) throw new Error("HTTP " + res.status);
+        const data = await res.json();
+        const arr = (data.data || []).map(i => i.id).filter(Boolean);
+        if(arr.length){
+          el.model.value = arr[0];
+          setApiStatus("状态：模型拉取成功，共 " + arr.length + " 个");
+        }else{
+          setApiStatus("状态：模型列表为空");
+        }
+      }catch(e){
+        setApiStatus("状态：拉取模型失败");
+      }
     }
-  }
 
-  async function testConn(){
-    try{
-      if(!(C.url&&C.key&&C.model)){ toast('先填全配置'); return; }
-      await callChat([{role:'user',content:'回1'}]);
-      toast('连接正常');
-    }catch(e){
-      toast('连接失败');
+    function setupFiles(){
+      el.wallpaperFile.addEventListener("change", (ev) => {
+        const f = ev.target.files?.[0];
+        if(!f) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+          app.wallpaper = String(reader.result || "");
+          applyLook();
+          save(KEY_APP, app);
+        };
+        reader.readAsDataURL(f);
+      });
+
+      el.coverFile.addEventListener("change", (ev) => {
+        const f = ev.target.files?.[0];
+        if(!f) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+          app.cover = String(reader.result || "");
+          applyLook();
+          save(KEY_APP, app);
+        };
+        reader.readAsDataURL(f);
+      });
     }
-  }
 
-  function bind(){
-    $$('.tab').forEach(function(t){
-      t.addEventListener('click',function(){ switchPage(t.getAttribute('data-page')); });
-    });
-    $('#backBtn').addEventListener('click',function(){ switchPage('home'); });
-    $('#saveRoleBtn').addEventListener('click',saveRole);
-    $('#resetRoleBtn').addEventListener('click',resetRoleForm);
-    $('#delRoleBtn').addEventListener('click',delRole);
-
-    $('#savePfBtn').addEventListener('click',function(){
-      PF.name=($('#pfNameInp').value||'').trim()||'Noctis 用户';
-      PF.sign=($('#pfSignInp').value||'').trim()||'还没写签名';
-      save(PF_KEY,PF); renderProfile(); toast('资料已保存');
-    });
-
-    $('#saveCfgBtn').addEventListener('click',function(){
-      C.url=norm($('#cUrl').value); C.key=($('#cKey').value||'').trim(); C.model=($('#cModel').value||'').trim();
-      C.temp=parseFloat($('#cTemp').value)||0.8; C.max=parseInt($('#cMax').value,10)||800;
-      C.chatMode=($('#chatMode').value==='offline')?'offline':'online';
-      C.multiOn=!!$('#multiOn').checked;
-      C.multiMin=parseInt($('#multiMin').value,10)||2;
-      C.multiMax=parseInt($('#multiMax').value,10)||3;
-      save(CFG_KEY,C); setStatus(); toast('配置已保存');
-    });
-
-    $('#testBtn').addEventListener('click',testConn);
-
-    $('#sendBtn').addEventListener('click',requestReply);
-    $('#inp').addEventListener('input',function(){
-      this.style.height='42px';
-      this.style.height=Math.min(this.scrollHeight,120)+'px';
-    });
-    $('#inp').addEventListener('keydown',function(e){
-      if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){ e.preventDefault(); requestReply(); }
-    });
-
-    $('#chatMode').addEventListener('change',function(){ syncModeNow(); });
-  }
-
-  function init(){
-    C=load(CFG_KEY,C); roles=load(ROLE_KEY,[]); activeRoleId=load(ACT_KEY,''); HMap=load(HMAP_KEY,{}); PF=load(PF_KEY,PF);
-    if(!roles.length){
-      var id=uid();
-      roles=[{id:id,name:'默认助手',avatar:'AI',greeting:'先去角色页设置人设。',prompt:''}];
-      activeRoleId=id;
-      save(ROLE_KEY,roles); save(ACT_KEY,activeRoleId);
+    function applyLook(){
+      if(app.wallpaper){
+        el.wallpaper.style.backgroundImage = `url("${app.wallpaper}")`;
+      }else{
+        el.wallpaper.style.backgroundImage = "linear-gradient(180deg,#d9e8f6 0%,#cfe1f1 42%,#dbe9f5 100%)";
+      }
+      if(app.cover) el.coupleImg.src = app.cover;
+      el.annivText.textContent = app.anniversary || "暂无纪念日";
     }
-    if(!activeRoleId&&roles.length) activeRoleId=roles[0].id;
 
-    $('#cUrl').value=C.url||''; $('#cKey').value=C.key||''; $('#cModel').value=C.model||'';
-    $('#cTemp').value=C.temp||0.8; $('#cMax').value=C.max||800;
-    $('#chatMode').value=C.chatMode||'online';
-    $('#multiOn').checked=!!C.multiOn;
-    $('#multiMin').value=C.multiMin||2; $('#multiMax').value=C.multiMax||3;
+    function initSnow(){
+      const c = document.getElementById("snow");
+      const ctx = c.getContext("2d");
+      let w=0,h=0,flakes=[];
+      const count = 38;
 
-    bind();
-    renderProfile();
-    renderHomeApps();
-    renderRoles();
-    renderChat();
-    renderClock();
-    setInterval(renderClock,15000);
-    setStatus();
-    switchPage('home');
-  }
+      function resize(){
+        w = c.width = c.clientWidth * devicePixelRatio;
+        h = c.height = c.clientHeight * devicePixelRatio;
+        ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
+      }
+      function reset(){
+        flakes = Array.from({length:count}, () => ({
+          x: Math.random()*c.clientWidth,
+          y: Math.random()*c.clientHeight,
+          r: Math.random()*2.2 + .8,
+          v: Math.random()*.45 + .18,
+          d: (Math.random()-.5)*.25,
+          o: Math.random()*.35 + .1
+        }));
+      }
+      function draw(){
+        ctx.clearRect(0,0,c.clientWidth,c.clientHeight);
+        for(const f of flakes){
+          ctx.beginPath();
+          ctx.fillStyle = `rgba(180,220,250,${f.o})`;
+          ctx.arc(f.x,f.y,f.r,0,Math.PI*2);
+          ctx.fill();
+          f.y += f.v;
+          f.x += f.d;
+          if(f.y > c.clientHeight + 8){ f.y = -8; f.x = Math.random()*c.clientWidth; }
+          if(f.x < -10) f.x = c.clientWidth + 6;
+          if(f.x > c.clientWidth + 10) f.x = -6;
+        }
+        requestAnimationFrame(draw);
+      }
+      resize(); reset(); draw();
+      addEventListener("resize", () => { resize(); reset(); }, {passive:true});
+    }
 
-  init();
-})();
-</script>
+    // events
+    document.querySelectorAll("[data-open]").forEach(i => {
+      i.addEventListener("click", () => go(i.dataset.open));
+    });
+    document.querySelectorAll("[data-back]").forEach(i => {
+      i.addEventListener("click", () => go("home"));
+    });
+
+    el.fabMenu.addEventListener("click", () => go("settings"));
+    el.chatSend.addEventListener("click", sendMessage);
+    el.chatInput.addEventListener("input", autoGrow);
+    el.chatInput.addEventListener("keydown", (e) => {
+      if(e.key === "Enter" && !e.shiftKey){
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    el.chatClear.addEventListener("click", () => {
+      messages = [];
+      save(KEY_MSG, messages);
+      renderMsgs();
+    });
+
+    el.profileSelect.addEventListener("change", () => {
+      app.currentProfile = el.profileSelect.value;
+      save(KEY_APP, app);
+      fillProfileForm(getCurrentProfile());
+      setApiStatus("状态：已切换配置");
+    });
+
+    el.btnSaveProfile.addEventListener("click", saveCurrentProfile);
+    el.saveAll.addEventListener("click", saveCurrentProfile);
+    el.btnLoadModels.addEventListener("click", loadModels);
+
+    el.btnNewProfile.addEventListener("click", () => {
+      const n = "配置" + (app.profiles.length + 1);
+      const p = structuredClone(defaultProfile);
+      p.name = n;
+      app.profiles.push(p);
+      app.currentProfile = n;
+      save(KEY_APP, app);
+      renderProfiles();
+      setApiStatus("状态：已新建配置");
+    });
+
+    el.btnDeleteProfile.addEventListener("click", () => {
+      if(app.profiles.length <= 1){
+        setApiStatus("状态：至少保留一套配置");
+        return;
+      }
+      const name = app.currentProfile;
+      app.profiles = app.profiles.filter(i => i.name !== name);
+      app.currentProfile = app.profiles[0].name;
+      save(KEY_APP, app);
+      renderProfiles();
+      setApiStatus("状态：配置已删除");
+    });
+
+    el.btnResetLook.addEventListener("click", () => {
+      app.wallpaper = "";
+      app.cover = "";
+      save(KEY_APP, app);
+      applyLook();
+    });
+
+    // init
+    tick(); setInterval(tick, 1000);
+    renderProfiles();
+    renderMsgs();
+    applyLook();
+    setupFiles();
+    initSnow();
+  </script>
 </body>
 </html>
