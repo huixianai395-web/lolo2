@@ -6486,5 +6486,93 @@ window.requestReply = function(){
   const root = $("#homeGroups");
   if (root) mo.observe(root, {childList:true, subtree:true});
 })();
+</script><script>
+/* ===== MODE FORCE PATCH (safe) ===== */
+(function () {
+  if (window.__NX_MODE_FORCE_PATCH__) return;
+  window.__NX_MODE_FORCE_PATCH__ = true;
+
+  function $(s){ return document.querySelector(s); }
+
+  function syncLiveMode(){
+    try{
+      var sel = $("#chatMode");
+      if(!sel || !window.C) return (C && C.chatMode) || "online";
+      C.chatMode = (sel.value === "offline") ? "offline" : "online";
+      if (typeof save === "function") save("nx_cfg", C);
+      return C.chatMode;
+    }catch(e){
+      return (window.C && C.chatMode) || "online";
+    }
+  }
+
+  // 1) 下拉切换时立刻落盘
+  document.addEventListener("change", function(e){
+    if(e.target && e.target.id === "chatMode"){
+      syncLiveMode();
+    }
+  }, true);
+
+  // 2) 发送前强制同步（保证“第一条就生效”）
+  if (typeof window.requestReply === "function" && !window.__NX_WRAP_REQ_MODE__) {
+    window.__NX_WRAP_REQ_MODE__ = true;
+    var _req = window.requestReply;
+    window.requestReply = function(){
+      syncLiveMode();
+      return _req.apply(this, arguments);
+    };
+  }
+
+  if (typeof window.queueMessage === "function" && !window.__NX_WRAP_QUEUE_MODE__) {
+    window.__NX_WRAP_QUEUE_MODE__ = true;
+    var _queue = window.queueMessage;
+    window.queueMessage = function(){
+      syncLiveMode();
+      return _queue.apply(this, arguments);
+    };
+  }
+
+  // 3) 给模型请求加“硬规则”，不改你原逻辑
+  if (typeof window.callChatOnce === "function" && !window.__NX_WRAP_CALL_MODE__) {
+    window.__NX_WRAP_CALL_MODE__ = true;
+    var _call = window.callChatOnce;
+
+    window.callChatOnce = function(messages, modelName){
+      var mode = syncLiveMode();
+      var forced = [];
+
+      if (mode === "offline") {
+        forced.push({
+          role:"system",
+          content:
+            "当前是线下沉浸模式：只输出一条完整回复；不要使用<msg>标签；不要分点分条；贴合角色人设与关系推进。"
+        });
+      } else {
+        forced.push({
+          role:"system",
+          content:
+            "当前是线上即时聊天模式：像真实聊天，短消息自然推进；贴合角色人设；不要模板腔。若多条可用<msg>...</msg>。"
+        });
+      }
+
+      var merged = forced.concat(Array.isArray(messages) ? messages : []);
+
+      return _call(merged, modelName).then(function(out){
+        out = String(out || "");
+
+        // 线下兜底清洗：去 <msg> 包裹，避免看起来像线上格式
+        if (mode === "offline") {
+          out = out.replace(/<\/?msg>/gi, "");
+          out = out.replace(/\n{3,}/g, "\n\n").trim();
+        }
+
+        return out;
+      });
+    };
+  }
+
+  // 初始化同步一次
+  syncLiveMode();
+})();
 </script></body>
 </html>
