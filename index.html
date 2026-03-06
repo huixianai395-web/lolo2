@@ -3,152 +3,98 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Home UI</title>
+  <title>小手机 · 结构版</title>
   <style>
     :root{
       --glass: rgba(255,255,255,.28);
-      --glass-border: rgba(255,255,255,.45);
-      --text: #fff;
+      --glass-border: rgba(255,255,255,.46);
+      --text:#fff;
+      --line:#e9e9ef;
+      --blue:#2f66d8;
     }
     *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-    html,body{margin:0;height:100%;background:#000;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;}
+    html,body{margin:0;height:100%;background:#000;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}
     #phone{
-      width:100%;
-      max-width:430px;
-      height:100dvh;
-      margin:0 auto;
-      position:relative;
-      overflow:hidden;
-      color:var(--text);
-      background:#111;
+      width:100%;max-width:430px;height:100dvh;margin:0 auto;position:relative;overflow:hidden;background:#111;
     }
+    .screen{position:absolute;inset:0;display:none;background:#f7f7fb}
+    .screen.active{display:block}
 
-    /* 背景 */
+    /* HOME */
+    #home{color:var(--text)}
     .wallpaper{
       position:absolute;inset:0;z-index:0;
       background:
-        linear-gradient(160deg, rgba(41,97,255,.35), rgba(132,224,255,.18)),
+        linear-gradient(160deg, rgba(40,96,255,.34), rgba(125,221,255,.18)),
         url('https://picsum.photos/900/1800?blur=1') center/cover no-repeat;
     }
-
-    /* 飘花 */
-    #petals{
-      position:absolute;inset:0;z-index:1;pointer-events:none;
-    }
-
-    .layer{
-      position:relative;z-index:2;height:100%;
-      display:flex;flex-direction:column;
-      padding:18px 12px 14px;
-    }
-
-    /* 风铃 */
+    #petals{position:absolute;inset:0;z-index:1;pointer-events:none}
+    .layer{position:relative;z-index:2;height:100%;display:flex;flex-direction:column;padding:18px 12px 14px}
     .windchime{
-      position:absolute;right:14px;top:26px;
-      width:56px;height:130px;opacity:.88;
-      transform-origin:top center;
-      animation:swing 3.4s ease-in-out infinite;
-      pointer-events:none;
+      position:absolute;right:14px;top:26px;width:56px;height:130px;opacity:.88;
+      transform-origin:top center;animation:swing 3.4s ease-in-out infinite;pointer-events:none;
     }
-    .windchime:before{
-      content:"";position:absolute;left:27px;top:0;width:2px;height:62px;
-      background:linear-gradient(#ffe4a8,#9a733a);
-    }
+    .windchime:before{content:"";position:absolute;left:27px;top:0;width:2px;height:62px;background:linear-gradient(#ffe4a8,#9a733a)}
     .windchime:after{
-      content:"";position:absolute;left:9px;top:60px;width:38px;height:38px;
-      border-radius:50%;
-      border:2px solid rgba(230,197,133,.85);
-      box-shadow:inset 0 0 18px rgba(0,0,0,.25);
+      content:"";position:absolute;left:9px;top:60px;width:38px;height:38px;border-radius:50%;
+      border:2px solid rgba(230,197,133,.85);box-shadow:inset 0 0 18px rgba(0,0,0,.25);
     }
-    @keyframes swing{
-      0%,100%{transform:rotate(5deg)}
-      50%{transform:rotate(-5deg)}
-    }
+    @keyframes swing{0%,100%{transform:rotate(5deg)}50%{transform:rotate(-5deg)}}
+    .clock{margin-top:8px;padding:4px 4px 0;text-shadow:0 2px 12px rgba(0,0,0,.22)}
+    .date{font-size:15px;opacity:.95;margin-left:2px}
+    .time{font-size:72px;line-height:1.02;letter-spacing:-2px;font-weight:760;margin-top:2px}
 
-    /* 大时钟 */
-    .clock{
-      margin-top:8px;
-      padding:4px 4px 0;
-      text-shadow:0 2px 12px rgba(0,0,0,.22);
-    }
-    .date{
-      font-size:15px;opacity:.95;
-      margin-left:2px;
-    }
-    .time{
-      font-size:72px;
-      line-height:1.02;
-      letter-spacing:-2px;
-      font-weight:760;
-      margin-top:2px;
-    }
-
-    /* 小组件 */
-    .widgets{
-      margin-top:10px;
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:10px;
-    }
+    .widgets{margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:10px}
     .widget{
-      background:var(--glass);
-      border:1px solid var(--glass-border);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border-radius:18px;
-      padding:10px 12px;
+      background:var(--glass);border:1px solid var(--glass-border);
+      backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+      border-radius:18px;padding:10px 12px;
     }
     .widget .t{font-size:12px;opacity:.88}
     .widget .v{font-size:16px;font-weight:700;margin-top:4px}
 
-    /* 图标宫格 */
     .grid{
-      margin-top:14px;
-      display:grid;
-      grid-template-columns:repeat(4,1fr);
-      gap:14px 8px;
-      padding:0 2px;
+      margin-top:14px;display:grid;grid-template-columns:repeat(4,1fr);gap:14px 8px;padding:0 2px
     }
     .icon{text-align:center}
     .icon-box{
-      width:62px;height:62px;margin:0 auto 6px;
-      border-radius:16px;
-      display:grid;place-items:center;
-      background:var(--glass);
-      border:1px solid var(--glass-border);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      font-size:27px;
-      transition:transform .12s ease;
+      width:62px;height:62px;margin:0 auto 6px;border-radius:16px;display:grid;place-items:center;
+      background:var(--glass);border:1px solid var(--glass-border);
+      backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+      font-size:27px;transition:transform .12s ease;cursor:pointer
     }
     .icon:active .icon-box{transform:scale(.88)}
-    .label{
-      font-size:12px;
-      text-shadow:0 1px 2px rgba(0,0,0,.25);
-    }
+    .label{font-size:12px;text-shadow:0 1px 2px rgba(0,0,0,.25)}
 
-    /* Dock */
-    .dock-wrap{
-      margin-top:auto;
-      padding:10px 2px 0;
-    }
+    .dock-wrap{margin-top:auto;padding:10px 2px 0}
     .dock{
-      border-radius:26px;
-      padding:10px;
-      display:grid;
-      grid-template-columns:repeat(4,1fr);
-      gap:8px;
+      border-radius:26px;padding:10px;
+      display:grid;grid-template-columns:repeat(3,1fr);gap:8px;
       background:rgba(255,255,255,.26);
       border:1px solid rgba(255,255,255,.42);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
+      backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
     }
-    .dock .label{display:none}
+
+    /* Common page */
+    .header{
+      height:52px;display:flex;align-items:center;justify-content:space-between;
+      padding:0 12px;background:#fff;border-bottom:1px solid var(--line)
+    }
+    .btn{border:none;border-radius:10px;padding:8px 12px;font-size:13px;background:#edf2ff;color:#173a7a}
+    .btn.p{background:var(--blue);color:#fff}
+    .page{height:calc(100% - 52px);overflow:auto;padding:12px;display:flex;flex-direction:column;gap:10px}
+    .card{background:#fff;border:1px solid #ececf2;border-radius:14px;padding:12px}
+    .small{font-size:12px;color:#777}
+    .input,.ta{width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:10px;font-size:14px}
+    .ta{min-height:110px;resize:vertical}
   </style>
 </head>
 <body>
-  <div id="phone">
-    <div class="wallpaper"></div>
+<div id="phone">
+
+  <!-- HOME -->
+  <section id="home" class="screen active">
+    <div class="wallpaper" id="wallpaper"></div>
     <canvas id="petals"></canvas>
     <div class="windchime"></div>
 
@@ -159,92 +105,183 @@
       </div>
 
       <div class="widgets">
-        <div class="widget">
-          <div class="t">纪念日</div>
-          <div class="v">第 233 天</div>
-        </div>
-        <div class="widget">
-          <div class="t">天气</div>
-          <div class="v">22°C 晴</div>
-        </div>
+        <div class="widget"><div class="t">纪念日</div><div class="v">第 233 天</div></div>
+        <div class="widget"><div class="t">天气</div><div class="v">22°C 晴</div></div>
       </div>
 
+      <!-- 上面宫格（不放世界书/API/外观，避免和dock重复） -->
       <div class="grid">
-        <div class="icon"><div class="icon-box">💬</div><div class="label">消息</div></div>
-        <div class="icon"><div class="icon-box">📖</div><div class="label">世界书</div></div>
-        <div class="icon"><div class="icon-box">🎨</div><div class="label">外观</div></div>
-        <div class="icon"><div class="icon-box">🔑</div><div class="label">API</div></div>
-        <div class="icon"><div class="icon-box">📱</div><div class="label">查手机</div></div>
-        <div class="icon"><div class="icon-box">📚</div><div class="label">书籍</div></div>
-        <div class="icon"><div class="icon-box">🛍️</div><div class="label">拼多多</div></div>
-        <div class="icon"><div class="icon-box">🖋️</div><div class="label">同人文</div></div>
+        <div class="icon" onclick="show('qq')"><div class="icon-box">💬</div><div class="label">QQ</div></div>
+        <div class="icon" onclick="show('probe')"><div class="icon-box">📱</div><div class="label">查手机</div></div>
+        <div class="icon" onclick="show('books')"><div class="icon-box">📚</div><div class="label">书籍工坊</div></div>
+        <div class="icon" onclick="show('fanfic')"><div class="icon-box">🖋️</div><div class="label">同人文</div></div>
+        <div class="icon" onclick="show('pdd')"><div class="icon-box">🛍️</div><div class="label">拼多多</div></div>
       </div>
 
+      <!-- 下方Dock -->
       <div class="dock-wrap">
         <div class="dock">
-          <div class="icon"><div class="icon-box">💬</div><div class="label">消息</div></div>
-          <div class="icon"><div class="icon-box">📱</div><div class="label">查手机</div></div>
-          <div class="icon"><div class="icon-box">🎨</div><div class="label">外观</div></div>
-          <div class="icon"><div class="icon-box">🔑</div><div class="label">API</div></div>
+          <div class="icon" onclick="show('worldbook')"><div class="icon-box">📖</div><div class="label">世界书</div></div>
+          <div class="icon" onclick="show('appearance')"><div class="icon-box">🎨</div><div class="label">外观</div></div>
+          <div class="icon" onclick="show('api')"><div class="icon-box">🔑</div><div class="label">API</div></div>
         </div>
       </div>
     </div>
-  </div>
+  </section>
 
-  <script>
-    // 时钟
-    function tick(){
-      const n = new Date();
-      const h = String(n.getHours()).padStart(2,'0');
-      const m = String(n.getMinutes()).padStart(2,'0');
-      const w = ['周日','周一','周二','周三','周四','周五','周六'][n.getDay()];
-      document.getElementById('timeText').textContent = `${h}:${m}`;
-      document.getElementById('dateText').textContent = `${n.getMonth()+1}月${n.getDate()}日 ${w}`;
-    }
-    tick();
-    setInterval(tick, 1000);
+  <!-- QQ (唯一聊天入口骨架) -->
+  <section id="qq" class="screen">
+    <div class="header">
+      <button class="btn" onclick="show('home')">‹ 返回</button>
+      <b>QQ</b>
+      <div>
+        <button class="btn">+</button>
+        <button class="btn p">群聊</button>
+      </div>
+    </div>
+    <div class="page">
+      <div class="card">
+        <b>聊天入口（后续接完整功能）</b>
+        <div class="small" style="margin-top:6px;">
+          创建角色 / 导入角色 / 单聊 / 群聊 / 表情包 / 转账 / 视频 / 语音 / 上传图片 / 定位 / 礼物 / 通话记录 / 右上角工具设置
+        </div>
+      </div>
+      <div class="card small">这页先做骨架，不和你需求冲突。下一步直接填聊天核心。</div>
+    </div>
+  </section>
 
-    // 飘花粒子
-    const canvas = document.getElementById('petals');
-    const ctx = canvas.getContext('2d');
-    let petals = [];
+  <section id="probe" class="screen">
+    <div class="header"><button class="btn" onclick="show('home')">‹ 返回</button><b>查手机</b><button class="btn p">刷新</button></div>
+    <div class="page"><div class="card">查手机骨架页（下步做微信感分组会话+动态备注名）</div></div>
+  </section>
 
-    function resize(){
-      const phone = document.getElementById('phone');
-      canvas.width = phone.clientWidth;
-      canvas.height = phone.clientHeight;
-      petals = Array.from({length:42}, ()=>({
-        x:Math.random()*canvas.width,
-        y:Math.random()*canvas.height,
-        rx:Math.random()*2.4+1.2,
-        ry:Math.random()*1.8+0.8,
-        vy:Math.random()*0.55+0.2,
-        vx:(Math.random()-0.5)*0.35,
-        a:Math.random()*0.45+0.15
-      }));
-    }
+  <section id="books" class="screen">
+    <div class="header"><button class="btn" onclick="show('home')">‹ 返回</button><b>书籍工坊</b><button class="btn p">处理</button></div>
+    <div class="page">
+      <div class="card"><textarea class="ta" placeholder="粘贴文本..."></textarea></div>
+      <div class="card"><textarea class="ta" placeholder="输出结果..."></textarea></div>
+    </div>
+  </section>
 
-    function draw(){
-      ctx.clearRect(0,0,canvas.width,canvas.height);
-      petals.forEach(p=>{
-        p.x += p.vx;
-        p.y += p.vy;
+  <section id="fanfic" class="screen">
+    <div class="header"><button class="btn" onclick="show('home')">‹ 返回</button><b>同人文</b><button class="btn p">生成</button></div>
+    <div class="page"><div class="card">同人文骨架页</div></div>
+  </section>
 
-        if(p.y > canvas.height + 10){ p.y = -10; p.x = Math.random()*canvas.width; }
-        if(p.x < -10) p.x = canvas.width + 10;
-        if(p.x > canvas.width + 10) p.x = -10;
+  <section id="pdd" class="screen">
+    <div class="header"><button class="btn" onclick="show('home')">‹ 返回</button><b>拼多多</b><span></span></div>
+    <div class="page"><div class="card">拼多多骨架页</div></div>
+  </section>
 
-        ctx.beginPath();
-        ctx.ellipse(p.x, p.y, p.rx, p.ry, 0, 0, Math.PI*2);
-        ctx.fillStyle = `rgba(255, 214, 214, ${p.a})`;
-        ctx.fill();
-      });
-      requestAnimationFrame(draw);
-    }
+  <section id="worldbook" class="screen">
+    <div class="header"><button class="btn" onclick="show('home')">‹ 返回</button><b>世界书</b><span></span></div>
+    <div class="page"><div class="card">世界书骨架页</div></div>
+  </section>
 
-    resize();
-    draw();
-    window.addEventListener('resize', resize);
-  </script>
+  <section id="appearance" class="screen">
+    <div class="header"><button class="btn" onclick="show('home')">‹ 返回</button><b>外观</b><button class="btn p" onclick="applyWallpaper()">应用</button></div>
+    <div class="page">
+      <div class="card">
+        <div class="small">壁纸URL</div>
+        <input id="wpUrl" class="input" placeholder="https://..." />
+      </div>
+      <div class="card">
+        <div class="small">本地上传</div>
+        <input id="wpFile" type="file" accept="image/*" />
+      </div>
+    </div>
+  </section>
+
+  <section id="api" class="screen">
+    <div class="header"><button class="btn" onclick="show('home')">‹ 返回</button><b>API</b><button class="btn p">保存</button></div>
+    <div class="page">
+      <div class="card"><div class="small">Base URL</div><input class="input" placeholder="https://api.openai.com" /></div>
+      <div class="card"><div class="small">API Key</div><input class="input" type="password" placeholder="sk-..." /></div>
+      <div class="card"><div class="small">Model</div><input class="input" value="gpt-4o-mini" /></div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+  function show(id){
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+  }
+
+  // 时钟
+  function tick(){
+    const n=new Date();
+    const h=String(n.getHours()).padStart(2,'0');
+    const m=String(n.getMinutes()).padStart(2,'0');
+    const w=['周日','周一','周二','周三','周四','周五','周六'][n.getDay()];
+    document.getElementById('timeText').textContent = `${h}:${m}`;
+    document.getElementById('dateText').textContent = `${n.getMonth()+1}月${n.getDate()}日 ${w}`;
+  }
+  tick(); setInterval(tick,1000);
+
+  // 飘花
+  const canvas = document.getElementById('petals');
+  const ctx = canvas.getContext('2d');
+  let petals = [];
+  function resize(){
+    const phone=document.getElementById('phone');
+    canvas.width=phone.clientWidth; canvas.height=phone.clientHeight;
+    petals=Array.from({length:42},()=>({
+      x:Math.random()*canvas.width,
+      y:Math.random()*canvas.height,
+      rx:Math.random()*2.4+1.2,
+      ry:Math.random()*1.8+0.8,
+      vy:Math.random()*0.55+0.2,
+      vx:(Math.random()-0.5)*0.35,
+      a:Math.random()*0.45+0.15
+    }));
+  }
+  function draw(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    petals.forEach(p=>{
+      p.x+=p.vx; p.y+=p.vy;
+      if(p.y>canvas.height+10){p.y=-10;p.x=Math.random()*canvas.width;}
+      if(p.x<-10)p.x=canvas.width+10;
+      if(p.x>canvas.width+10)p.x=-10;
+      ctx.beginPath();
+      ctx.ellipse(p.x,p.y,p.rx,p.ry,0,0,Math.PI*2);
+      ctx.fillStyle=`rgba(255,214,214,${p.a})`;
+      ctx.fill();
+    });
+    requestAnimationFrame(draw);
+  }
+  resize(); draw(); window.addEventListener('resize',resize);
+
+  // 换壁纸
+  const wallpaper = document.getElementById('wallpaper');
+  function applyWallpaper(){
+    const url = document.getElementById('wpUrl').value.trim();
+    if(!url) return alert('先填壁纸URL');
+    wallpaper.style.background =
+      `linear-gradient(160deg, rgba(40,96,255,.28), rgba(125,221,255,.14)), url('${url}') center/cover no-repeat`;
+    localStorage.setItem('wp', url);
+    alert('壁纸已应用');
+  }
+  const wpFile = document.getElementById('wpFile');
+  wpFile.addEventListener('change', e=>{
+    const f = e.target.files?.[0];
+    if(!f) return;
+    const reader = new FileReader();
+    reader.onload = ()=>{
+      const data = reader.result;
+      wallpaper.style.background =
+        `linear-gradient(160deg, rgba(40,96,255,.28), rgba(125,221,255,.14)), url('${data}') center/cover no-repeat`;
+      localStorage.setItem('wp', data);
+      alert('本地壁纸已应用');
+    };
+    reader.readAsDataURL(f);
+  });
+  const saved = localStorage.getItem('wp');
+  if(saved){
+    wallpaper.style.background =
+      `linear-gradient(160deg, rgba(40,96,255,.28), rgba(125,221,255,.14)), url('${saved}') center/cover no-repeat`;
+  }
+</script>
 </body>
 </html>
