@@ -1,9 +1,11 @@
+
+
 <!doctype html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>小手机·联通版</title>
+  <title>小手机 保命版</title>
   <style>
     *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
     html,body{margin:0;height:100%;background:#000;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}
@@ -16,8 +18,8 @@
     .page{height:calc(100% - 52px);overflow:auto;padding:12px;display:flex;flex-direction:column;gap:10px}
     .card{background:#fff;border:1px solid #ececf2;border-radius:14px;padding:12px}
     .small{font-size:12px;color:#777}
-    .input,.ta,.select{width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:10px;background:#fff;font-size:14px}
-    .ta{min-height:80px;resize:vertical}
+    .input,.ta{width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:10px;background:#fff;font-size:14px}
+    .ta{min-height:42px;max-height:120px;resize:none}
 
     /* home */
     #home{color:#fff}
@@ -26,15 +28,12 @@
       url('https://picsum.photos/900/1800?blur=1') center/cover no-repeat;
       z-index:0}
     .home-layer{position:relative;z-index:2;height:100%;display:flex;flex-direction:column;padding:18px 12px 14px}
-    .time{font-size:72px;font-weight:760;letter-spacing:-2px;text-shadow:0 2px 12px rgba(0,0,0,.2)}
     .date{font-size:15px;opacity:.95}
+    .time{font-size:72px;font-weight:760;letter-spacing:-2px;text-shadow:0 2px 12px rgba(0,0,0,.2)}
     .grid{margin-top:20px;display:grid;grid-template-columns:repeat(4,1fr);gap:14px 8px}
     .icon{text-align:center}
-    .icon-box{width:62px;height:62px;margin:0 auto 6px;border-radius:16px;display:grid;place-items:center;
-      background:rgba(255,255,255,.28);border:1px solid rgba(255,255,255,.45);font-size:27px}
+    .icon-box{width:62px;height:62px;margin:0 auto 6px;border-radius:16px;display:grid;place-items:center;background:rgba(255,255,255,.28);border:1px solid rgba(255,255,255,.45);font-size:27px;cursor:pointer}
     .label{font-size:12px;text-shadow:0 1px 2px rgba(0,0,0,.25)}
-    .dock{margin-top:auto;border-radius:24px;padding:10px;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;
-      background:rgba(255,255,255,.24);border:1px solid rgba(255,255,255,.42)}
 
     /* list */
     .list{display:flex;flex-direction:column;gap:8px}
@@ -51,7 +50,7 @@
     .me{margin-left:auto;background:#2f66d8;color:#fff;border-bottom-right-radius:6px}
     .ai{background:#fff;border:1px solid #e8e8ef;border-bottom-left-radius:6px}
     .chatInputBar{position:absolute;left:0;right:0;bottom:0;padding:10px;background:#fff;border-top:1px solid #e9e9ef;display:flex;gap:8px}
-    #chatInput{flex:1;min-height:42px;max-height:100px;resize:none}
+    #chatInput{flex:1}
   </style>
 </head>
 <body>
@@ -65,28 +64,22 @@
       <div class="time" id="homeTime"></div>
 
       <div class="grid">
-        <div class="icon" data-nav="wechat"><div class="icon-box">💬</div><div class="label">微信</div></div>
-        <div class="icon" data-nav="api"><div class="icon-box">🔑</div><div class="label">API</div></div>
-      </div>
-
-      <div class="dock">
-        <div class="icon" data-nav="wechat"><div class="icon-box">💬</div></div>
-        <div class="icon" data-nav="api"><div class="icon-box">🔑</div></div>
-        <div class="icon"><div class="icon-box">✨</div></div>
+        <div class="icon" onclick="show('wechat')"><div class="icon-box">💬</div><div class="label">微信</div></div>
+        <div class="icon" onclick="show('api')"><div class="icon-box">🔑</div><div class="label">API</div></div>
       </div>
     </div>
   </section>
 
-  <!-- WeChat List -->
+  <!-- WeChat -->
   <section id="wechat" class="screen">
     <div class="header">
-      <button class="btn" data-nav="home">‹ 返回</button>
+      <button class="btn" onclick="show('home')">‹ 返回</button>
       <b>微信</b>
-      <button class="btn" id="addContactBtn">+联系人</button>
+      <button class="btn" onclick="addContact()">+联系人</button>
     </div>
     <div class="page" style="padding:0;">
       <div style="padding:10px 12px;border-bottom:1px solid #eee;background:#fff;">
-        <input id="searchInput" class="input" placeholder="搜索联系人" />
+        <input id="searchInput" class="input" placeholder="搜索联系人" oninput="renderContacts(this.value)" />
       </div>
       <div id="contactList" class="list" style="padding:10px;"></div>
     </div>
@@ -95,27 +88,27 @@
   <!-- Chat -->
   <section id="chatRoom" class="screen">
     <div class="header">
-      <button class="btn" data-nav="wechat">‹ 返回</button>
+      <button class="btn" onclick="show('wechat')">‹ 返回</button>
       <b id="chatTitle">聊天</b>
-      <button class="btn" id="clearChatBtn">清空</button>
+      <button class="btn" onclick="clearChat()">清空</button>
     </div>
     <div id="chatMsgs"></div>
     <div class="chatInputBar">
-      <textarea id="chatInput" class="input" placeholder="输入消息..."></textarea>
-      <button class="btn p" id="sendBtn">发送</button>
+      <textarea id="chatInput" class="ta" placeholder="输入消息..."></textarea>
+      <button class="btn p" onclick="sendMsg()">发送</button>
     </div>
   </section>
 
   <!-- API -->
   <section id="api" class="screen">
     <div class="header">
-      <button class="btn" data-nav="home">‹ 返回</button>
+      <button class="btn" onclick="show('home')">‹ 返回</button>
       <b>API 设置</b>
-      <button class="btn p" id="saveApiBtn">保存</button>
+      <button class="btn p" onclick="saveApi()">保存</button>
     </div>
     <div class="page">
       <div class="card">
-        <div class="small">Base URL（可填你给的反代域名）</div>
+        <div class="small">Base URL（支持反代）</div>
         <input id="apiBase" class="input" placeholder="https://api.cetaceang.qzz.io" />
       </div>
       <div class="card">
@@ -130,279 +123,241 @@
         <div class="small">Temperature</div>
         <input id="apiTemp" class="input" type="number" min="0" max="2" step="0.1" value="0.8" />
       </div>
-      <div class="row">
-        <button class="btn" id="testApiBtn">测试连接</button>
+      <div class="card">
+        <button class="btn" onclick="testApi()">测试连接</button>
+        <div id="apiStatus" class="small" style="margin-top:8px;">状态：未测试</div>
       </div>
-      <div class="card small" id="apiStatus">状态：未测试</div>
     </div>
   </section>
 
 </div>
 
 <script>
-(() => {
-  const $ = id => document.getElementById(id);
-  const K_API = 'mp_api_cfg_v1';
-  const K_CONTACTS = 'mp_contacts_v1';
-  const K_CHATS = 'mp_chats_v1';
+const K_API='mp_api_cfg_min';
+const K_CONTACTS='mp_contacts_min';
+const K_CHATS='mp_chats_min';
+let currentContactId=null;
 
-  let currentContactId = null;
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+function esc(s=''){return String(s).replace(/[&<>"']/g,m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));}
+function getJSON(k,d){try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(d));}catch{return d;}}
+function setJSON(k,v){localStorage.setItem(k,JSON.stringify(v));}
 
-  // ---------- helpers ----------
-  const getJSON = (k, def) => { try { return JSON.parse(localStorage.getItem(k) || JSON.stringify(def)); } catch { return def; } };
-  const setJSON = (k, v) => localStorage.setItem(k, JSON.stringify(v));
-  const esc = (s='') => String(s).replace(/[&<>"']/g,m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
+// time
+function tick(){
+  const n=new Date();
+  const h=String(n.getHours()).padStart(2,'0');
+  const m=String(n.getMinutes()).padStart(2,'0');
+  const w=['周日','周一','周二','周三','周四','周五','周六'][n.getDay()];
+  document.getElementById('homeDate').textContent=`${n.getMonth()+1}月${n.getDate()}日 ${w}`;
+  document.getElementById('homeTime').textContent=`${h}:${m}`;
+}
+setInterval(tick,1000); tick();
 
-  function show(id){
-    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-    const el = $(id); if(el) el.classList.add('active');
-  }
-
-  // ---------- nav ----------
-  document.querySelectorAll('[data-nav]').forEach(el=>{
-    el.addEventListener('click', ()=>show(el.getAttribute('data-nav')));
-  });
-
-  // ---------- time ----------
-  function tick(){
-    const n = new Date();
-    const h = String(n.getHours()).padStart(2,'0');
-    const m = String(n.getMinutes()).padStart(2,'0');
-    const w = ['周日','周一','周二','周三','周四','周五','周六'][n.getDay()];
-    $('homeDate').textContent = `${n.getMonth()+1}月${n.getDate()}日 ${w}`;
-    $('homeTime').textContent = `${h}:${m}`;
-  }
-  tick(); setInterval(tick, 1000);
-
-  // ---------- contacts ----------
-  function getContacts(){
-    let arr = getJSON(K_CONTACTS, null);
-    if(!arr){
-      arr = [{
-        id:'c_'+Date.now(),
-        name:'沈昼白',
-        avatar:'https://i.postimg.cc/y8xWzCqj/anime-boy.jpg',
-        preview:'在吗 我刚遛狗回来',
-        time:'刚刚',
-        unread:1,
-        persona:'计算机系大三，爱分享日常'
-      }];
-      setJSON(K_CONTACTS, arr);
-    }
-    return arr;
-  }
-  function setContacts(arr){ setJSON(K_CONTACTS, arr); }
-
-  function renderContacts(keyword=''){
-    const k = keyword.trim();
-    const arr = getContacts().filter(c => !k || c.name.includes(k) || (c.preview||'').includes(k));
-    $('contactList').innerHTML = arr.map(c=>`
-      <div class="item" data-id="${c.id}">
-        <img class="avatar" src="${c.avatar || 'https://via.placeholder.com/88x88?text=头像'}" />
-        <div class="main">
-          <div style="display:flex;justify-content:space-between;align-items:center;">
-            <div class="name">${esc(c.name)}</div>
-            <div class="t">${esc(c.time||'')}</div>
-          </div>
-          <div class="preview">${esc(c.preview||'')}</div>
-        </div>
-        ${c.unread ? `<div style="background:#ff4d4f;color:#fff;border-radius:999px;padding:2px 6px;font-size:11px">${c.unread}</div>`:''}
-      </div>
-    `).join('') || `<div class="card small">暂无联系人</div>`;
-
-    document.querySelectorAll('#contactList .item').forEach(el=>{
-      el.onclick = ()=>{
-        const c = getContacts().find(x=>x.id===el.dataset.id);
-        if(!c) return;
-        currentContactId = c.id;
-        $('chatTitle').textContent = c.name;
-        renderChat();
-        show('chatRoom');
-      };
-    });
-  }
-
-  $('searchInput').addEventListener('input', e=>renderContacts(e.target.value || ''));
-
-  $('addContactBtn').onclick = async ()=>{
-    const name = (prompt('联系人昵称：') || '').trim();
-    if(!name) return;
-    const avatar = (prompt('头像URL（可空）：') || '').trim();
-    const persona = (prompt('角色人设（可空）：') || '').trim();
-
-    const arr = getContacts();
-    arr.unshift({
-      id:'c_'+Date.now()+'_'+Math.floor(Math.random()*9999),
-      name,
-      avatar,
-      preview:'新的聊天已创建',
+// contacts
+function getContacts(){
+  let arr=getJSON(K_CONTACTS,null);
+  if(!arr){
+    arr=[{
+      id:'c_'+Date.now(),
+      name:'沈昼白',
+      avatar:'https://i.postimg.cc/y8xWzCqj/anime-boy.jpg',
+      preview:'在吗 我刚遛狗回来',
       time:'刚刚',
-      unread:0,
-      persona
-    });
-
-    try{
-      setContacts(arr);
-      renderContacts();
-    }catch{
-      alert('保存失败：本地存储空间不足');
-    }
-  };
-
-  // ---------- chats ----------
-  function getChats(){ return getJSON(K_CHATS, {}); }
-  function setChats(map){ setJSON(K_CHATS, map); }
-
-  function renderChat(){
-    const map = getChats();
-    const msgs = map[currentContactId] || [];
-    $('chatMsgs').innerHTML = msgs.map(m=>`<div class="bubble ${m.role==='user'?'me':'ai'}">${esc(m.text)}</div>`).join('');
-    $('chatMsgs').scrollTop = $('chatMsgs').scrollHeight;
+      unread:1,
+      persona:'计算机系大三，爱分享日常'
+    }];
+    setJSON(K_CONTACTS,arr);
   }
+  return arr;
+}
+function setContacts(arr){setJSON(K_CONTACTS,arr);}
 
-  $('clearChatBtn').onclick = ()=>{
-    if(!currentContactId) return;
-    if(!confirm('清空当前聊天？')) return;
-    const map = getChats();
-    map[currentContactId] = [];
-    setChats(map);
-    renderChat();
-  };
+function renderContacts(keyword=''){
+  const k=(keyword||'').trim();
+  const arr=getContacts().filter(c=>!k||c.name.includes(k)||(c.preview||'').includes(k));
+  const box=document.getElementById('contactList');
+  box.innerHTML=arr.map(c=>`
+    <div class="item" onclick="openChat('${c.id}')">
+      <img class="avatar" src="${c.avatar||'https://via.placeholder.com/88x88?text=头像'}"/>
+      <div class="main">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div class="name">${esc(c.name)}</div>
+          <div class="t">${esc(c.time||'')}</div>
+        </div>
+        <div class="preview">${esc(c.preview||'')}</div>
+      </div>
+      ${c.unread?`<div style="background:#ff4d4f;color:#fff;border-radius:999px;padding:2px 6px;font-size:11px">${c.unread}</div>`:''}
+    </div>
+  `).join('') || `<div class="card small">暂无联系人</div>`;
+}
 
-  // ---------- API ----------
-  function loadApi(){
-    const cfg = getJSON(K_API, {
-      base:'',
-      key:'',
-      model:'gpt-4o-mini',
-      temp:0.8
-    });
-    $('apiBase').value = cfg.base || '';
-    $('apiKey').value = cfg.key || '';
-    $('apiModel').value = cfg.model || 'gpt-4o-mini';
-    $('apiTemp').value = cfg.temp ?? 0.8;
-  }
-
-  function saveApi(){
-    const cfg = {
-      base: ($('apiBase').value||'').trim(),
-      key: ($('apiKey').value||'').trim(),
-      model: ($('apiModel').value||'').trim() || 'gpt-4o-mini',
-      temp: Number($('apiTemp').value || 0.8)
-    };
-    setJSON(K_API, cfg);
-    $('apiStatus').textContent = '状态：已保存';
-    return cfg;
-  }
-
-  function buildChatUrl(base){
-    const b = (base||'').replace(/\/+$/,'');
-    if (b.endsWith('/v1')) return b + '/chat/completions';
-    return b + '/v1/chat/completions';
-  }
-
-  async function callApi(messages){
-    const cfg = saveApi();
-    if(!cfg.base || !cfg.key) throw new Error('请先配置 Base URL 和 API Key');
-    const url = buildChatUrl(cfg.base);
-
-    const resp = await fetch(url, {
-      method:'POST',
-      headers:{
-        'Content-Type':'application/json',
-        'Authorization':'Bearer ' + cfg.key
-      },
-      body: JSON.stringify({
-        model: cfg.model,
-        temperature: cfg.temp,
-        messages
-      })
-    });
-
-    const data = await resp.json().catch(()=> ({}));
-    if(!resp.ok){
-      throw new Error(data?.error?.message || ('HTTP ' + resp.status));
-    }
-    return data?.choices?.[0]?.message?.content?.trim() || '';
-  }
-
-  $('saveApiBtn').onclick = ()=>saveApi();
-
-  $('testApiBtn').onclick = async ()=>{
-    try{
-      $('apiStatus').textContent = '状态：测试中...';
-      const out = await callApi([{role:'user', content:'只回复 ok'}]);
-      $('apiStatus').textContent = '状态：连接成功 -> ' + (out || 'ok');
-    }catch(e){
-      $('apiStatus').textContent = '状态：失败 -> ' + e.message;
-    }
-  };
-
-  // send
-  $('sendBtn').onclick = async ()=>{
-    const text = ($('chatInput').value || '').trim();
-    if(!text || !currentContactId) return;
-
-    const map = getChats();
-    map[currentContactId] = map[currentContactId] || [];
-    map[currentContactId].push({role:'user', text, time:Date.now()});
-    setChats(map);
-    $('chatInput').value = '';
-    renderChat();
-
-    // typing占位
-    map[currentContactId].push({role:'assistant', text:'...', time:Date.now()});
-    setChats(map);
-    renderChat();
-
-    try{
-      const contacts = getContacts();
-      const c = contacts.find(x=>x.id===currentContactId);
-      const hist = (map[currentContactId] || []).filter(m=>m.text!=='...').slice(-20);
-      const messages = [
-        {role:'system', content:`你现在扮演微信聊天对象：${c?.name||'角色'}。人设：${c?.persona||'自然聊天'}。回复自然、简短。`},
-        ...hist.map(m=>({role: m.role==='user'?'user':'assistant', content:m.text}))
-      ];
-
-      const out = await callApi(messages);
-
-      // 替换占位
-      const arr = map[currentContactId];
-      if(arr.length && arr[arr.length-1].text === '...') arr.pop();
-      arr.push({role:'assistant', text: out || '...', time:Date.now()});
-      setChats(map);
-
-      // 更新列表预览
-      const cl = getContacts();
-      const idx = cl.findIndex(x=>x.id===currentContactId);
-      if(idx>=0){
-        cl[idx].preview = out || '...';
-        cl[idx].time = '刚刚';
-        setContacts(cl);
-      }
-
-      renderChat();
-    }catch(e){
-      const arr = map[currentContactId];
-      if(arr.length && arr[arr.length-1].text === '...') arr.pop();
-      arr.push({role:'assistant', text:'请求失败：' + e.message, time:Date.now()});
-      setChats(map);
-      renderChat();
-    }
-  };
-
-  // Enter send
-  $('chatInput').addEventListener('keydown', (e)=>{
-    if(e.key === 'Enter' && !e.shiftKey){
-      e.preventDefault();
-      $('sendBtn').click();
-    }
+function addContact(){
+  const name=(prompt('联系人昵称：')||'').trim();
+  if(!name) return;
+  const avatar=(prompt('头像URL（可空）：')||'').trim();
+  const persona=(prompt('人设（可空）：')||'').trim();
+  const arr=getContacts();
+  arr.unshift({
+    id:'c_'+Date.now()+'_'+Math.floor(Math.random()*9999),
+    name, avatar, persona,
+    preview:'新的聊天已创建',
+    time:'刚刚',
+    unread:0
   });
+  try{
+    setContacts(arr);
+    renderContacts();
+  }catch{
+    alert('保存失败：本地存储空间不足');
+  }
+}
 
-  // init
-  loadApi();
-  renderContacts();
+// chat
+function getChats(){return getJSON(K_CHATS,{});}
+function setChats(m){setJSON(K_CHATS,m);}
+
+function openChat(id){
+  currentContactId=id;
+  const c=getContacts().find(x=>x.id===id);
+  document.getElementById('chatTitle').textContent=c?c.name:'聊天';
+  renderChat();
+  show('chatRoom');
+}
+window.openChat=openChat;
+
+function renderChat(){
+  const map=getChats();
+  const msgs=map[currentContactId]||[];
+  const box=document.getElementById('chatMsgs');
+  box.innerHTML=msgs.map(m=>`<div class="bubble ${m.role==='user'?'me':'ai'}">${esc(m.text)}</div>`).join('');
+  box.scrollTop=box.scrollHeight;
+}
+function clearChat(){
+  if(!currentContactId) return;
+  if(!confirm('清空当前聊天？')) return;
+  const map=getChats();
+  map[currentContactId]=[];
+  setChats(map);
+  renderChat();
+}
+
+// api
+function loadApi(){
+  const cfg=getJSON(K_API,{base:'',key:'',model:'gpt-4o-mini',temp:0.8});
+  document.getElementById('apiBase').value=cfg.base||'';
+  document.getElementById('apiKey').value=cfg.key||'';
+  document.getElementById('apiModel').value=cfg.model||'gpt-4o-mini';
+  document.getElementById('apiTemp').value=cfg.temp??0.8;
+}
+function saveApi(){
+  const cfg={
+    base:(document.getElementById('apiBase').value||'').trim(),
+    key:(document.getElementById('apiKey').value||'').trim(),
+    model:(document.getElementById('apiModel').value||'').trim()||'gpt-4o-mini',
+    temp:Number(document.getElementById('apiTemp').value||0.8)
+  };
+  setJSON(K_API,cfg);
+  document.getElementById('apiStatus').textContent='状态：已保存';
+  return cfg;
+}
+function chatUrl(base){
+  const b=(base||'').replace(/\/+$/,'');
+  if(b.endsWith('/v1')) return b+'/chat/completions';
+  return b+'/v1/chat/completions';
+}
+async function callApi(messages){
+  const cfg=saveApi();
+  if(!cfg.base||!cfg.key) throw new Error('请先配置 Base URL 和 API Key');
+  const url=chatUrl(cfg.base);
+  const r=await fetch(url,{
+    method:'POST',
+    headers:{
+      'Content-Type':'application/json',
+      'Authorization':'Bearer '+cfg.key
+    },
+    body:JSON.stringify({
+      model:cfg.model,
+      temperature:cfg.temp,
+      messages
+    })
+  });
+  const data=await r.json().catch(()=>({}));
+  if(!r.ok) throw new Error(data?.error?.message || ('HTTP '+r.status));
+  return data?.choices?.[0]?.message?.content?.trim() || '';
+}
+async function testApi(){
+  try{
+    document.getElementById('apiStatus').textContent='状态：测试中...';
+    const out=await callApi([{role:'user',content:'只回复 ok'}]);
+    document.getElementById('apiStatus').textContent='状态：连接成功 -> '+(out||'ok');
+  }catch(e){
+    document.getElementById('apiStatus').textContent='状态：失败 -> '+e.message;
+  }
+}
+window.testApi=testApi;
+
+// send
+async function sendMsg(){
+  const input=document.getElementById('chatInput');
+  const t=(input.value||'').trim();
+  if(!t||!currentContactId) return;
+
+  const map=getChats();
+  map[currentContactId]=map[currentContactId]||[];
+  map[currentContactId].push({role:'user',text:t,time:Date.now()});
+  setChats(map);
+  input.value='';
+  renderChat();
+
+  map[currentContactId].push({role:'assistant',text:'...',time:Date.now()});
+  setChats(map);
+  renderChat();
+
+  try{
+    const c=getContacts().find(x=>x.id===currentContactId);
+    const hist=(map[currentContactId]||[]).filter(m=>m.text!=='...').slice(-20);
+    const messages=[
+      {role:'system',content:`你是${c?.name||'聊天对象'}，人设：${c?.persona||'自然聊天'}。回复自然简短。`},
+      ...hist.map(m=>({role:m.role==='user'?'user':'assistant',content:m.text}))
+    ];
+    const out=await callApi(messages);
+
+    const arr=map[currentContactId];
+    if(arr.length&&arr[arr.length-1].text==='...') arr.pop();
+    arr.push({role:'assistant',text:out||'...',time:Date.now()});
+    setChats(map);
+
+    const cs=getContacts();
+    const idx=cs.findIndex(x=>x.id===currentContactId);
+    if(idx>=0){
+      cs[idx].preview=out||'...';
+      cs[idx].time='刚刚';
+      setContacts(cs);
+    }
+    renderChat();
+    renderContacts(document.getElementById('searchInput').value||'');
+  }catch(e){
+    const arr=map[currentContactId];
+    if(arr.length&&arr[arr.length-1].text==='...') arr.pop();
+    arr.push({role:'assistant',text:'请求失败：'+e.message,time:Date.now()});
+    setChats(map);
+    renderChat();
+  }
+}
+window.sendMsg=sendMsg;
+
+document.getElementById('chatInput').addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg();}
 });
+
+// init
+loadApi();
+renderContacts();
+})();
 </script>
 </body>
 </html>
