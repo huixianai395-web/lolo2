@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>小手机 · 结构版</title>
+  <title>小手机 · 稳定骨架版</title>
   <style>
     :root{
       --glass: rgba(255,255,255,.28);
@@ -11,12 +11,11 @@
       --text:#fff;
       --line:#e9e9ef;
       --blue:#2f66d8;
+      --danger:#d9534f;
     }
     *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
     html,body{margin:0;height:100%;background:#000;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}
-    #phone{
-      width:100%;max-width:430px;height:100dvh;margin:0 auto;position:relative;overflow:hidden;background:#111;
-    }
+    #phone{width:100%;max-width:430px;height:100dvh;margin:0 auto;position:relative;overflow:hidden;background:#111}
     .screen{position:absolute;inset:0;display:none;background:#f7f7fb}
     .screen.active{display:block}
 
@@ -43,7 +42,6 @@
     .clock{margin-top:8px;padding:4px 4px 0;text-shadow:0 2px 12px rgba(0,0,0,.22)}
     .date{font-size:15px;opacity:.95;margin-left:2px}
     .time{font-size:72px;line-height:1.02;letter-spacing:-2px;font-weight:760;margin-top:2px}
-
     .widgets{margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:10px}
     .widget{
       background:var(--glass);border:1px solid var(--glass-border);
@@ -52,10 +50,7 @@
     }
     .widget .t{font-size:12px;opacity:.88}
     .widget .v{font-size:16px;font-weight:700;margin-top:4px}
-
-    .grid{
-      margin-top:14px;display:grid;grid-template-columns:repeat(4,1fr);gap:14px 8px;padding:0 2px
-    }
+    .grid{margin-top:14px;display:grid;grid-template-columns:repeat(4,1fr);gap:14px 8px;padding:0 2px}
     .icon{text-align:center}
     .icon-box{
       width:62px;height:62px;margin:0 auto 6px;border-radius:16px;display:grid;place-items:center;
@@ -65,13 +60,10 @@
     }
     .icon:active .icon-box{transform:scale(.88)}
     .label{font-size:12px;text-shadow:0 1px 2px rgba(0,0,0,.25)}
-
     .dock-wrap{margin-top:auto;padding:10px 2px 0}
     .dock{
-      border-radius:26px;padding:10px;
-      display:grid;grid-template-columns:repeat(3,1fr);gap:8px;
-      background:rgba(255,255,255,.26);
-      border:1px solid rgba(255,255,255,.42);
+      border-radius:26px;padding:10px;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;
+      background:rgba(255,255,255,.26);border:1px solid rgba(255,255,255,.42);
       backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
     }
 
@@ -82,11 +74,41 @@
     }
     .btn{border:none;border-radius:10px;padding:8px 12px;font-size:13px;background:#edf2ff;color:#173a7a}
     .btn.p{background:var(--blue);color:#fff}
+    .btn.d{background:var(--danger);color:#fff}
     .page{height:calc(100% - 52px);overflow:auto;padding:12px;display:flex;flex-direction:column;gap:10px}
     .card{background:#fff;border:1px solid #ececf2;border-radius:14px;padding:12px}
     .small{font-size:12px;color:#777}
-    .input,.ta{width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:10px;font-size:14px}
+    .input,.ta,.select{width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:10px;font-size:14px;background:#fff}
     .ta{min-height:110px;resize:vertical}
+    .row{display:flex;gap:8px;align-items:center}
+
+    /* wechat list */
+    .wechat-list{padding:8px 10px;display:flex;flex-direction:column;gap:8px}
+    .wechat-item{
+      background:#fff;border:1px solid #ececf2;border-radius:12px;padding:10px;
+      display:flex;align-items:center;gap:10px;cursor:pointer;
+    }
+    .wechat-avatar{
+      width:44px;height:44px;border-radius:12px;object-fit:cover;background:#eef2ff;flex-shrink:0;
+    }
+    .wechat-main{flex:1;min-width:0}
+    .wechat-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+    .wechat-name{font-weight:600;color:#222}
+    .wechat-time{font-size:11px;color:#999;white-space:nowrap}
+    .wechat-preview{
+      margin-top:4px;font-size:12px;color:#666;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    }
+    .wechat-badge{
+      min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:#ff4d4f;color:#fff;
+      font-size:11px;display:flex;align-items:center;justify-content:center;
+    }
+
+    /* modal */
+    .modal-mask{position:absolute;inset:0;background:rgba(0,0,0,.35);z-index:99;display:none;place-items:center}
+    .modal-card{
+      width:88%;max-width:360px;background:#fff;border-radius:14px;padding:12px;
+      box-shadow:0 10px 30px rgba(0,0,0,.18);
+    }
   </style>
 </head>
 <body>
@@ -109,16 +131,16 @@
         <div class="widget"><div class="t">天气</div><div class="v">22°C 晴</div></div>
       </div>
 
-      <!-- 上面宫格（不放世界书/API/外观，避免和dock重复） -->
+      <!-- 上方宫格 -->
       <div class="grid">
-        <div class="icon" onclick="show('qq')"><div class="icon-box">💬</div><div class="label">QQ</div></div>
+        <div class="icon" onclick="show('wechat')"><div class="icon-box">💬</div><div class="label">微信</div></div>
         <div class="icon" onclick="show('probe')"><div class="icon-box">📱</div><div class="label">查手机</div></div>
         <div class="icon" onclick="show('books')"><div class="icon-box">📚</div><div class="label">书籍工坊</div></div>
         <div class="icon" onclick="show('fanfic')"><div class="icon-box">🖋️</div><div class="label">同人文</div></div>
         <div class="icon" onclick="show('pdd')"><div class="icon-box">🛍️</div><div class="label">拼多多</div></div>
       </div>
 
-      <!-- 下方Dock -->
+      <!-- 下方 Dock -->
       <div class="dock-wrap">
         <div class="dock">
           <div class="icon" onclick="show('worldbook')"><div class="icon-box">📖</div><div class="label">世界书</div></div>
@@ -129,32 +151,31 @@
     </div>
   </section>
 
-  <!-- QQ (唯一聊天入口骨架) -->
-  <section id="qq" class="screen">
+  <!-- WeChat -->
+  <section id="wechat" class="screen">
     <div class="header">
       <button class="btn" onclick="show('home')">‹ 返回</button>
-      <b>QQ</b>
-      <div>
-        <button class="btn">+</button>
-        <button class="btn p">群聊</button>
+      <b>微信</b>
+      <div class="row">
+        <button class="btn" id="addRoleBtn">+</button>
+        <button class="btn p" id="groupBtn">群聊</button>
       </div>
     </div>
-    <div class="page">
-      <div class="card">
-        <b>聊天入口（后续接完整功能）</b>
-        <div class="small" style="margin-top:6px;">
-          创建角色 / 导入角色 / 单聊 / 群聊 / 表情包 / 转账 / 视频 / 语音 / 上传图片 / 定位 / 礼物 / 通话记录 / 右上角工具设置
-        </div>
+    <div class="page" style="padding:0;">
+      <div style="padding:10px 12px;border-bottom:1px solid #eee;background:#fff;">
+        <input id="wechatSearch" class="input" placeholder="搜索联系人" />
       </div>
-      <div class="card small">这页先做骨架，不和你需求冲突。下一步直接填聊天核心。</div>
+      <div id="wechatList" class="wechat-list"></div>
     </div>
   </section>
 
+  <!-- Probe -->
   <section id="probe" class="screen">
     <div class="header"><button class="btn" onclick="show('home')">‹ 返回</button><b>查手机</b><button class="btn p">刷新</button></div>
-    <div class="page"><div class="card">查手机骨架页（下步做微信感分组会话+动态备注名）</div></div>
+    <div class="page"><div class="card">查手机骨架页（下一步做微信感分组会话+动态备注名）</div></div>
   </section>
 
+  <!-- Books -->
   <section id="books" class="screen">
     <div class="header"><button class="btn" onclick="show('home')">‹ 返回</button><b>书籍工坊</b><button class="btn p">处理</button></div>
     <div class="page">
@@ -163,21 +184,25 @@
     </div>
   </section>
 
+  <!-- Fanfic -->
   <section id="fanfic" class="screen">
     <div class="header"><button class="btn" onclick="show('home')">‹ 返回</button><b>同人文</b><button class="btn p">生成</button></div>
     <div class="page"><div class="card">同人文骨架页</div></div>
   </section>
 
+  <!-- PDD -->
   <section id="pdd" class="screen">
     <div class="header"><button class="btn" onclick="show('home')">‹ 返回</button><b>拼多多</b><span></span></div>
     <div class="page"><div class="card">拼多多骨架页</div></div>
   </section>
 
+  <!-- WorldBook -->
   <section id="worldbook" class="screen">
     <div class="header"><button class="btn" onclick="show('home')">‹ 返回</button><b>世界书</b><span></span></div>
     <div class="page"><div class="card">世界书骨架页</div></div>
   </section>
 
+  <!-- Appearance -->
   <section id="appearance" class="screen">
     <div class="header"><button class="btn" onclick="show('home')">‹ 返回</button><b>外观</b><button class="btn p" onclick="applyWallpaper()">应用</button></div>
     <div class="page">
@@ -192,6 +217,7 @@
     </div>
   </section>
 
+  <!-- API -->
   <section id="api" class="screen">
     <div class="header"><button class="btn" onclick="show('home')">‹ 返回</button><b>API</b><button class="btn p">保存</button></div>
     <div class="page">
@@ -201,26 +227,53 @@
     </div>
   </section>
 
+  <!-- 创建角色弹窗 -->
+  <div id="roleModal" class="modal-mask">
+    <div class="modal-card">
+      <h3 style="margin:0 0 10px;">创建角色</h3>
+      <div class="small">昵称</div>
+      <input id="roleName" class="input" placeholder="例如：沈昼白" />
+      <div class="small" style="margin-top:8px;">分组</div>
+      <select id="roleGroup" class="select">
+        <option>朋友</option>
+        <option>家人</option>
+        <option>同事</option>
+      </select>
+      <div class="small" style="margin-top:8px;">头像URL（可空）</div>
+      <input id="roleAvatar" class="input" placeholder="https://..." />
+      <div class="small" style="margin-top:8px;">人设</div>
+      <textarea id="rolePersona" class="ta" placeholder="写角色性格、背景、说话方式..."></textarea>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px;">
+        <button class="btn" id="cancelRoleBtn">取消</button>
+        <button class="btn p" id="saveRoleBtn">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 导入角色 -->
+  <input type="file" id="roleImportInput" accept="application/json" style="display:none;" />
+
 </div>
 
 <script>
+  /* ========= 基础 ========= */
   function show(id){
     document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
     document.getElementById(id).classList.add('active');
   }
 
-  // 时钟
+  /* ========= 时钟 ========= */
   function tick(){
     const n=new Date();
     const h=String(n.getHours()).padStart(2,'0');
     const m=String(n.getMinutes()).padStart(2,'0');
     const w=['周日','周一','周二','周三','周四','周五','周六'][n.getDay()];
-    document.getElementById('timeText').textContent = `${h}:${m}`;
-    document.getElementById('dateText').textContent = `${n.getMonth()+1}月${n.getDate()}日 ${w}`;
+    document.getElementById('timeText').textContent=`${h}:${m}`;
+    document.getElementById('dateText').textContent=`${n.getMonth()+1}月${n.getDate()}日 ${w}`;
   }
   tick(); setInterval(tick,1000);
 
-  // 飘花
+  /* ========= 飘花 ========= */
   const canvas = document.getElementById('petals');
   const ctx = canvas.getContext('2d');
   let petals = [];
@@ -253,7 +306,7 @@
   }
   resize(); draw(); window.addEventListener('resize',resize);
 
-  // 换壁纸
+  /* ========= 换壁纸 ========= */
   const wallpaper = document.getElementById('wallpaper');
   function applyWallpaper(){
     const url = document.getElementById('wpUrl').value.trim();
@@ -263,25 +316,174 @@
     localStorage.setItem('wp', url);
     alert('壁纸已应用');
   }
-  const wpFile = document.getElementById('wpFile');
-  wpFile.addEventListener('change', e=>{
+  document.getElementById('wpFile').addEventListener('change', e=>{
     const f = e.target.files?.[0];
     if(!f) return;
-    const reader = new FileReader();
-    reader.onload = ()=>{
-      const data = reader.result;
+    const fr = new FileReader();
+    fr.onload = ()=>{
+      const data = fr.result;
       wallpaper.style.background =
         `linear-gradient(160deg, rgba(40,96,255,.28), rgba(125,221,255,.14)), url('${data}') center/cover no-repeat`;
       localStorage.setItem('wp', data);
       alert('本地壁纸已应用');
     };
-    reader.readAsDataURL(f);
+    fr.readAsDataURL(f);
   });
-  const saved = localStorage.getItem('wp');
-  if(saved){
+  const savedWp = localStorage.getItem('wp');
+  if(savedWp){
     wallpaper.style.background =
-      `linear-gradient(160deg, rgba(40,96,255,.28), rgba(125,221,255,.14)), url('${saved}') center/cover no-repeat`;
+      `linear-gradient(160deg, rgba(40,96,255,.28), rgba(125,221,255,.14)), url('${savedWp}') center/cover no-repeat`;
   }
+
+  /* ========= 微信联系人 ========= */
+  const WECHAT_KEY = 'wechat_contacts_v1';
+
+  function getWechatContacts(){
+    const raw = localStorage.getItem(WECHAT_KEY);
+    if(raw){
+      try{return JSON.parse(raw);}catch(e){}
+    }
+    const seed = [{
+      id: 'c_' + Date.now(),
+      name: '沈昼白',
+      group: '朋友',
+      avatar: 'https://i.postimg.cc/y8xWzCqj/anime-boy.jpg',
+      persona: '计算机系大三，爱分享日常，嘴硬心软',
+      preview: '在吗 我刚遛狗回来',
+      time: '刚刚',
+      unread: 2
+    }];
+    localStorage.setItem(WECHAT_KEY, JSON.stringify(seed));
+    return seed;
+  }
+  function setWechatContacts(arr){
+    localStorage.setItem(WECHAT_KEY, JSON.stringify(arr));
+  }
+
+  function renderWechatList(keyword=''){
+    const list = document.getElementById('wechatList');
+    const contacts = getWechatContacts().filter(c=>{
+      const k = keyword.trim();
+      if(!k) return true;
+      return (c.name||'').includes(k) || (c.group||'').includes(k);
+    });
+
+    list.innerHTML = contacts.map(c=>`
+      <div class="wechat-item" data-id="${c.id}">
+        <img class="wechat-avatar" src="${c.avatar || 'https://via.placeholder.com/88x88?text=头像'}" />
+        <div class="wechat-main">
+          <div class="wechat-top">
+            <div class="wechat-name">${escapeHtml(c.name)} <span class="small">(${escapeHtml(c.group||'朋友')})</span></div>
+            <div class="wechat-time">${escapeHtml(c.time||'')}</div>
+          </div>
+          <div class="wechat-preview">${escapeHtml(c.preview||'点击进入聊天')}</div>
+        </div>
+        ${c.unread ? `<div class="wechat-badge">${c.unread}</div>` : ''}
+      </div>
+    `).join('') || `<div class="card small">暂无联系人，点右上角 + 创建或导入。</div>`;
+
+    list.querySelectorAll('.wechat-item').forEach(item=>{
+      item.onclick = ()=>{
+        const id = item.dataset.id;
+        const c = getWechatContacts().find(x=>x.id===id);
+        alert(`下一步接入真实聊天页：${c.name}`);
+      };
+    });
+  }
+
+  function escapeHtml(s=''){
+    return String(s).replace(/[&<>"']/g, m => ({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    }[m]));
+  }
+
+  function openRoleModal(){ document.getElementById('roleModal').style.display='grid'; }
+  function closeRoleModal(){ document.getElementById('roleModal').style.display='none'; }
+
+  function saveRole(){
+    const name = document.getElementById('roleName').value.trim();
+    const group = document.getElementById('roleGroup').value;
+    const avatar = document.getElementById('roleAvatar').value.trim();
+    const persona = document.getElementById('rolePersona').value.trim();
+    if(!name) return alert('昵称不能为空');
+
+    const arr = getWechatContacts();
+    arr.unshift({
+      id: 'c_' + Date.now(),
+      name, group, avatar, persona,
+      preview: '新的聊天已创建',
+      time: '刚刚',
+      unread: 0
+    });
+    setWechatContacts(arr);
+
+    document.getElementById('roleName').value='';
+    document.getElementById('roleAvatar').value='';
+    document.getElementById('rolePersona').value='';
+    closeRoleModal();
+    renderWechatList();
+  }
+
+  function importRoleJson(file){
+    const fr = new FileReader();
+    fr.onload = ()=>{
+      try{
+        const data = JSON.parse(fr.result);
+        const list = Array.isArray(data) ? data : [data];
+        const arr = getWechatContacts();
+
+        list.forEach(x=>{
+          if(!x.name) return;
+          arr.unshift({
+            id: 'c_' + Date.now() + '_' + Math.floor(Math.random()*9999),
+            name: x.name,
+            group: x.group || '朋友',
+            avatar: x.avatar || '',
+            persona: x.persona || '',
+            preview: x.preview || '已导入角色',
+            time: '刚刚',
+            unread: Number(x.unread || 0)
+          });
+        });
+
+        setWechatContacts(arr);
+        renderWechatList();
+        alert('导入成功');
+      }catch(e){
+        alert('JSON格式不正确');
+      }
+    };
+    fr.readAsText(file, 'utf-8');
+  }
+
+  function bindWechatEvents(){
+    const addBtn = document.getElementById('addRoleBtn');
+    const groupBtn = document.getElementById('groupBtn');
+    const search = document.getElementById('wechatSearch');
+    const cancelBtn = document.getElementById('cancelRoleBtn');
+    const saveBtn = document.getElementById('saveRoleBtn');
+    const importInput = document.getElementById('roleImportInput');
+    const modal = document.getElementById('roleModal');
+
+    addBtn.onclick = ()=>{
+      const create = confirm('点“确定”创建角色；点“取消”导入JSON');
+      if(create) openRoleModal();
+      else importInput.click();
+    };
+    groupBtn.onclick = ()=> alert('群聊选择器下一步接入');
+    search.oninput = e => renderWechatList(e.target.value.trim());
+    cancelBtn.onclick = closeRoleModal;
+    saveBtn.onclick = saveRole;
+    importInput.onchange = e=>{
+      const f = e.target.files?.[0];
+      if(f) importRoleJson(f);
+      e.target.value = '';
+    };
+    modal.onclick = e=>{ if(e.target.id==='roleModal') closeRoleModal(); };
+  }
+
+  bindWechatEvents();
+  renderWechatList();
 </script>
 </body>
 </html>
