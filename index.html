@@ -1,40 +1,87 @@
-
 <!doctype html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>小手机 v1.1</title>
+  <title>小手机 v1.2 稳定版</title>
   <style>
+    :root{
+      --line:#e9e9ef;
+      --bg:#f7f7fb;
+      --blue:#2f66d8;
+      --glass: rgba(255,255,255,.28);
+      --glass-border: rgba(255,255,255,.46);
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
     *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-    html,body{margin:0;height:100%;background:#000;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}
-    #app{max-width:430px;height:100dvh;margin:0 auto;position:relative;overflow:hidden;background:#111}
-    .screen{position:absolute;inset:0;display:none;background:#f7f7fb}
+    html,body{margin:0;height:100%;background:#0f1424;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}
+    #app{
+      width:100%;
+      max-width:430px;
+      height:100svh; /* 修复顶部黑条 */
+      min-height:100svh;
+      margin:0 auto;
+      position:relative;
+      overflow:hidden;
+      background:#111;
+    }
+
+    .screen{position:absolute;inset:0;display:none;background:var(--bg)}
     .screen.active{display:block}
-    .header{height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 12px;background:#fff;border-bottom:1px solid #e9e9ef}
-    .btn{border:none;border-radius:10px;padding:8px 12px;font-size:13px;background:#edf2ff;color:#173a7a;cursor:pointer}
-    .btn.p{background:#2f66d8;color:#fff}
+
+    .header{
+      padding-top:var(--safe-top);
+      height:calc(52px + var(--safe-top));
+      display:flex;align-items:center;justify-content:space-between;
+      padding-left:12px;padding-right:12px;
+      background:#fff;border-bottom:1px solid var(--line);
+    }
+
+    .btn{
+      border:none;border-radius:10px;padding:8px 12px;font-size:13px;
+      background:#edf2ff;color:#173a7a;cursor:pointer;
+    }
+    .btn.p{background:var(--blue);color:#fff}
     .btn.d{background:#d9534f;color:#fff}
-    .page{height:calc(100% - 52px);overflow:auto;padding:12px;display:flex;flex-direction:column;gap:10px}
+
+    .page{
+      height:calc(100% - (52px + var(--safe-top)));
+      overflow:auto;
+      padding:12px;
+      padding-bottom:calc(12px + var(--safe-bottom));
+      display:flex;flex-direction:column;gap:10px;
+    }
+
     .card{background:#fff;border:1px solid #ececf2;border-radius:14px;padding:12px}
     .small{font-size:12px;color:#777}
-    .input,.ta,.select{width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:10px;background:#fff;font-size:16px}
-    .ta{min-height:44px;resize:none}
     .row{display:flex;gap:8px;align-items:center}
+    .input,.ta,.select{
+      width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:10px;
+      font-size:16px;background:#fff;
+    }
+    .ta{resize:none}
+    .hidden{display:none !important}
 
     /* HOME */
     #home{color:#fff}
     .wall{
-      position:absolute;inset:0;background:
-      linear-gradient(160deg, rgba(40,96,255,.34), rgba(125,221,255,.18)),
-      url('https://picsum.photos/900/1800?blur=1') center/cover no-repeat;
-      z-index:0
+      position:absolute;inset:0;z-index:0;
+      background:
+        linear-gradient(160deg, rgba(40,96,255,.34), rgba(125,221,255,.18)),
+        url('https://picsum.photos/900/1800?blur=1') center/cover no-repeat;
     }
-    .home-layer{position:relative;z-index:2;height:100%;padding:18px 12px 14px;display:flex;flex-direction:column}
+    #petals{position:absolute;inset:0;z-index:1;pointer-events:none}
+    .home-layer{
+      position:relative;z-index:2;height:100%;
+      padding:calc(18px + var(--safe-top)) 12px calc(14px + var(--safe-bottom));
+      display:flex;flex-direction:column;
+    }
     .windchime{
-      position:absolute;right:14px;top:22px;width:62px;height:150px;z-index:3;pointer-events:none;
+      position:absolute;right:14px;top:calc(22px + var(--safe-top));
+      width:62px;height:150px;z-index:3;pointer-events:none;
       transform-origin:top center;animation:swing 3.2s ease-in-out infinite;
-      filter:drop-shadow(0 6px 10px rgba(0,0,0,.25))
+      filter:drop-shadow(0 6px 10px rgba(0,0,0,.25));
     }
     .windchime .line{position:absolute;left:30px;top:0;width:2px;height:66px;background:linear-gradient(#ffe8b5,#8b6632)}
     .windchime .ring{position:absolute;left:10px;top:62px;width:42px;height:42px;border-radius:50%;border:2px solid rgba(230,197,133,.95);box-shadow:inset 0 0 14px rgba(0,0,0,.22)}
@@ -42,10 +89,10 @@
     @keyframes swing{0%,100%{transform:rotate(6deg)}50%{transform:rotate(-6deg)}}
 
     .date{font-size:15px;opacity:.95}
-    .time{font-size:72px;font-weight:760;letter-spacing:-2px;text-shadow:0 2px 12px rgba(0,0,0,.2)}
+    .time{font-size:72px;line-height:1.02;font-weight:760;letter-spacing:-2px;text-shadow:0 2px 12px rgba(0,0,0,.2)}
     .widgets{margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:10px}
     .widget{
-      background:rgba(255,255,255,.28);border:1px solid rgba(255,255,255,.46);
+      background:var(--glass);border:1px solid var(--glass-border);
       border-radius:18px;padding:10px 12px;backdrop-filter:blur(12px)
     }
     .widget .t{font-size:12px;opacity:.88}
@@ -54,13 +101,17 @@
     .icon{text-align:center}
     .ibox{
       width:62px;height:62px;margin:0 auto 6px;border-radius:16px;display:grid;place-items:center;
-      background:rgba(255,255,255,.28);border:1px solid rgba(255,255,255,.45);font-size:27px;cursor:pointer
+      background:rgba(255,255,255,.28);border:1px solid rgba(255,255,255,.45);
+      font-size:27px;cursor:pointer;
     }
     .lab{font-size:12px;text-shadow:0 1px 2px rgba(0,0,0,.25)}
 
     /* list */
     .list{display:flex;flex-direction:column;gap:8px}
-    .item{background:#fff;border:1px solid #ececf2;border-radius:12px;padding:10px;display:flex;gap:10px;align-items:center}
+    .item{
+      background:#fff;border:1px solid #ececf2;border-radius:12px;padding:10px;
+      display:flex;gap:10px;align-items:center;
+    }
     .avatar{width:44px;height:44px;border-radius:12px;object-fit:cover;background:#eef2ff;flex-shrink:0}
     .main{flex:1;min-width:0;cursor:pointer}
     .name{font-weight:600;color:#222}
@@ -69,36 +120,45 @@
 
     /* chat */
     #chatMsgs{
-      height:calc(100% - 52px - 68px);
+      height:calc(100% - (52px + var(--safe-top)) - (68px + var(--safe-bottom)));
       overflow:auto;padding:12px;background:#eef1f6;
-      display:flex;flex-direction:column;gap:10px
+      display:flex;flex-direction:column;gap:10px;
     }
     .msg-row{display:flex;gap:8px;align-items:flex-end}
     .msg-row.me{justify-content:flex-end}
     .chat-avatar{width:32px;height:32px;border-radius:10px;object-fit:cover;background:#dde6ff;flex-shrink:0}
     .bubble{
-      max-width:74%;padding:10px 12px;border-radius:14px;line-height:1.45;
-      word-break:break-word;white-space:pre-wrap
+      max-width:74%;
+      padding:10px 12px;border-radius:14px;line-height:1.45;
+      word-break:break-word;white-space:pre-wrap;
     }
     .bubble.me{background:#2f66d8;color:#fff;border-bottom-right-radius:6px}
     .bubble.ai{background:#fff;border:1px solid #e8e8ef;border-bottom-left-radius:6px}
 
     .chatInputBar{
-      position:absolute;left:0;right:0;bottom:0;padding:10px;background:#fff;border-top:1px solid #e9e9ef;
-      display:flex;gap:8px;align-items:flex-end
+      position:absolute;left:0;right:0;bottom:0;
+      padding:10px;
+      padding-bottom:calc(10px + var(--safe-bottom));
+      background:#fff;border-top:1px solid #e9e9ef;
+      display:flex;gap:8px;align-items:flex-end;
     }
     #chatInput{
-      flex:1;height:44px;min-height:44px;max-height:96px;overflow-y:auto;resize:none;
+      flex:1;
+      min-height:44px;
+      height:44px;
+      max-height:96px;
+      overflow-y:auto;
+      resize:none;
     }
 
     /* modal */
     .modal-mask{
       position:absolute;inset:0;background:rgba(0,0,0,.35);z-index:99;
-      display:none;place-items:center;padding:12px
+      display:none;place-items:center;padding:12px;
     }
     .modal-card{
-      width:100%;max-width:360px;max-height:90dvh;overflow:auto;
-      background:#fff;border-radius:14px;padding:12px;box-shadow:0 10px 30px rgba(0,0,0,.18)
+      width:100%;max-width:360px;max-height:90svh;overflow:auto;
+      background:#fff;border-radius:14px;padding:12px;box-shadow:0 10px 30px rgba(0,0,0,.18);
     }
     .preview-img{width:64px;height:64px;border-radius:12px;object-fit:cover;border:1px solid #eee;background:#f3f5ff}
   </style>
@@ -109,6 +169,7 @@
   <!-- HOME -->
   <section id="home" class="screen active">
     <div class="wall"></div>
+    <canvas id="petals"></canvas>
     <div class="windchime"><span class="line"></span><span class="ring"></span><span class="tag"></span></div>
     <div class="home-layer">
       <div class="date" id="homeDate"></div>
@@ -131,9 +192,7 @@
     <div class="header">
       <button class="btn" data-nav="home">‹ 返回</button>
       <b>微信</b>
-      <div class="row">
-        <button class="btn" id="addContactBtn">+联系人</button>
-      </div>
+      <button class="btn" id="addContactBtn">+联系人</button>
     </div>
     <div class="page">
       <input id="searchInput" class="input" placeholder="搜索联系人" />
@@ -166,6 +225,15 @@
       <button class="btn p" id="saveApiBtn">保存</button>
     </div>
     <div class="page">
+      <div class="card">
+        <div class="small">API预设</div>
+        <div class="row" style="margin-top:8px;">
+          <select id="apiPresetSelect" class="select"></select>
+          <button class="btn" id="newPresetBtn">新建</button>
+          <button class="btn d" id="delPresetBtn">删</button>
+        </div>
+      </div>
+
       <div class="card">
         <div class="small">Base URL（反代）</div>
         <input id="apiBase" class="input" placeholder="https://api.cetaceang.qzz.io" />
@@ -264,33 +332,47 @@
 
 <script>
 (() => {
-  const K_API='mini_api_v11';
-  const K_CONTACT='mini_contacts_v11';
-  const K_CHAT='mini_chats_v11';
-  const K_ME='mini_me_v11';
+  // ===== keys =====
+  const K_CONTACT='mp_v12_contacts';
+  const K_CHAT='mp_v12_chats';
+  const K_ME='mp_v12_me';
+  const K_API='mp_v12_api';
 
+  // ===== state =====
   let currentId=null;
   let newAvatarData='';
   let roleAvatarData='';
   let meAvatarData='';
 
+  // ===== helpers =====
   const $ = id => document.getElementById(id);
   const getJ=(k,d)=>{try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(d));}catch{return d;}};
   const setJ=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
   const esc=s=>String(s||'').replace(/[&<>"']/g,m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
+
+  // 清洗异常字符，避免奇怪输出
+  function cleanText(s=''){
+    return String(s)
+      .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g,'')
+      .replace(/\uFFFD/g,'')
+      .trim();
+  }
 
   function show(id){
     document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
     const el=$(id); if(el) el.classList.add('active');
   }
 
+  // nav
   document.querySelectorAll('[data-nav]').forEach(el=>{
     el.addEventListener('click', ()=>show(el.getAttribute('data-nav')));
   });
 
   // time
   function tick(){
-    const n=new Date(), h=String(n.getHours()).padStart(2,'0'), m=String(n.getMinutes()).padStart(2,'0');
+    const n=new Date();
+    const h=String(n.getHours()).padStart(2,'0');
+    const m=String(n.getMinutes()).padStart(2,'0');
     const w=['周日','周一','周二','周三','周四','周五','周六'][n.getDay()];
     $('homeDate').textContent=`${n.getMonth()+1}月${n.getDate()}日 ${w}`;
     $('homeTime').textContent=`${h}:${m}`;
@@ -345,7 +427,7 @@
     });
   }
 
-  // contacts list
+  // contacts render
   function renderContacts(keyword=''){
     const k=(keyword||'').trim();
     const arr=getContacts().filter(c=>!k||c.name.includes(k)||(c.preview||'').includes(k));
@@ -364,20 +446,18 @@
   }
 
   // create contact modal
-  function openContactModal(){
-    $('contactModal').style.display='grid';
-  }
+  function openContactModal(){ $('contactModal').style.display='grid'; }
   function closeContactModal(){
     $('contactModal').style.display='none';
     $('newName').value=''; $('newAvatarUrl').value=''; $('newPersona').value='';
     newAvatarData=''; $('newAvatarPreview').classList.add('hidden'); $('newAvatarPreview').src='';
   }
 
-  async function saveContact(){
-    const name=($('newName').value||'').trim();
+  function saveContact(){
+    const name=cleanText($('newName').value);
     if(!name) return alert('昵称不能为空');
-    const avatarUrl=($('newAvatarUrl').value||'').trim();
-    const persona=($('newPersona').value||'').trim();
+    const avatarUrl=cleanText($('newAvatarUrl').value);
+    const persona=cleanText($('newPersona').value);
 
     const arr=getContacts();
     arr.unshift({
@@ -397,21 +477,21 @@
     closeContactModal();
   }
 
-  $('addContactBtn').addEventListener('click', openContactModal);
-  $('cancelNewBtn').addEventListener('click', closeContactModal);
-  $('saveNewBtn').addEventListener('click', saveContact);
+  $('addContactBtn').onclick=openContactModal;
+  $('cancelNewBtn').onclick=closeContactModal;
+  $('saveNewBtn').onclick=saveContact;
   $('contactModal').addEventListener('click',e=>{ if(e.target.id==='contactModal') closeContactModal(); });
 
-  $('pickNewAvatarBtn').addEventListener('click',()=> $('newAvatarFile').click());
-  $('newAvatarFile').addEventListener('change', async e=>{
+  $('pickNewAvatarBtn').onclick=()=> $('newAvatarFile').click();
+  $('newAvatarFile').onchange=async e=>{
     const f=e.target.files?.[0]; if(!f) return;
     newAvatarData=await compressImage(f,280,0.55);
     $('newAvatarPreview').src=newAvatarData;
     $('newAvatarPreview').classList.remove('hidden');
     e.target.value='';
-  });
+  };
 
-  $('searchInput').addEventListener('input',e=>renderContacts(e.target.value||''));
+  $('searchInput').oninput=e=>renderContacts(e.target.value||'');
 
   // chat
   window.openChat=function(id){
@@ -422,32 +502,27 @@
     show('chatRoom');
   };
 
+  function splitAiBubbles(text){
+    const clean = cleanText(text);
+    if(!clean) return ['...'];
+    // 按空行分段，像微信多条气泡
+    return clean.split(/\n{2,}/).map(s=>s.trim()).filter(Boolean).slice(0,8);
+  }
+
   function renderChat(){
     const c=getContacts().find(x=>x.id===currentId);
     const me=getMe();
-    const roleAvatar = c?.avatar || 'https://via.placeholder.com/64x64?text=TA';
-    const meAvatar = me.avatar || 'https://via.placeholder.com/64x64?text=我';
-
+    const roleAvatar=c?.avatar||'https://via.placeholder.com/64x64?text=TA';
+    const meAvatar=me.avatar||'https://via.placeholder.com/64x64?text=我';
     const map=getChats();
     const arr=map[currentId]||[];
 
     $('chatMsgs').innerHTML=arr.map(m=>{
       if(m.role==='user'){
-        return `
-          <div class="msg-row me">
-            <div class="bubble me">${esc(m.text)}</div>
-            <img class="chat-avatar" src="${meAvatar}" />
-          </div>
-        `;
+        return `<div class="msg-row me"><div class="bubble me">${esc(m.text)}</div><img class="chat-avatar" src="${meAvatar}"></div>`;
       }
-      return `
-        <div class="msg-row">
-          <img class="chat-avatar" src="${roleAvatar}" />
-          <div class="bubble ai">${esc(m.text)}</div>
-        </div>
-      `;
+      return `<div class="msg-row"><img class="chat-avatar" src="${roleAvatar}"><div class="bubble ai">${esc(m.text)}</div></div>`;
     }).join('');
-
     $('chatMsgs').scrollTop=$('chatMsgs').scrollHeight;
   }
 
@@ -459,38 +534,96 @@
     setChats(map);
     renderChat();
   }
-  $('clearChatBtn').addEventListener('click', clearChat);
+  $('clearChatBtn').onclick=clearChat;
 
-  // input behavior
+  // input height
   function resetInputHeight(){ $('chatInput').style.height='44px'; }
   $('chatInput').addEventListener('input', ()=>{
-    // 固定上限，不无限长
     const el=$('chatInput');
     el.style.height='44px';
     el.style.height=Math.min(el.scrollHeight,96)+'px';
   });
 
-  // api
-  function loadApi(){
-    const cfg=getJ(K_API,{base:'',key:'',model:'gpt-4o-mini',temp:0.8});
+  // API presets
+  function getApiState(){
+    return getJ(K_API,{
+      current:'默认',
+      presets:{
+        '默认':{base:'',key:'',model:'gpt-4o-mini',temp:0.8}
+      }
+    });
+  }
+  function setApiState(s){ setJ(K_API,s); }
+
+  function refreshPresetUI(){
+    const s=getApiState();
+    const names=Object.keys(s.presets);
+    $('apiPresetSelect').innerHTML=names.map(n=>`<option ${n===s.current?'selected':''}>${n}</option>`).join('');
+    loadApiForm();
+  }
+
+  function loadApiForm(){
+    const s=getApiState();
+    const cfg=s.presets[s.current] || {base:'',key:'',model:'gpt-4o-mini',temp:0.8};
     $('apiBase').value=cfg.base||'';
     $('apiKey').value=cfg.key||'';
     $('apiTemp').value=cfg.temp??0.8;
     $('apiModel').innerHTML=`<option value="${cfg.model||'gpt-4o-mini'}">${cfg.model||'gpt-4o-mini'}</option>`;
   }
 
-  function saveApi(){
-    const cfg={
-      base:($('apiBase').value||'').trim(),
-      key:($('apiKey').value||'').trim(),
-      model:($('apiModel').value||'').trim()||'gpt-4o-mini',
+  function saveApiForm(){
+    const s=getApiState();
+    s.presets[s.current]={
+      base:cleanText($('apiBase').value),
+      key:cleanText($('apiKey').value),
+      model:cleanText($('apiModel').value)||'gpt-4o-mini',
       temp:Number($('apiTemp').value||0.8)
     };
-    setJ(K_API,cfg);
+    setApiState(s);
     $('apiStatus').textContent='状态：已保存';
-    return cfg;
+    return s.presets[s.current];
   }
 
+  function switchPreset(name){
+    const s=getApiState();
+    if(!s.presets[name]) return;
+    // 先保存当前
+    s.presets[s.current]={
+      base:cleanText($('apiBase').value),
+      key:cleanText($('apiKey').value),
+      model:cleanText($('apiModel').value)||'gpt-4o-mini',
+      temp:Number($('apiTemp').value||0.8)
+    };
+    s.current=name;
+    setApiState(s);
+    loadApiForm();
+  }
+
+  $('apiPresetSelect').addEventListener('change',e=>switchPreset(e.target.value));
+
+  $('newPresetBtn').onclick=()=>{
+    const name=(prompt('新预设名：')||'').trim();
+    if(!name) return;
+    const s=getApiState();
+    if(s.presets[name]) return alert('预设已存在');
+    s.presets[name]={base:'',key:'',model:'gpt-4o-mini',temp:0.8};
+    s.current=name;
+    setApiState(s);
+    refreshPresetUI();
+  };
+
+  $('delPresetBtn').onclick=()=>{
+    const s=getApiState();
+    const names=Object.keys(s.presets);
+    if(names.length<=1) return alert('至少保留一个预设');
+    if(!confirm('删除当前预设？')) return;
+    delete s.presets[s.current];
+    s.current=Object.keys(s.presets)[0];
+    setApiState(s);
+    refreshPresetUI();
+  };
+
+  // api request
   function buildUrl(base,path){
     const b=(base||'').replace(/\/+$/,'');
     if(b.endsWith('/v1')) return b + path.replace('/v1','');
@@ -498,34 +631,25 @@
   }
 
   async function callApi(messages){
-    const cfg=saveApi();
+    const cfg=saveApiForm();
     if(!cfg.base||!cfg.key) throw new Error('请先配置 Base URL 和 API Key');
     const url=buildUrl(cfg.base,'/v1/chat/completions');
 
     const r=await fetch(url,{
       method:'POST',
-      headers:{
-        'Content-Type':'application/json',
-        'Authorization':'Bearer '+cfg.key
-      },
-      body:JSON.stringify({
-        model:cfg.model,
-        temperature:cfg.temp,
-        messages
-      })
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+cfg.key},
+      body:JSON.stringify({model:cfg.model,temperature:cfg.temp,messages})
     });
-
     const data=await r.json().catch(()=>({}));
     if(!r.ok) throw new Error(data?.error?.message || ('HTTP '+r.status));
-    return data?.choices?.[0]?.message?.content?.trim() || '';
+    return cleanText(data?.choices?.[0]?.message?.content||'');
   }
 
   async function fetchModels(){
     try{
-      const cfg=saveApi();
+      const cfg=saveApiForm();
       if(!cfg.base||!cfg.key) throw new Error('请先配置 Base URL 和 API Key');
       $('apiStatus').textContent='状态：拉取模型中...';
-
       const url=buildUrl(cfg.base,'/v1/models');
       const r=await fetch(url,{headers:{'Authorization':'Bearer '+cfg.key}});
       const data=await r.json().catch(()=>({}));
@@ -533,7 +657,6 @@
 
       const list=(data.data||[]).map(x=>x.id).filter(Boolean);
       if(!list.length) throw new Error('未返回模型列表');
-
       $('apiModel').innerHTML=list.map(m=>`<option value="${m}">${m}</option>`).join('');
       if(list.includes(cfg.model)) $('apiModel').value=cfg.model;
       $('apiStatus').textContent='状态：模型拉取成功（'+list.length+'）';
@@ -552,13 +675,13 @@
     }
   }
 
-  $('saveApiBtn').addEventListener('click', saveApi);
-  $('fetchModelsBtn').addEventListener('click', fetchModels);
-  $('testApiBtn').addEventListener('click', testApi);
+  $('saveApiBtn').onclick=saveApiForm;
+  $('fetchModelsBtn').onclick=fetchModels;
+  $('testApiBtn').onclick=testApi;
 
   // send
   async function sendMsg(){
-    const text=($('chatInput').value||'').trim();
+    const text=cleanText($('chatInput').value);
     if(!text||!currentId) return;
 
     const map=getChats();
@@ -577,22 +700,22 @@
       const c=getContacts().find(x=>x.id===currentId);
       const hist=(map[currentId]||[]).filter(x=>x.text!=='...').slice(-20);
       const messages=[
-        {role:'system',content:`你是${c?.name||'聊天对象'}。人设：${c?.persona||'自然聊天'}。回复自然简短。`},
+        {role:'system',content:`你是${c?.name||'聊天对象'}。人设：${c?.persona||'自然聊天'}。回复自然简短，分段表达。`},
         ...hist.map(x=>({role:x.role==='user'?'user':'assistant',content:x.text}))
       ];
 
       const out=await callApi(messages);
+      const parts=splitAiBubbles(out);
 
       const arr=map[currentId];
       if(arr.length&&arr[arr.length-1].text==='...') arr.pop();
-      arr.push({role:'assistant',text:out||'...',time:Date.now()});
+      parts.forEach(p=>arr.push({role:'assistant',text:p,time:Date.now()}));
       setChats(map);
 
-      // 更新预览
       const contacts=getContacts();
       const i=contacts.findIndex(x=>x.id===currentId);
       if(i>=0){
-        contacts[i].preview=out||'...';
+        contacts[i].preview=parts[0]||'...';
         contacts[i].time='刚刚';
         setContacts(contacts);
       }
@@ -602,21 +725,18 @@
     }catch(e){
       const arr=map[currentId];
       if(arr.length&&arr[arr.length-1].text==='...') arr.pop();
-      arr.push({role:'assistant',text:'请求失败：'+e.message,time:Date.now()});
+      arr.push({role:'assistant',text:'请求失败：'+cleanText(e.message),time:Date.now()});
       setChats(map);
       renderChat();
     }
   }
 
-  $('sendBtn').addEventListener('click', sendMsg);
+  $('sendBtn').onclick=sendMsg;
   $('chatInput').addEventListener('keydown',e=>{
-    if(e.key==='Enter'&&!e.shiftKey){
-      e.preventDefault();
-      sendMsg();
-    }
+    if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg();}
   });
 
-  // chat settings modal
+  // settings modal
   function openChatSettings(){
     if(!currentId) return;
     const c=getContacts().find(x=>x.id===currentId);
@@ -637,10 +757,7 @@
     roleAvatarData=''; meAvatarData='';
     $('chatSettingsModal').style.display='grid';
   }
-
-  function closeChatSettings(){
-    $('chatSettingsModal').style.display='none';
-  }
+  function closeChatSettings(){ $('chatSettingsModal').style.display='none'; }
 
   async function saveChatSettings(){
     if(!currentId) return;
@@ -648,58 +765,62 @@
     const i=contacts.findIndex(x=>x.id===currentId);
     if(i<0) return;
 
-    const roleName=($('editRoleName').value||'').trim() || contacts[i].name;
-    const rolePersona=($('editRolePersona').value||'').trim();
-    const roleAvatarUrl=($('editRoleAvatarUrl').value||'').trim();
-
-    contacts[i].name=roleName;
-    contacts[i].persona=rolePersona;
-    contacts[i].avatar=roleAvatarData || roleAvatarUrl || contacts[i].avatar || '';
+    contacts[i].name=cleanText($('editRoleName').value)||contacts[i].name;
+    contacts[i].persona=cleanText($('editRolePersona').value);
+    contacts[i].avatar=roleAvatarData || cleanText($('editRoleAvatarUrl').value) || contacts[i].avatar || '';
     setContacts(contacts);
 
     const me=getMe();
-    const meName=($('editMeName').value||'').trim() || '我';
-    const mePersona=($('editMePersona').value||'').trim();
-    const meAvatarUrl=($('editMeAvatarUrl').value||'').trim();
     setMe({
-      name:meName,
-      persona:mePersona,
-      avatar: meAvatarData || meAvatarUrl || me.avatar || ''
+      name:cleanText($('editMeName').value)||'我',
+      persona:cleanText($('editMePersona').value),
+      avatar: meAvatarData || cleanText($('editMeAvatarUrl').value) || me.avatar || ''
     });
 
-    $('chatTitle').textContent=roleName;
+    $('chatTitle').textContent=contacts[i].name;
     renderContacts($('searchInput').value||'');
     renderChat();
     closeChatSettings();
     alert('聊天设置已保存');
   }
 
-  $('chatSettingsBtn').addEventListener('click', openChatSettings);
-  $('cancelSettingsBtn').addEventListener('click', closeChatSettings);
-  $('saveSettingsBtn').addEventListener('click', saveChatSettings);
+  $('chatSettingsBtn').onclick=openChatSettings;
+  $('cancelSettingsBtn').onclick=closeChatSettings;
+  $('saveSettingsBtn').onclick=saveChatSettings;
   $('chatSettingsModal').addEventListener('click',e=>{ if(e.target.id==='chatSettingsModal') closeChatSettings(); });
 
-  $('pickRoleAvatarBtn').addEventListener('click',()=> $('editRoleAvatarFile').click());
-  $('editRoleAvatarFile').addEventListener('change', async e=>{
+  $('pickRoleAvatarBtn').onclick=()=> $('editRoleAvatarFile').click();
+  $('editRoleAvatarFile').onchange=async e=>{
     const f=e.target.files?.[0]; if(!f) return;
     roleAvatarData=await compressImage(f,280,0.55);
     $('editRoleAvatarPreview').src=roleAvatarData;
     $('editRoleAvatarPreview').classList.remove('hidden');
     e.target.value='';
-  });
+  };
 
-  $('pickMeAvatarBtn').addEventListener('click',()=> $('editMeAvatarFile').click());
-  $('editMeAvatarFile').addEventListener('change', async e=>{
+  $('pickMeAvatarBtn').onclick=()=> $('editMeAvatarFile').click();
+  $('editMeAvatarFile').onchange=async e=>{
     const f=e.target.files?.[0]; if(!f) return;
     meAvatarData=await compressImage(f,280,0.55);
     $('editMeAvatarPreview').src=meAvatarData;
     $('editMeAvatarPreview').classList.remove('hidden');
     e.target.value='';
-  });
+  };
+
+  // expose
+  window.openChat=function(id){
+    currentId=id;
+    const c=getContacts().find(x=>x.id===id);
+    $('chatTitle').textContent=c?c.name:'聊天';
+    renderChat();
+    show('chatRoom');
+  };
 
   // init
-  loadApi();
+  refreshApiUI();
   renderContacts();
+  function refreshApiUI(){ refreshPresetUI(); }
+
 })();
 </script>
 </body>
