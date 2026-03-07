@@ -236,33 +236,67 @@
     }
 
     /* 储存键：风铃风（克制高级） */
-    .btn.store{
-      width:40px;height:40px;padding:0;border-radius:12px;
-      border:1px solid rgba(182,199,231,.9);
-      background:linear-gradient(180deg,rgba(255,255,255,.92),rgba(237,244,255,.86));
-      box-shadow:
-        inset 0 1px 0 rgba(255,255,255,.95),
-        0 3px 10px rgba(54,87,146,.16);
-      position:relative;
-      overflow:hidden;
-    }
-    .btn.store::before{
-      content:"";
-      position:absolute;left:50%;top:8px;transform:translateX(-50%);
-      width:14px;height:2px;border-radius:99px;
-      background:rgba(66,95,148,.88);
-      box-shadow:
-        -5px 6px 0 0 rgba(66,95,148,.42),
-         0px 8px 0 0 rgba(66,95,148,.56),
-         5px 6px 0 0 rgba(66,95,148,.42);
-    }
-    .btn.store::after{
-      content:"";
-      position:absolute;left:50%;top:13px;transform:translateX(-50%);
-      width:2px;height:13px;border-radius:99px;
-      background:linear-gradient(180deg,rgba(66,95,148,.72),rgba(66,95,148,.2));
-      box-shadow:0 13px 0 0 rgba(66,95,148,.62);
-    }
+   /* 把你现在的 .btn.store / .btn.store::before / .btn.store::after 整段替换成这个 */
+
+.btn.store{
+  width:40px;
+  height:40px;
+  padding:0;
+  border-radius:12px;
+  position:relative;
+  overflow:hidden;
+  border:1px solid #dbe3f3;
+  background:
+    radial-gradient(120% 120% at 20% 10%, rgba(255,255,255,.96) 0%, rgba(255,255,255,.62) 36%, rgba(240,245,255,.88) 100%),
+    linear-gradient(180deg,#fafcff 0%,#eef3ff 100%);
+  box-shadow:
+    0 2px 8px rgba(53,78,133,.14),
+    inset 0 1px 0 rgba(255,255,255,.96);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  font-size:0;
+  transition:
+    transform .12s ease,
+    box-shadow .2s ease,
+    border-color .2s ease,
+    background .2s ease;
+}
+
+.btn.store::before{
+  content:"";
+  position:absolute;
+  inset:1px;
+  border-radius:11px;
+  border:1px solid rgba(255,255,255,.55);
+  pointer-events:none;
+}
+
+.btn.store::after{
+  content:"存";
+  position:absolute;
+  inset:0;
+  display:grid;
+  place-items:center;
+  font-size:12px;
+  font-weight:700;
+  letter-spacing:.5px;
+  color:#5b6f98;
+  text-shadow:0 1px 0 rgba(255,255,255,.8);
+}
+
+.btn.store:hover{
+  border-color:#cfdaf0;
+  box-shadow:
+    0 4px 12px rgba(53,78,133,.18),
+    inset 0 1px 0 rgba(255,255,255,.98);
+}
+
+.btn.store:active{
+  transform:translateY(1px) scale(.98);
+  box-shadow:
+    0 2px 6px rgba(53,78,133,.12),
+    inset 0 1px 0 rgba(255,255,255,.92);
+}
     .btn.store:active{transform:translateY(1px)}
 
     /* modal */
