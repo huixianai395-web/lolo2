@@ -366,7 +366,7 @@
     <div class="modal-card">
       <h3 style="margin:0 0 10px;">创建联系人</h3>
       <div class="small">昵称</div>
-      <input id="newName" class="input" placeholder="例如：沈昼白" />
+      <input id="newName" class="input" placeholder="例如：遇见" />
 
       <div class="small" style="margin-top:8px;">头像（上传 或 URL）</div>
       <div class="row">
@@ -423,19 +423,12 @@
 
   // data
   function getContacts(){
-    let arr=getJ(K_CONTACT,null);
-    if(!arr){
-      arr=[{
-        id:'c1',
-        name:'沈昼白',
-        avatar:'https://i.postimg.cc/y8xWzCqj/anime-boy.jpg',
-        preview:'在吗 我刚遛狗回来',
-        time:'刚刚',
-        persona:'计算机系大三，爱分享日常'
-      }];
-      setJ(K_CONTACT,arr);
-    }
-    return arr;
+  let arr=getJ(K_CONTACT,null);
+  if(!Array.isArray(arr)){
+    arr=[]; // 首次进入为空，不再内置遇见
+    setJ(K_CONTACT,arr);
+  }
+  return arr;
   }
   function setContacts(v){setJ(K_CONTACT,v);}
   function getChats(){return getJ(K_CHAT,{});}
