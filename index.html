@@ -1,9 +1,10 @@
+
 <!doctype html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>小手机 v1.3.2 稳定</title>
+  <title>小手机 v1.3.3 稳定</title>
   <style>
     :root{
       --safe-top: env(safe-area-inset-top, 0px);
@@ -11,8 +12,10 @@
       --line:#e6e9f5;
       --bg:#f6f8ff;
       --blue:#2f66d8;
+      --blue2:#5d8cff;
       --glass: rgba(255,255,255,.30);
       --glass-border: rgba(255,255,255,.48);
+      --chat-mode-h: 44px;
     }
     *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
     html,body{
@@ -60,7 +63,7 @@
     }
 
     .card{background:#fff;border:1px solid #ececf2;border-radius:14px;padding:12px}
-    .small{font-size:12px;color:#777}
+    .small{font-size:12px;color:#777;line-height:1.5}
     .row{display:flex;gap:8px;align-items:center}
     .input,.ta,.select{
       width:100%;
@@ -74,9 +77,14 @@
     .hidden{display:none !important}
 
     /* HOME */
-    #home{color:#fff}
+    #home{color:#fff;background:transparent}
     .wall{
-      position:absolute;inset:0;z-index:0;
+      position:absolute;
+      left:0;right:0;
+      top:calc(-1 * var(--safe-top));
+      bottom:0;
+      height:calc(100% + var(--safe-top));
+      z-index:0;
       background:
         linear-gradient(160deg, rgba(40,96,255,.34), rgba(125,221,255,.18)),
         url('https://picsum.photos/900/1800?blur=1') center/cover no-repeat;
@@ -97,20 +105,17 @@
       position:absolute;
       top:calc(6px + var(--safe-top));
       right:12px;
-      width:72px;
-      height:126px;
+      width:74px;height:128px;
       transform-origin:top center;
-      animation:chimeSwing 3.2s ease-in-out infinite;
+      animation:chimeSwing 3.3s ease-in-out infinite;
       filter:drop-shadow(0 4px 10px rgba(0,0,0,.26));
-      pointer-events:none;
-      z-index:3;
+      pointer-events:none;z-index:3;
     }
     .windchime .ring{
       width:28px;height:10px;margin:0 auto;
       border:2px solid rgba(255,255,255,.95);
       border-radius:999px;
       background:rgba(255,255,255,.18);
-      backdrop-filter:blur(1px);
     }
     .windchime .line{
       position:absolute;top:10px;width:2px;
@@ -137,28 +142,14 @@
     .windchime .pendulum::after{
       content:"";
       position:absolute;left:50%;bottom:-9px;transform:translateX(-50%);
-      width:22px;height:14px;
-      border-radius:4px 4px 8px 8px;
+      width:22px;height:14px;border-radius:4px 4px 8px 8px;
       background:linear-gradient(180deg,rgba(255,255,255,.95),rgba(220,240,255,.72));
       box-shadow:0 0 12px rgba(255,255,255,.5);
     }
-
-    @keyframes chimeSwing{
-      0%,100%{transform:rotate(8deg)}
-      50%{transform:rotate(-8deg)}
-    }
-    @keyframes lineSwingA{
-      0%,100%{transform:rotate(6deg)}
-      50%{transform:rotate(-5deg)}
-    }
-    @keyframes lineSwingB{
-      0%,100%{transform:rotate(3deg)}
-      50%{transform:rotate(-3deg)}
-    }
-    @keyframes lineSwingC{
-      0%,100%{transform:rotate(-5deg)}
-      50%{transform:rotate(5deg)}
-    }
+    @keyframes chimeSwing{0%,100%{transform:rotate(8deg)}50%{transform:rotate(-8deg)}}
+    @keyframes lineSwingA{0%,100%{transform:rotate(6deg)}50%{transform:rotate(-5deg)}}
+    @keyframes lineSwingB{0%,100%{transform:rotate(3deg)}50%{transform:rotate(-3deg)}}
+    @keyframes lineSwingC{0%,100%{transform:rotate(-5deg)}50%{transform:rotate(5deg)}}
 
     .widgets{margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:10px}
     .widget{
@@ -190,14 +181,37 @@
     .preview{margin-top:4px;font-size:12px;color:#666;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .t{font-size:11px;color:#999}
 
+    /* Chat mode bar */
+    .chat-mode-bar{
+      height:var(--chat-mode-h);
+      padding:6px 10px;
+      display:flex;align-items:center;justify-content:space-between;gap:8px;
+      background:linear-gradient(180deg,#f8f9ff,#f3f6ff);
+      border-bottom:1px solid #e2e8fb;
+    }
+    .seg{
+      display:flex;gap:6px;align-items:center;
+      padding:4px;border-radius:12px;
+      background:#e9eefc;border:1px solid #dce4fb;
+    }
+    .seg button{
+      border:none;background:transparent;color:#38538d;
+      padding:6px 10px;border-radius:9px;cursor:pointer;font-size:12px;
+    }
+    .seg button.active{
+      background:#fff;color:#244ea5;font-weight:600;
+      box-shadow:0 1px 3px rgba(35,67,137,.15);
+    }
+
     /* Chat */
     #chatMsgs{
-      height:calc(100% - (52px + var(--safe-top)) - (74px + var(--safe-bottom)));
+      height:calc(100% - (52px + var(--safe-top)) - var(--chat-mode-h) - (78px + var(--safe-bottom)));
       overflow:auto;
       padding:12px;
       background:linear-gradient(180deg,#edf2ff,#edf1f8);
       display:flex;flex-direction:column;gap:10px;
     }
+
     .msg-row{display:flex;gap:8px;align-items:flex-end}
     .msg-row.me{justify-content:flex-end}
     .chat-avatar{
@@ -213,41 +227,116 @@
     }
     .bubble.me{background:#2f66d8;color:#fff;border-bottom-right-radius:6px}
     .bubble.ai{background:#fff;border:1px solid #e8e8ef;border-bottom-left-radius:6px}
+    .bubble.typing{opacity:.65}
 
+    /* 线下酒馆风 */
+    #chatRoom.offline-layout #chatMsgs{
+      background:linear-gradient(180deg,#f1f5ff,#eef2ff);
+      padding:10px 8px;
+      gap:14px;
+    }
+    #chatRoom.offline-layout .msg-row{
+      display:block;max-width:100%;
+    }
+    #chatRoom.offline-layout .msg-head{
+      display:flex;align-items:center;gap:8px;margin:0 6px 6px;
+      color:#5d678b;font-size:12px;font-weight:600;
+    }
+    #chatRoom.offline-layout .msg-row.me .msg-head{
+      justify-content:flex-end;
+    }
+    #chatRoom.offline-layout .chat-avatar{
+      width:42px;height:42px;border-radius:14px;
+      box-shadow:0 2px 8px rgba(54,77,130,.14);
+    }
+    #chatRoom.offline-layout .bubble{
+      max-width:100%;
+      width:calc(100% - 14px);
+      margin:0 7px;
+      border-radius:16px;
+      padding:12px 13px;
+      line-height:1.62;
+    }
+    #chatRoom.offline-layout .msg-row.me .bubble{
+      margin-left:auto;
+      background:linear-gradient(180deg,#3773f3,#2f66d8);
+      color:#fff;
+      border-bottom-right-radius:10px;
+    }
+    #chatRoom.offline-layout .msg-row:not(.me) .bubble{
+      background:#fff;
+      border:1px solid #e4e9fb;
+      border-bottom-left-radius:10px;
+    }
+    #chatRoom.offline-layout .status-block{
+      display:block;
+      background:#f8faff;
+      border:1px dashed #cfdaff;
+      border-radius:10px;
+      padding:8px 9px;
+      margin-bottom:8px;
+      color:#4f5f8c;
+      font-size:12px;
+      line-height:1.5;
+    }
+
+    /* 输入区（统一风格） */
     .chatInputBar{
       position:absolute;left:0;right:0;bottom:0;
       padding:10px;
       padding-bottom:calc(10px + var(--safe-bottom));
-      background:linear-gradient(180deg,#f8f9ff,#f6f8ff);
-      border-top:1px solid #e4e8f5;
+      background:linear-gradient(180deg,#f8f9ff,#f4f7ff);
+      border-top:1px solid #e2e8fb;
       display:flex;gap:8px;align-items:flex-end;
+      box-shadow:0 -4px 16px rgba(56,89,162,.06);
     }
     #chatInput{
       flex:1;
       height:44px;
       min-height:44px;
-      max-height:96px;
+      max-height:120px;
       overflow-y:auto;
       resize:none;
+      border:1px solid #d8e1fb;
+      background:#fff;
+      border-radius:14px;
+      padding:11px 12px;
+      box-shadow:inset 0 1px 2px rgba(52,80,146,.06);
     }
     .send-actions{
       display:flex;gap:8px;align-items:center;align-self:flex-end;
     }
-    .btn.store{
-      width:40px;height:40px;padding:0;border-radius:999px;
-      border:1px solid rgba(117,77,39,.45);
-      background:
-        radial-gradient(circle at 30% 25%, rgba(255,236,199,.85), rgba(191,141,84,.75) 45%, rgba(111,75,42,.88) 100%);
-      box-shadow:inset 0 1px 1px rgba(255,255,255,.35), 0 2px 6px rgba(88,52,20,.22);
+    .send-btn,.store-btn{
+      height:42px;
+      border:none;
+      cursor:pointer;
+      border-radius:12px;
+      display:grid;place-items:center;
+      transition:transform .12s ease, opacity .12s ease;
+    }
+    .send-btn:active,.store-btn:active{transform:translateY(1px) scale(.98)}
+    .store-btn{
+      width:42px;
+      background:linear-gradient(160deg,#ecd8b4,#c89d62 58%,#9a6c3a);
+      box-shadow:inset 0 1px 1px rgba(255,255,255,.4),0 3px 8px rgba(110,73,35,.22);
+      border:1px solid rgba(140,92,49,.4);
       position:relative;
     }
-    .btn.store::after{
+    .store-btn::before{
       content:"";
-      position:absolute;left:50%;top:50%;
-      width:10px;height:10px;border-radius:999px;
-      transform:translate(-50%,-50%);
-      background:rgba(255,249,236,.9);
-      box-shadow:0 0 8px rgba(255,235,204,.75);
+      width:16px;height:16px;
+      border-radius:999px;
+      border:2px solid rgba(255,246,230,.9);
+      box-shadow:inset 0 0 0 2px rgba(171,123,67,.45), 0 0 8px rgba(255,237,205,.5);
+    }
+    .send-btn{
+      min-width:64px;
+      padding:0 14px;
+      color:#fff;font-weight:600;
+      background:linear-gradient(160deg,var(--blue2),var(--blue));
+      box-shadow:0 3px 10px rgba(47,102,216,.28);
+      border:1px solid rgba(45,96,205,.55);
+      font-size:14px;
     }
 
     /* modal */
@@ -318,13 +407,24 @@
       <button class="btn" id="clearChatBtn">清空</button>
     </div>
 
+    <div class="chat-mode-bar">
+      <div class="seg" id="modeSeg">
+        <button id="modeOnlineBtn" class="active">线上</button>
+        <button id="modeOfflineBtn">线下</button>
+      </div>
+      <div class="seg" id="onlineStyleSeg">
+        <button id="styleFreeBtn" class="active">自由</button>
+        <button id="styleRangeBtn">区间</button>
+      </div>
+    </div>
+
     <div id="chatMsgs"></div>
 
     <div class="chatInputBar">
       <textarea id="chatInput" class="ta" placeholder="输入消息..."></textarea>
       <div class="send-actions">
-        <button class="btn store" id="storeBtn" title="储存" aria-label="储存"></button>
-        <button class="btn p" id="sendBtn">发送</button>
+        <button class="store-btn" id="storeBtn" title="储存" aria-label="储存"></button>
+        <button class="send-btn" id="sendBtn">发送</button>
       </div>
     </div>
   </section>
@@ -354,7 +454,50 @@
         <div style="margin-top:8px"><button class="btn" id="fetchModelsBtn">拉取模型</button></div>
       </div>
       <div class="card"><div class="small">Temperature</div><input id="apiTemp" class="input" type="number" min="0" max="2" step="0.1" value="0.8" /></div>
-      <div class="card"><button class="btn" id="testApiBtn">测试连接</button><div id="apiStatus" class="small" style="margin-top:8px;">状态：未测试</div></div>
+
+      <div class="card">
+        <div class="small"><b>聊天模式配置（保存后为默认值）</b></div>
+        <div class="small" style="margin-top:8px;">默认模式</div>
+        <select id="defaultModeSelect" class="select">
+          <option value="online">线上</option>
+          <option value="offline">线下</option>
+        </select>
+
+        <div class="small" style="margin-top:10px;">线上回复模式</div>
+        <select id="onlineStyleSelect" class="select">
+          <option value="free">自由条数（AI自行平衡）</option>
+          <option value="range">区间条数（在范围内随机）</option>
+        </select>
+
+        <div class="row" style="margin-top:10px;">
+          <div style="flex:1">
+            <div class="small">线上最少条数</div>
+            <input id="onlineMinInput" class="input" type="number" min="1" max="20" value="2" />
+          </div>
+          <div style="flex:1">
+            <div class="small">线上最多条数</div>
+            <input id="onlineMaxInput" class="input" type="number" min="1" max="30" value="5" />
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:10px;">
+          <div style="flex:1">
+            <div class="small">线下最小字数</div>
+            <input id="offlineMinLenInput" class="input" type="number" min="60" max="2000" value="140" />
+          </div>
+          <div style="flex:1">
+            <div class="small">线下最大字数</div>
+            <input id="offlineMaxLenInput" class="input" type="number" min="80" max="2400" value="280" />
+          </div>
+        </div>
+
+        <div class="small" style="margin-top:8px;color:#5f6b92;">切换线上/线下在聊天页会立即生效，不需要重进聊天。</div>
+      </div>
+
+      <div class="card">
+        <button class="btn" id="testApiBtn">测试连接</button>
+        <div id="apiStatus" class="small" style="margin-top:8px;">状态：未测试</div>
+      </div>
     </div>
   </section>
 
@@ -391,6 +534,7 @@
   const K_CHAT='mp_fix_chats';
   const K_API='mp_fix_api';
   const K_ME='mp_fix_me';
+  const K_PREF='mp_fix_chat_pref_v133';
 
   let currentId=null;
   let createAvatar='';
@@ -400,6 +544,7 @@
   const setJ=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
   const esc=s=>String(s||'').replace(/[&<>"']/g,m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
   const clean=s=>String(s||'').replace(/[\u0000-\u001F\u007F\uFFFD]/g,'').trim();
+  const clamp=(n,min,max)=>Math.max(min,Math.min(max,n));
 
   function show(id){
     document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
@@ -439,6 +584,82 @@
   function setChats(v){setJ(K_CHAT,v);}
   function getMe(){return getJ(K_ME,{name:'我',avatar:'',persona:''});}
   function setMe(v){setJ(K_ME,v);}
+
+  function getPref(){
+    const d={
+      mode:'online',             // online / offline
+      onlineStyle:'free',        // free / range
+      onlineMin:2,
+      onlineMax:5,
+      offlineMinLen:140,
+      offlineMaxLen:280
+    };
+    const v=getJ(K_PREF,d);
+    v.onlineMin=clamp(Number(v.onlineMin||2),1,20);
+    v.onlineMax=clamp(Number(v.onlineMax||5),1,30);
+    if(v.onlineMin>v.onlineMax){const t=v.onlineMin;v.onlineMin=v.onlineMax;v.onlineMax=t;}
+    v.offlineMinLen=clamp(Number(v.offlineMinLen||140),60,2000);
+    v.offlineMaxLen=clamp(Number(v.offlineMaxLen||280),80,2400);
+    if(v.offlineMinLen>v.offlineMaxLen){const t=v.offlineMinLen;v.offlineMinLen=v.offlineMaxLen;v.offlineMaxLen=t;}
+    v.mode=(v.mode==='offline')?'offline':'online';
+    v.onlineStyle=(v.onlineStyle==='range')?'range':'free';
+    return v;
+  }
+  function setPref(v){setJ(K_PREF,v);}
+
+  function syncPrefToApiUI(){
+    const p=getPref();
+    $('defaultModeSelect').value=p.mode;
+    $('onlineStyleSelect').value=p.onlineStyle;
+    $('onlineMinInput').value=p.onlineMin;
+    $('onlineMaxInput').value=p.onlineMax;
+    $('offlineMinLenInput').value=p.offlineMinLen;
+    $('offlineMaxLenInput').value=p.offlineMaxLen;
+  }
+
+  function savePrefFromApiUI(){
+    const p=getPref();
+    p.mode = $('defaultModeSelect').value==='offline'?'offline':'online';
+    p.onlineStyle = $('onlineStyleSelect').value==='range'?'range':'free';
+    p.onlineMin = clamp(Number($('onlineMinInput').value||2),1,20);
+    p.onlineMax = clamp(Number($('onlineMaxInput').value||5),1,30);
+    if(p.onlineMin>p.onlineMax){const t=p.onlineMin;p.onlineMin=p.onlineMax;p.onlineMax=t;}
+    p.offlineMinLen = clamp(Number($('offlineMinLenInput').value||140),60,2000);
+    p.offlineMaxLen = clamp(Number($('offlineMaxLenInput').value||280),80,2400);
+    if(p.offlineMinLen>p.offlineMaxLen){const t=p.offlineMinLen;p.offlineMinLen=p.offlineMaxLen;p.offlineMaxLen=t;}
+    setPref(p);
+    applyModeUI();
+  }
+
+  function applyModeUI(){
+    const p=getPref();
+    const online = p.mode==='online';
+    $('modeOnlineBtn').classList.toggle('active', online);
+    $('modeOfflineBtn').classList.toggle('active', !online);
+
+    $('styleFreeBtn').classList.toggle('active', p.onlineStyle==='free');
+    $('styleRangeBtn').classList.toggle('active', p.onlineStyle==='range');
+
+    $('onlineStyleSeg').style.opacity = online ? '1' : '.45';
+    $('onlineStyleSeg').style.pointerEvents = online ? 'auto' : 'none';
+
+    $('chatRoom').classList.toggle('offline-layout', !online);
+    renderChat();
+  }
+
+  // quick mode switch (即时生效)
+  $('modeOnlineBtn').onclick=()=>{
+    const p=getPref(); p.mode='online'; setPref(p); applyModeUI();
+  };
+  $('modeOfflineBtn').onclick=()=>{
+    const p=getPref(); p.mode='offline'; setPref(p); applyModeUI();
+  };
+  $('styleFreeBtn').onclick=()=>{
+    const p=getPref(); p.onlineStyle='free'; setPref(p); applyModeUI();
+  };
+  $('styleRangeBtn').onclick=()=>{
+    const p=getPref(); p.onlineStyle='range'; setPref(p); applyModeUI();
+  };
 
   // contacts
   function renderContacts(k=''){
@@ -531,24 +752,61 @@
     currentId=id;
     const c=getContacts().find(x=>x.id===id);
     $('chatTitle').textContent=c?c.name:'聊天';
-    renderChat();
+    applyModeUI();
     show('chatRoom');
   };
 
+  function decorateOfflineText(s){
+    const text=String(s||'');
+    if(text.includes('【状态】') || text.includes('「状态」') || text.includes('状态：')){
+      // 简单包裹头部块（第一段）
+      const parts=text.split(/\n{2,}/);
+      if(parts.length>1){
+        return `<span class="status-block">${esc(parts[0])}</span>${esc(parts.slice(1).join('\n\n'))}`;
+      }
+    }
+    return esc(text);
+  }
+
   function renderChat(){
+    if(!currentId){ $('chatMsgs').innerHTML=''; return; }
+
     const c=getContacts().find(x=>x.id===currentId);
     const me=getMe();
     const roleAvatar=c?.avatar||'https://via.placeholder.com/64x64?text=TA';
     const meAvatar=me.avatar||'https://via.placeholder.com/64x64?text=我';
+    const roleName=c?.name||'对方';
+    const meName=me?.name||'我';
     const map=getChats();
     const arr=map[currentId]||[];
+    const offline = getPref().mode==='offline';
 
-    $('chatMsgs').innerHTML=arr.map(m=>{
-      if(m.role==='user'){
-        return `<div class="msg-row me"><div class="bubble me">${esc(m.text)}</div><img class="chat-avatar" src="${meAvatar}"></div>`;
-      }
-      return `<div class="msg-row"><img class="chat-avatar" src="${roleAvatar}"><div class="bubble ai">${esc(m.text)}</div></div>`;
-    }).join('');
+    if(!offline){
+      $('chatMsgs').innerHTML=arr.map(m=>{
+        const typingCls = m.typing ? ' typing' : '';
+        if(m.role==='user'){
+          return `<div class="msg-row me"><div class="bubble me${typingCls}">${esc(m.text)}</div><img class="chat-avatar" src="${meAvatar}"></div>`;
+        }
+        return `<div class="msg-row"><img class="chat-avatar" src="${roleAvatar}"><div class="bubble ai${typingCls}">${esc(m.text)}</div></div>`;
+      }).join('');
+    }else{
+      $('chatMsgs').innerHTML=arr.map(m=>{
+        const typingCls = m.typing ? ' typing' : '';
+        if(m.role==='user'){
+          return `
+            <div class="msg-row me">
+              <div class="msg-head"><span>${esc(meName)}</span><img class="chat-avatar" src="${meAvatar}"></div>
+              <div class="bubble me${typingCls}">${esc(m.text)}</div>
+            </div>`;
+        }
+        return `
+          <div class="msg-row">
+            <div class="msg-head"><img class="chat-avatar" src="${roleAvatar}"><span>${esc(roleName)}</span></div>
+            <div class="bubble ai${typingCls}">${decorateOfflineText(m.text)}</div>
+          </div>`;
+      }).join('');
+    }
+
     $('chatMsgs').scrollTop=$('chatMsgs').scrollHeight;
   }
 
@@ -563,7 +821,7 @@
   $('chatInput').addEventListener('input', ()=>{
     const el=$('chatInput');
     el.style.height='44px';
-    el.style.height=Math.min(el.scrollHeight,96)+'px';
+    el.style.height=Math.min(el.scrollHeight,120)+'px';
   });
 
   function pushUser(text){
@@ -582,7 +840,7 @@
 
   $('storeBtn').onclick=storeCurrentInput;
 
-  function forceSplitByLen(text, len){
+  function splitLongByLen(text, len=30){
     const out=[];
     let i=0;
     while(i<text.length){
@@ -592,77 +850,167 @@
     return out;
   }
 
-  function splitAiBubbles(raw){
-    const txt=clean(raw);
-    if(!txt) return ['...'];
+  function normalizeBubbleCount(arr,min,max){
+    let list=[...arr].filter(Boolean);
+    if(!list.length) return ['...'];
 
-    try{
-      const j=JSON.parse(txt);
-      if(Array.isArray(j.messages)){
-        return j.messages
-          .map(x=>clean(x))
-          .filter(Boolean)
-          .flatMap(x=>x.length>34?forceSplitByLen(x,34):[x])
-          .slice(0,18);
-      }
-    }catch{}
-
-    const normalized = txt
-      .replace(/\r/g,'')
-      .replace(/[ \t]+\n/g,'\n')
-      .replace(/\n{3,}/g,'\n\n')
-      .trim();
-
-    const blocks = normalized.split(/\n{2,}/).filter(Boolean);
-    const pieces = [];
-
-    for(const block of blocks){
-      const segs = block.match(/[^。！？!?；;，,\n]+[。！？!?；;，,]?/g) || [block];
-      let buf = '';
-
-      for(let seg of segs){
-        seg = seg.trim();
-        if(!seg) continue;
-
-        if(seg.length > 34){
-          const chunks = forceSplitByLen(seg, 28);
-          if(buf){ pieces.push(buf); buf=''; }
-          pieces.push(...chunks);
-          continue;
-        }
-
-        if((buf + seg).length <= 34){
-          buf += seg;
-        }else{
-          if(buf) pieces.push(buf);
-          buf = seg;
-        }
-      }
-      if(buf) pieces.push(buf);
+    // 太多就合并到 max（不死板限制，只在 range 模式下应用）
+    while(list.length>max){
+      const tail=list.pop();
+      list[list.length-1] = (list[list.length-1] + ' ' + tail).trim();
     }
 
-    const cleaned = pieces.map(s=>s.trim()).filter(Boolean);
-    return (cleaned.length ? cleaned : [txt]).slice(0, 18);
+    // 太少就拆长句到 min
+    while(list.length<min){
+      let idx=-1, longest=0;
+      for(let i=0;i<list.length;i++){
+        if(list[i].length>longest){longest=list[i].length;idx=i;}
+      }
+      if(idx<0 || list[idx].length<12) break;
+      const target=list[idx];
+      const cut=Math.floor(target.length/2);
+      const a=target.slice(0,cut).trim();
+      const b=target.slice(cut).trim();
+      list.splice(idx,1,a,b);
+    }
+    return list.filter(Boolean);
+  }
+
+  function splitOnlineBubbles(raw){
+    const p=getPref();
+    let txt=clean(raw);
+    if(!txt) return ['...'];
+
+    // 去掉可能的代码块包裹
+    txt=txt.replace(/^```[\w-]*\n?/,'').replace(/```$/,'');
+
+    // 优先按换行（模型已被要求一行一泡）
+    let lines = txt
+      .split(/\n+/)
+      .map(s=>s.replace(/^\s*([-\d]+[\.、\)]|[•·])\s*/,'').trim())
+      .filter(Boolean);
+
+    // 如果没有明显换行，就按语义标点拆
+    if(lines.length<=1){
+      lines = txt.match(/[^。！？!?；;，,\n]+[。！？!?；;，,]?/g) || [txt];
+      lines = lines.map(s=>s.trim()).filter(Boolean);
+    }
+
+    const bubbles=[];
+    for(let line of lines){
+      if(line.length<=32){ bubbles.push(line); continue; }
+
+      // 按句号层面再拆
+      const sub = line.match(/[^。！？!?；;]+[。！？!?；;]?/g) || [line];
+      let buf='';
+      for(let s of sub){
+        s=s.trim(); if(!s) continue;
+        if(s.length>34){
+          if(buf){ bubbles.push(buf); buf=''; }
+          bubbles.push(...splitLongByLen(s,30));
+          continue;
+        }
+        if((buf+s).length<=34){ buf+=s; }
+        else { if(buf) bubbles.push(buf); buf=s; }
+      }
+      if(buf) bubbles.push(buf);
+    }
+
+    let finalList = bubbles.map(s=>s.trim()).filter(Boolean);
+
+    // 在线区间模式才进行条数区间平衡；自由模式不限制死条数
+    if(p.onlineStyle==='range'){
+      finalList = normalizeBubbleCount(finalList, p.onlineMin, p.onlineMax);
+    }
+
+    // 兜底
+    if(!finalList.length) finalList=['...'];
+    return finalList;
   }
 
   async function emitAiSequential(parts,map){
     for(let i=0;i<parts.length;i++){
-      map[currentId].push({role:'assistant',text:parts[i],time:Date.now()});
+      const t=parts[i];
+      map[currentId].push({role:'assistant',text:t,time:Date.now()});
       setChats(map);
       renderChat();
 
-      const delay = i===0
-        ? 130 + Math.floor(Math.random()*170)   // 首条更快
-        : 360 + Math.floor(Math.random()*620);  // 后续更慢，更像真人
+      // 首条快，后续慢，且按阅读长度算时间（确保你能看完）
+      let delay;
+      if(i===0){
+        delay = 700 + Math.floor(Math.random()*300);
+      }else{
+        const readCost = clamp(1100 + t.length * 90, 1200, 4200);
+        delay = readCost + Math.floor(Math.random()*260);
+      }
       await new Promise(r=>setTimeout(r,delay));
     }
+  }
+
+  function buildOnlinePrompt(c,p){
+    const styleLine = p.onlineStyle==='range'
+      ? `本轮总消息条数请控制在 ${p.onlineMin}-${p.onlineMax} 条之间，条数可随机。`
+      : `本轮消息条数由你根据情境自由决定，不设固定上限，但要自然。`;
+
+    return `
+你是「${c?.name||'聊天对象'}」。
+【核心人设】
+${c?.persona||'自然聊天'}
+
+【目标】
+- 强拟人、强代入，像真实QQ/微信聊天，不要模板腔。
+- 先理解对方真实意图、情绪、关系温度，再回答。
+- 允许有停顿、犹豫、补充，避免“完美客服口吻”。
+
+【输出规则（非常重要）】
+- 输出纯文本。
+- 一条消息=一行，不要编号，不要项目符号。
+- 单行尽量短：建议 8~28 字，超过就主动拆到下一行。
+- 如果内容较多，必须拆成多条短消息，像日常连发。
+- 不要把整段长文塞进一条消息。
+
+【条数策略】
+${styleLine}
+
+【风格平衡】
+- 根据当下关系与语境选择语气：日常、克制、暧昧、冷淡都可以，但要符合人设。
+- 少空话，多“带情境的有效回应”。
+- 不要解释你在扮演角色，不要输出系统说明。
+`.trim();
+  }
+
+  function buildOfflinePrompt(c,p){
+    return `
+你现在进入线下沉浸式角色扮演模式（酒馆风）。
+你是「${c?.name||'聊天对象'}」。
+【核心人设】
+${c?.persona||'自然聊天'}
+
+【回复形式】
+- 本轮只输出 1 条长消息，不要分成多条。
+- 总长度控制在 ${p.offlineMinLen}-${p.offlineMaxLen} 字之间。
+- 采用“状态栏 + 正文”的格式：
+
+【状态】
+时间：...
+地点：...
+情绪：...
+动作：...
+关系温度：...
+
+正文：以剧情沉浸写法回复，允许对白+动作+环境描写，贴合人设，不浮于表面。
+
+【要求】
+- 细腻但不矫情，真实有呼吸感。
+- 不要编号，不要解释规则，不要跳出角色。
+`.trim();
   }
 
   // API preset
   function getApiState(){
     return getJ(K_API,{
       current:'默认',
-      presets:{'默认':{base:'',key:'',model:'gpt-4o-mini',temp:0.8}}
+      presets:{'默认':{base:'',key:'',model:'gpt-4o-mini',temp:0.85}}
     });
   }
   function setApiState(v){setJ(K_API,v);}
@@ -676,8 +1024,9 @@
     const s=getApiState(), c=s.presets[s.current];
     $('apiBase').value=c.base||'';
     $('apiKey').value=c.key||'';
-    $('apiTemp').value=c.temp??0.8;
+    $('apiTemp').value=c.temp??0.85;
     $('apiModel').innerHTML=`<option value="${c.model||'gpt-4o-mini'}">${c.model||'gpt-4o-mini'}</option>`;
+    syncPrefToApiUI();
   }
   function saveApiForm(){
     const s=getApiState();
@@ -685,9 +1034,10 @@
       base:clean($('apiBase').value),
       key:clean($('apiKey').value),
       model:clean($('apiModel').value)||'gpt-4o-mini',
-      temp:Number($('apiTemp').value||0.8)
+      temp:Number($('apiTemp').value||0.85)
     };
     setApiState(s);
+    savePrefFromApiUI();
     $('apiStatus').textContent='状态：已保存';
     return s.presets[s.current];
   }
@@ -695,8 +1045,10 @@
   $('apiPresetSelect').onchange=e=>{
     const s=getApiState();
     s.presets[s.current]={
-      base:clean($('apiBase').value), key:clean($('apiKey').value),
-      model:clean($('apiModel').value)||'gpt-4o-mini', temp:Number($('apiTemp').value||0.8)
+      base:clean($('apiBase').value),
+      key:clean($('apiKey').value),
+      model:clean($('apiModel').value)||'gpt-4o-mini',
+      temp:Number($('apiTemp').value||0.85)
     };
     s.current=e.target.value;
     setApiState(s);
@@ -708,16 +1060,20 @@
     if(!name) return;
     const s=getApiState();
     if(s.presets[name]) return alert('预设已存在');
-    s.presets[name]={base:'',key:'',model:'gpt-4o-mini',temp:0.8};
-    s.current=name; setApiState(s); refreshPresetUI();
+    s.presets[name]={base:'',key:'',model:'gpt-4o-mini',temp:0.85};
+    s.current=name;
+    setApiState(s);
+    refreshPresetUI();
   };
+
   $('delPresetBtn').onclick=()=>{
     const s=getApiState(), names=Object.keys(s.presets);
     if(names.length<=1) return alert('至少保留一个预设');
     if(!confirm('删除当前预设？')) return;
     delete s.presets[s.current];
     s.current=Object.keys(s.presets)[0];
-    setApiState(s); refreshPresetUI();
+    setApiState(s);
+    refreshPresetUI();
   };
 
   function buildUrl(base,path){
@@ -734,7 +1090,11 @@
     const r=await fetch(url,{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+cfg.key},
-      body:JSON.stringify({model:cfg.model,temperature:cfg.temp,messages})
+      body:JSON.stringify({
+        model:cfg.model,
+        temperature:cfg.temp,
+        messages
+      })
     });
     const data=await r.json().catch(()=>({}));
     if(!r.ok) throw new Error(data?.error?.message || ('HTTP '+r.status));
@@ -776,40 +1136,60 @@
 
   async function sendMsg(){
     if(!currentId) return;
+    const p=getPref();
+
     const t=clean($('chatInput').value);
     if(t) pushUser(t);
-
     $('chatInput').value=''; resetInputH(); renderChat();
 
     const map=getChats();
-    const hist=(map[currentId]||[]).filter(x=>x.text&&x.text!=='...').slice(-20);
+    const hist=(map[currentId]||[]).filter(x=>x.text && x.text!=='...');
     if(!hist.length) return;
 
-    map[currentId].push({role:'assistant',text:'...',typing:true,time:Date.now()});
+    map[currentId].push({role:'assistant',text:'对方正在输入…',typing:true,time:Date.now()});
     setChats(map); renderChat();
 
     try{
       const c=getContacts().find(x=>x.id===currentId);
+      const systemPrompt = p.mode==='online' ? buildOnlinePrompt(c,p) : buildOfflinePrompt(c,p);
+
       const messages=[
-        {role:'system',content:`你是${c?.name||'聊天对象'}。人设：${c?.persona||'自然聊天'}。用即时聊天口吻回复；内容多时请拆多条短消息。每条尽量短。`},
-        ...hist.map(x=>({role:x.role==='user'?'user':'assistant',content:x.text}))
+        {role:'system',content:systemPrompt},
+        ...hist.slice(-28).map(x=>({role:x.role==='user'?'user':'assistant',content:x.text}))
       ];
+
       const out=await callApi(messages);
 
       const arr=map[currentId];
       if(arr.length && arr[arr.length-1].typing) arr.pop();
 
-      const parts=splitAiBubbles(out);
-      await emitAiSequential(parts.length?parts:['...'], map);
+      if(p.mode==='online'){
+        const parts=splitOnlineBubbles(out);
+        await emitAiSequential(parts, map);
 
-      const contacts=getContacts();
-      const i=contacts.findIndex(x=>x.id===currentId);
-      if(i>=0){
-        contacts[i].preview=parts[0]||'...';
-        contacts[i].time='刚刚';
-        setContacts(contacts);
+        const contacts=getContacts();
+        const i=contacts.findIndex(x=>x.id===currentId);
+        if(i>=0){
+          contacts[i].preview=parts[0]||'...';
+          contacts[i].time='刚刚';
+          setContacts(contacts);
+        }
+        renderContacts($('searchInput').value||'');
+      }else{
+        // 线下：只回一条长消息
+        await new Promise(r=>setTimeout(r,900 + Math.floor(Math.random()*400)));
+        map[currentId].push({role:'assistant',text:out||'…',time:Date.now()});
+        setChats(map); renderChat();
+
+        const contacts=getContacts();
+        const i=contacts.findIndex(x=>x.id===currentId);
+        if(i>=0){
+          contacts[i].preview='[线下沉浸回复]';
+          contacts[i].time='刚刚';
+          setContacts(contacts);
+        }
+        renderContacts($('searchInput').value||'');
       }
-      renderContacts($('searchInput').value||'');
     }catch(e){
       const arr=map[currentId];
       if(arr.length && arr[arr.length-1].typing) arr.pop();
@@ -835,6 +1215,7 @@
   // init
   refreshPresetUI();
   renderContacts();
+  applyModeUI();
 })();
 </script>
 </body>
