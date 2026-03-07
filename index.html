@@ -571,30 +571,208 @@
   let currentId=null;
   let createAvatar='';
   let typingForId=null;
+  let quoteDraft=null;
+  let pressTimer=null;
+  let activeMsgId=null;
+  let selecting=false;
+  let selectedSet=new Set();
 
   const $ = id => document.getElementById(id);
   const clean=s=>String(s||'').replace(/[\u0000-\u001F\u007F\uFFFD]/g,'').trim();
-  const esc=s=>String(s||'').replace(/[&<>"']/g,m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
+  const esc=s=>String(s||'').replace(/[&<>"']/g,m=>({ '&':'&','<':'<','>':'>','"':'"',"'":''' }[m]));
   const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+  const mid=()=> 'm_'+Date.now()+'_'+Math.floor(Math.random()*1e6);
 
+  // ---------- style hotfix inject ----------
+  (function injectFixCss(){
+    const css = `
+    /* 线上头像与气泡更贴合 */
+    .msg-row{align-items:flex-end !important}
+    .msg-row .chat-avatar{align-self:flex-end}
+    .bubble-wrap{display:flex;flex-direction:column;max-width:calc(100% - 48px)}
+    .bubble-wrap.ai{align-items:flex-start}
+    .bubble-wrap.me{align-items:flex-end}
+    .msg-time{font-size:10px;color:#96a0b9;margin-top:4px;padding:0 2px}
+
+    /* 长按菜单 */
+    .sheet-mask{
+      position:fixed;inset:0;background:rgba(0,0,0,.28);z-index:120;display:none;
+    }
+    .sheet-mask.active{display:block}
+    .sheet{
+      position:absolute;left:10px;right:10px;bottom:10px;
+      background:#fff;border-radius:14px;padding:8px;
+      box-shadow:0 10px 30px rgba(0,0,0,.18);
+      max-height:70vh;overflow:auto;
+    }
+    .sheet .sheet-grid{
+      display:grid;grid-template-columns:repeat(3,1fr);gap:8px;
+    }
+    .sheet-btn{
+      border:1px solid #e4e8f5;background:#f7f9ff;color:#24447c;
+      border-radius:10px;padding:10px 8px;font-size:13px;
+    }
+
+    /* 引用条 */
+    .quote-bar{
+      position:absolute;left:10px;right:110px;bottom:calc(58px + var(--safe-bottom));
+      background:linear-gradient(180deg,#f7fbff,#eef5ff);
+      border:1px solid #dce8ff;border-radius:10px;
+      padding:6px 8px;font-size:12px;color:#456;
+      display:none;z-index:4;
+      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    }
+    .quote-bar.active{display:block}
+
+    .quote-chip{
+      font-size:12px;color:#5f79aa;background:#eef4ff;border:1px solid #d9e6ff;
+      border-radius:8px;padding:4px 6px;margin-bottom:6px;
+      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+      max-width:100%;
+    }
+
+    /* 多选工具条 */
+    .multi-bar{
+      position:absolute;left:0;right:0;bottom:0;
+      padding:8px 10px calc(8px + var(--safe-bottom));
+      background:#fff;border-top:1px solid #e5e9f5;z-index:8;
+      display:none;gap:8px;flex-wrap:wrap;
+    }
+    .multi-bar.active{display:flex}
+    .multi-bar .btn{padding:7px 10px}
+    .msg-check{
+      width:18px;height:18px;flex-shrink:0;align-self:center;margin-right:4px;
+    }
+
+    /* 编辑页 */
+    #msgEditor .page{gap:12px}
+    #msgEditorTa{min-height:52dvh;font-size:15px;line-height:1.6}
+    `;
+    const el=document.createElement('style');
+    el.textContent=css;
+    document.head.appendChild(el);
+  })();
+
+  // ---------- dynamic UI ----------
+  (function mountExtraUI(){
+    // quote bar
+    const qb = document.createElement('div');
+    qb.id='quoteBar';
+    qb.className='quote-bar';
+    qb.innerHTML='引用：<span id="quoteText"></span>  <span id="quoteCancel" style="float:right;color:#6b84b8;cursor:pointer;">取消</span>';
+    $('chatRoom').appendChild(qb);
+
+    // long press sheet
+    const sheet = document.createElement('div');
+    sheet.id='msgSheetMask';
+    sheet.className='sheet-mask';
+    sheet.innerHTML=`
+      <div class="sheet" id="msgSheetCard">
+        <div class="sheet-grid">
+          <button class="sheet-btn" data-act="quote">引用</button>
+          <button class="sheet-btn" data-act="copy">复制</button>
+          <button class="sheet-btn" data-act="edit">编辑</button>
+          <button class="sheet-btn" data-act="recall">撤回</button>
+          <button class="sheet-btn" data-act="fav">收藏</button>
+          <button class="sheet-btn" data-act="hide">隐藏消息</button>
+          <button class="sheet-btn" data-act="unhide">取消隐藏</button>
+          <button class="sheet-btn" data-act="multi">多选</button>
+          <button class="sheet-btn" data-act="delete">删除</button>
+        </div>
+        <button class="sheet-btn" data-act="close" style="margin-top:8px;width:100%;">取消</button>
+      </div>
+    `;
+    document.body.appendChild(sheet);
+
+    // multi bar
+    const mb = document.createElement('div');
+    mb.id='multiBar';
+    mb.className='multi-bar';
+    mb.innerHTML=`
+      <button class="btn" id="multiCancelBtn">取消多选</button>
+      <button class="btn d" id="multiDelBtn">删除</button>
+      <button class="btn" id="multiFavBtn">收藏</button>
+      <button class="btn" id="multiHideBtn">隐藏</button>
+      <button class="btn" id="multiUnhideBtn">取消隐藏</button>
+    `;
+    $('chatRoom').appendChild(mb);
+
+    // full-screen editor
+    const editor = document.createElement('section');
+    editor.id='msgEditor';
+    editor.className='screen';
+    editor.innerHTML=`
+      <div class="header">
+        <button class="btn" data-nav="chatRoom">‹ 返回</button>
+        <b>编辑消息</b>
+        <button class="btn p" id="saveEditBtn">保存</button>
+      </div>
+      <div class="page">
+        <textarea id="msgEditorTa" class="ta" placeholder="编辑消息内容..."></textarea>
+      </div>
+    `;
+    $('app').appendChild(editor);
+
+    // favorites screen
+    const fav = document.createElement('section');
+    fav.id='favScreen';
+    fav.className='screen';
+    fav.innerHTML=`
+      <div class="header">
+        <button class="btn" data-nav="chatSetting">‹ 返回</button>
+        <b>收藏夹</b>
+        <button class="btn" id="clearFavBtn">清空收藏</button>
+      </div>
+      <div class="page"><div id="favList" class="list"></div></div>
+    `;
+    $('app').appendChild(fav);
+
+    // add buttons to chatSetting page
+    const dataCard = document.querySelector('#chatSetting .card:last-child .row');
+    if(dataCard){
+      const b1 = document.createElement('button');
+      b1.className='btn'; b1.id='favOpenBtn'; b1.textContent='收藏夹';
+      dataCard.prepend(b1);
+
+      const wrap = document.createElement('div');
+      wrap.style.cssText='margin-top:8px;display:flex;justify-content:space-between;align-items:center;';
+      wrap.innerHTML=`<span class="small">显示隐藏消息</span><input id="showHiddenSwitch" type="checkbox" />`;
+      dataCard.parentElement.appendChild(wrap);
+    }
+
+    // rebind dynamic nav
+    document.querySelectorAll('[data-nav]').forEach(el=>el.onclick=()=>show(el.getAttribute('data-nav')));
+  })();
+
+  // ---------- storage ----------
   function getJ(k,d){try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(d));}catch{return d;}}
-
   function isQuotaErr(e){
-    const n = (e && e.name) || '';
-    const m = (e && e.message) || '';
-    return n === 'QuotaExceededError' || n === 'NS_ERROR_DOM_QUOTA_REACHED' || /quota|exceeded/i.test(m);
+    const n=(e&&e.name)||'', m=(e&&e.message)||'';
+    return n==='QuotaExceededError'||n==='NS_ERROR_DOM_QUOTA_REACHED'||/quota|exceeded/i.test(m);
   }
 
-  function trimChatsForSpace(map, keepMsg=18, maxLen=260){
+  // 不截断单条文本，只在极限时删最旧消息
+  function pruneOldChats(targetTotal=1200){
+    const map=getJ(K_CHAT,{});
+    const buckets = Object.keys(map).map(id=>({id,arr:Array.isArray(map[id])?map[id]:[]}));
+    let total = buckets.reduce((a,b)=>a+b.arr.length,0);
+    if(total<=targetTotal) return map;
+
+    while(total>targetTotal){
+      // 找最旧一条消息删除
+      let pick=null;
+      for(const b of buckets){
+        if(!b.arr.length) continue;
+        const t=b.arr[0]?.time || 0;
+        if(!pick || t<pick.t) pick={b,t};
+      }
+      if(!pick) break;
+      pick.b.arr.shift();
+      total--;
+    }
+
     const out={};
-    Object.keys(map||{}).forEach(id=>{
-      const arr = Array.isArray(map[id]) ? map[id] : [];
-      out[id] = arr.slice(-keepMsg).map(m=>({
-        role:m.role,
-        text:String(m.text||'').slice(0,maxLen),
-        time:m.time||Date.now()
-      }));
-    });
+    buckets.forEach(b=>out[b.id]=b.arr);
     return out;
   }
 
@@ -605,38 +783,23 @@
   }
 
   function setJ(k,v){
-    const write = (val)=>localStorage.setItem(k, JSON.stringify(val));
-    try{
-      write(v);
-      return;
-    }catch(e){
-      if(!isQuotaErr(e)) throw e;
+    const write=(val)=>localStorage.setItem(k,JSON.stringify(val));
+    try{ write(v); return; }catch(e){ if(!isQuotaErr(e)) throw e; }
+
+    // 1) 非聊天写入时：先清理 base64 头像
+    if(k!==K_CHAT){
+      try{
+        const contacts=(getJ(K_CONTACT,[])||[]).map(x=>stripDataAvatar({...x}));
+        localStorage.setItem(K_CONTACT,JSON.stringify(contacts));
+        const me=stripDataAvatar({...getJ(K_ME,{name:'我',avatar:'',persona:'',note:''})});
+        localStorage.setItem(K_ME,JSON.stringify(me));
+        write(v); return;
+      }catch(e2){ if(!isQuotaErr(e2)) throw e2; }
     }
 
-    try{
-      const c1 = trimChatsForSpace(getJ(K_CHAT,{}), 16, 220);
-      localStorage.setItem(K_CHAT, JSON.stringify(c1));
-      write(v);
-      return;
-    }catch(e2){
-      if(!isQuotaErr(e2)) throw e2;
-    }
-
-    try{
-      const contacts = (getJ(K_CONTACT,[])||[]).map(x=>stripDataAvatar({...x}));
-      localStorage.setItem(K_CONTACT, JSON.stringify(contacts));
-
-      const me = stripDataAvatar({...getJ(K_ME,{name:'我',avatar:'',persona:'',note:''})});
-      localStorage.setItem(K_ME, JSON.stringify(me));
-
-      write(v);
-      return;
-    }catch(e3){
-      if(!isQuotaErr(e3)) throw e3;
-    }
-
-    const c2 = trimChatsForSpace(getJ(K_CHAT,{}), 8, 140);
-    localStorage.setItem(K_CHAT, JSON.stringify(c2));
+    // 2) 最后才删最旧聊天（不截断单条）
+    const pruned = pruneOldChats(900);
+    localStorage.setItem(K_CHAT, JSON.stringify(pruned));
     write(v);
   }
 
@@ -651,19 +814,16 @@
     return o;
   }
 
-  function getPref(){ return getJ(K_PREF,{showTs:false,bubbleCss:''}); }
+  function getPref(){ return getJ(K_PREF,{showTs:false,bubbleCss:'',showHidden:false}); }
   function setPref(v){ setJ(K_PREF,v); }
   function applyBubbleCss(){
     const p=getPref();
     let el=document.getElementById('bubbleCssStyle');
-    if(!el){
-      el=document.createElement('style');
-      el.id='bubbleCssStyle';
-      document.head.appendChild(el);
-    }
+    if(!el){ el=document.createElement('style'); el.id='bubbleCssStyle'; document.head.appendChild(el); }
     el.textContent=String(p.bubbleCss||'');
   }
 
+  // ---------- base ui ----------
   function show(id){
     document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
     const el=$(id); if(el) el.classList.add('active');
@@ -677,20 +837,35 @@
     $('homeTime').textContent=`${h}:${m}`;
   }
   tick(); setInterval(tick,1000);
+  const fmtTs=ts=>{const d=new Date(ts||Date.now());return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;}
 
-  function fmtTs(ts){
-    const d=new Date(ts||Date.now());
-    return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-  }
-
-  // data
+  // ---------- data ----------
   function getContacts(){
     const arr=getJ(K_CONTACT,[]);
     return Array.isArray(arr) ? arr.map(c=>({...c,settings:normSettings(c.settings)})) : [];
   }
   function setContacts(v){ setJ(K_CONTACT,(v||[]).map(c=>({...c,settings:normSettings(c.settings)}))); }
-  function getChats(){return getJ(K_CHAT,{});}
-  function setChats(v){setJ(K_CHAT,v);}
+
+  function sanitizeChats(raw){
+    const map = raw && typeof raw==='object' ? raw : {};
+    Object.keys(map).forEach(id=>{
+      map[id]=(Array.isArray(map[id])?map[id]:[]).map(m=>({
+        id:m.id||mid(),
+        role:m.role==='assistant'?'assistant':'user',
+        text:String(m.text||''),
+        time:m.time||Date.now(),
+        stored:!!m.stored,
+        hidden:!!m.hidden,
+        favorite:!!m.favorite,
+        recalled:!!m.recalled,
+        quoteText: m.quoteText ? String(m.quoteText).slice(0,120) : ''
+      }));
+    });
+    return map;
+  }
+  function getChats(){ return sanitizeChats(getJ(K_CHAT,{})); }
+  function setChats(v){ setJ(K_CHAT, sanitizeChats(v)); }
+
   function getMe(){return getJ(K_ME,{name:'我',avatar:'',persona:'',note:''});}
   function setMe(v){setJ(K_ME,v);}
   function getContactById(id){ return getContacts().find(x=>x.id===id); }
@@ -701,7 +876,7 @@
     setContacts(arr);
   }
 
-  // contacts
+  // ---------- contacts ----------
   function renderContacts(k=''){
     k=(k||'').trim();
     const arr=getContacts().filter(c=>!k||c.name.includes(k)||(c.preview||'').includes(k));
@@ -734,18 +909,13 @@
           let w=img.width,h=img.height;
           const s=Math.min(1,maxSide/Math.max(w,h));
           w=Math.round(w*s); h=Math.round(h*s);
-
           const c=document.createElement('canvas');
           c.width=w; c.height=h;
           c.getContext('2d').drawImage(img,0,0,w,h);
-
           let out='';
           try{ out=c.toDataURL('image/webp',quality); }catch(e){}
           if(!out || out.startsWith('data:,')) out=c.toDataURL('image/jpeg',quality);
-
-          if(out.length > 120000){
-            out=c.toDataURL('image/jpeg',0.32);
-          }
+          if(out.length > 120000) out=c.toDataURL('image/jpeg',0.32);
           resolve(out);
         };
         img.onerror=reject; img.src=fr.result;
@@ -770,11 +940,8 @@
       persona,
       settings:{...DEFAULT_CHAT_SETTINGS}
     });
-    try{
-      setContacts(arr);
-    }catch{
-      return alert('保存失败：存储空间不足（已自动瘦身，仍不足）');
-    }
+    try{ setContacts(arr); }
+    catch{ return alert('保存失败：存储空间不足（已自动瘦身，仍不足）'); }
 
     renderContacts($('searchInput').value||'');
     closeCreateModal();
@@ -794,7 +961,7 @@
     e.target.value='';
   };
 
-  // chat
+  // ---------- chat ----------
   function setTyping(chatId,on){
     typingForId = on ? chatId : (typingForId===chatId ? null : typingForId);
     updateChatSub();
@@ -810,6 +977,7 @@
 
   window.openChat=function(id){
     currentId=id;
+    selecting=false; selectedSet.clear(); toggleMultiBar(false);
     const c=getContactById(id);
     $('chatTitle').textContent=c?c.name:'聊天';
     applyModeUI();
@@ -817,23 +985,59 @@
     show('chatRoom');
   };
 
-  function renderOfflineAssistant(text,ts,pref){
+  function getCurrentMessages(){
+    const map=getChats();
+    return map[currentId]||[];
+  }
+  function setCurrentMessages(arr){
+    const map=getChats(); map[currentId]=arr; setChats(map);
+  }
+  function findMsgById(id){
+    const arr=getCurrentMessages();
+    const idx=arr.findIndex(x=>x.id===id);
+    return {arr,idx,msg:idx>=0?arr[idx]:null};
+  }
+
+  function renderQuoteBar(){
+    const bar=$('quoteBar');
+    if(!quoteDraft){ bar.classList.remove('active'); return; }
+    $('quoteText').textContent = clean(quoteDraft.text).slice(0,42);
+    bar.classList.add('active');
+  }
+  $('quoteCancel').onclick=()=>{ quoteDraft=null; renderQuoteBar(); };
+
+  function quoteChipHtml(m){
+    return m.quoteText ? `<div class="quote-chip">引用：${esc(m.quoteText)}</div>` : '';
+  }
+
+  function messageVisible(m,pref){
+    if(!m) return false;
+    if(m.hidden && !pref.showHidden) return false;
+    return true;
+  }
+
+  function renderOfflineAssistant(text,ts,pref,m){
     const raw=String(text||'');
-    const m=raw.match(/【状态栏】\s*([\s\S]*?)\s*【正文】\s*([\s\S]*)/);
-    if(!m){
-      return `<div class="bubble-wrap ai"><div class="bubble ai">${esc(raw)}</div>${pref.showTs?`<div class="msg-time">${fmtTs(ts)}</div>`:''}</div>`;
+    const m2=raw.match(/【状态栏】\s*([\s\S]*?)\s*【正文】\s*([\s\S]*)/);
+    const tsHtml = pref.showTs ? `<div class="msg-time">${fmtTs(ts)}</div>` : '';
+    const mark = m.hidden ? '（已隐藏）' : m.favorite ? '（已收藏）' : '';
+    if(!m2){
+      return `<div class="bubble-wrap ai"><div class="bubble ai">${quoteChipHtml(m)}${esc(raw)} ${mark}</div>${tsHtml}</div>`;
     }
-    const state=clean(m[1]);
-    const body=clean(m[2]);
+    const state=clean(m2[1]), body=clean(m2[2]);
     return `
       <div class="bubble-wrap ai">
         <div class="offline-card">
           <div class="offline-state">${esc(state||'状态未记录')}</div>
-          <div class="offline-body">${esc(body||'')}</div>
+          <div class="offline-body">${quoteChipHtml(m)}${esc(body||'')} ${mark}</div>
         </div>
-        ${pref.showTs?`<div class="msg-time">${fmtTs(ts)}</div>`:''}
+        ${tsHtml}
       </div>
     `;
+  }
+
+  function checkHtml(m){
+    return selecting ? `<input type="checkbox" class="msg-check" data-mid="${m.id}" ${selectedSet.has(m.id)?'checked':''}>` : '';
   }
 
   function renderChat(){
@@ -843,71 +1047,218 @@
     const pref=getPref();
     const roleAvatar=c?.avatar||'https://via.placeholder.com/64x64?text=TA';
     const meAvatar=me.avatar||'https://via.placeholder.com/64x64?text=我';
-    const map=getChats();
-    const arr=map[currentId]||[];
+    const arr=getCurrentMessages().filter(m=>messageVisible(m,pref));
 
     if(st.mode==='offline'){
       $('chatMsgs').innerHTML=arr.map(m=>{
         const cls=m.role==='user'?'me':'ai';
         const av=m.role==='user'?meAvatar:roleAvatar;
+        const tsHtml = pref.showTs ? `<div class="msg-time">${fmtTs(m.time)}</div>` : '';
+        const userBubble = `<div class="bubble-wrap me"><div class="bubble me">${quoteChipHtml(m)}${esc(m.text)} ${m.hidden?'（已隐藏）':''}${m.favorite?'（已收藏）':''}</div>${tsHtml}</div>`;
+        const aiBubble = renderOfflineAssistant(m.text,m.time,pref,m);
 
-        if(m.role==='user'){
-          return `<div class="msg-block ${cls}">
-            <img class="chat-avatar" src="${av}">
-            <div class="bubble-wrap me">
-              <div class="bubble me">${esc(m.text)}</div>
-              ${pref.showTs?`<div class="msg-time">${fmtTs(m.time)}</div>`:''}
-            </div>
-          </div>`;
-        }
-
-        return `<div class="msg-block ${cls}">
+        return `<div class="msg-block ${cls} msg-item" data-mid="${m.id}">
+          ${checkHtml(m)}
           <img class="chat-avatar" src="${av}">
-          ${renderOfflineAssistant(m.text,m.time,pref)}
+          ${m.role==='user'?userBubble:aiBubble}
         </div>`;
       }).join('');
     }else{
       $('chatMsgs').innerHTML=arr.map(m=>{
+        const tsHtml = pref.showTs ? `<div class="msg-time">${fmtTs(m.time)}</div>` : '';
         if(m.role==='user'){
-          return `<div class="msg-row me">
+          return `<div class="msg-row me msg-item" data-mid="${m.id}">
+            ${checkHtml(m)}
             <div class="bubble-wrap me">
-              <div class="bubble me">${esc(m.text)}</div>
-              ${pref.showTs?`<div class="msg-time">${fmtTs(m.time)}</div>`:''}
+              <div class="bubble me">${quoteChipHtml(m)}${esc(m.text)} ${m.hidden?'（已隐藏）':''}${m.favorite?'（已收藏）':''}</div>
+              ${tsHtml}
             </div>
             <img class="chat-avatar" src="${meAvatar}">
           </div>`;
         }
-        return `<div class="msg-row">
+        return `<div class="msg-row msg-item" data-mid="${m.id}">
+          ${checkHtml(m)}
           <img class="chat-avatar" src="${roleAvatar}">
           <div class="bubble-wrap ai">
-            <div class="bubble ai">${esc(m.text)}</div>
-            ${pref.showTs?`<div class="msg-time">${fmtTs(m.time)}</div>`:''}
+            <div class="bubble ai">${quoteChipHtml(m)}${esc(m.text)} ${m.hidden?'（已隐藏）':''}${m.favorite?'（已收藏）':''}</div>
+            ${tsHtml}
           </div>
         </div>`;
       }).join('');
     }
     $('chatMsgs').scrollTop=$('chatMsgs').scrollHeight;
+    bindMsgEvents();
+    renderQuoteBar();
   }
 
+  function bindMsgEvents(){
+    const box=$('chatMsgs');
+    box.querySelectorAll('.msg-item').forEach(el=>{
+      const id=el.getAttribute('data-mid');
+      if(!id) return;
+
+      el.oncontextmenu=(e)=>{e.preventDefault(); openMsgSheet(id);};
+
+      const start=()=>{ if(selecting) return; pressTimer=setTimeout(()=>openMsgSheet(id),420); };
+      const clear=()=>{ if(pressTimer){clearTimeout(pressTimer); pressTimer=null;} };
+
+      el.addEventListener('touchstart',start,{passive:true});
+      el.addEventListener('touchend',clear);
+      el.addEventListener('touchmove',clear);
+      el.addEventListener('mousedown',start);
+      el.addEventListener('mouseup',clear);
+      el.addEventListener('mouseleave',clear);
+      el.addEventListener('click',(e)=>{
+        const ck=e.target.closest('.msg-check');
+        if(ck){
+          const mid2=ck.getAttribute('data-mid');
+          if(ck.checked) selectedSet.add(mid2); else selectedSet.delete(mid2);
+          return;
+        }
+        if(selecting){
+          if(selectedSet.has(id)) selectedSet.delete(id); else selectedSet.add(id);
+          renderChat();
+        }
+      });
+    });
+  }
+
+  // ---------- msg sheet actions ----------
+  function openMsgSheet(id){
+    activeMsgId=id;
+    $('msgSheetMask').classList.add('active');
+  }
+  function closeMsgSheet(){
+    activeMsgId=null;
+    $('msgSheetMask').classList.remove('active');
+  }
+  $('msgSheetMask').addEventListener('click',e=>{
+    if(e.target.id==='msgSheetMask') closeMsgSheet();
+  });
+  $('msgSheetCard').addEventListener('click',async e=>{
+    const btn=e.target.closest('[data-act]'); if(!btn) return;
+    const act=btn.getAttribute('data-act');
+    if(act==='close') return closeMsgSheet();
+
+    const ref=findMsgById(activeMsgId);
+    if(!ref.msg && act!=='multi') { closeMsgSheet(); return; }
+
+    if(act==='quote'){
+      quoteDraft={id:ref.msg.id,text:ref.msg.text};
+      renderQuoteBar();
+    }
+    if(act==='copy'){
+      try{ await navigator.clipboard.writeText(ref.msg.text||''); }catch{}
+    }
+    if(act==='delete'){
+      if(confirm('删除这条消息？')){
+        ref.arr.splice(ref.idx,1); setCurrentMessages(ref.arr); renderChat();
+      }
+    }
+    if(act==='edit'){
+      $('msgEditorTa').value=ref.msg.text||'';
+      $('msgEditor').dataset.mid=ref.msg.id;
+      show('msgEditor');
+    }
+    if(act==='recall'){
+      ref.msg.text='[已撤回]';
+      ref.msg.recalled=true;
+      ref.msg.hidden=true; // 撤回后不喂给AI
+      setCurrentMessages(ref.arr); renderChat();
+    }
+    if(act==='hide'){
+      ref.msg.hidden=true; setCurrentMessages(ref.arr); renderChat();
+    }
+    if(act==='unhide'){
+      ref.msg.hidden=false; setCurrentMessages(ref.arr); renderChat();
+    }
+    if(act==='fav'){
+      ref.msg.favorite=!ref.msg.favorite; setCurrentMessages(ref.arr); renderChat();
+    }
+    if(act==='multi'){
+      selecting=true; selectedSet.clear(); toggleMultiBar(true); renderChat();
+    }
+    closeMsgSheet();
+  });
+
+  function toggleMultiBar(on){
+    selecting=!!on;
+    $('multiBar').classList.toggle('active',!!on);
+  }
+  $('multiCancelBtn').onclick=()=>{ selectedSet.clear(); toggleMultiBar(false); renderChat(); };
+  $('multiDelBtn').onclick=()=>{
+    if(!selectedSet.size) return;
+    if(!confirm(`删除已选 ${selectedSet.size} 条？`)) return;
+    const arr=getCurrentMessages().filter(m=>!selectedSet.has(m.id));
+    setCurrentMessages(arr); selectedSet.clear(); renderChat();
+  };
+  $('multiFavBtn').onclick=()=>{
+    if(!selectedSet.size) return;
+    const arr=getCurrentMessages(); arr.forEach(m=>{ if(selectedSet.has(m.id)) m.favorite=true;});
+    setCurrentMessages(arr); renderChat();
+  };
+  $('multiHideBtn').onclick=()=>{
+    if(!selectedSet.size) return;
+    const arr=getCurrentMessages(); arr.forEach(m=>{ if(selectedSet.has(m.id)) m.hidden=true;});
+    setCurrentMessages(arr); renderChat();
+  };
+  $('multiUnhideBtn').onclick=()=>{
+    if(!selectedSet.size) return;
+    const arr=getCurrentMessages(); arr.forEach(m=>{ if(selectedSet.has(m.id)) m.hidden=false;});
+    setCurrentMessages(arr); renderChat();
+  };
+
+  $('saveEditBtn').onclick=()=>{
+    const id=$('msgEditor').dataset.mid;
+    const txt=clean($('msgEditorTa').value);
+    const ref=findMsgById(id);
+    if(ref.msg){ ref.msg.text=txt||ref.msg.text; setCurrentMessages(ref.arr); }
+    show('chatRoom'); renderChat();
+  };
+
+  // ---------- favorites ----------
+  function renderFav(){
+    const all=[];
+    const contacts=getContacts().reduce((m,c)=>(m[c.id]=c.name,m),{});
+    const chats=getChats();
+    Object.keys(chats).forEach(cid=>{
+      (chats[cid]||[]).forEach(m=>{
+        if(m.favorite){
+          all.push({cid,name:contacts[cid]||'聊天',...m});
+        }
+      });
+    });
+    all.sort((a,b)=>(b.time||0)-(a.time||0));
+    $('favList').innerHTML = all.map(x=>`
+      <div class="item" style="align-items:flex-start;">
+        <div class="main" onclick="openChat('${x.cid}')">
+          <div class="name">${esc(x.name)}</div>
+          <div class="preview" style="white-space:normal;">${esc(x.text)}</div>
+          <div class="t" style="margin-top:6px;">${fmtTs(x.time)}</div>
+        </div>
+      </div>
+    `).join('') || `<div class="card small">暂无收藏</div>`;
+  }
+  $('favOpenBtn').onclick=()=>{ renderFav(); show('favScreen'); };
+  $('clearFavBtn').onclick=()=>{
+    if(!confirm('清空全部收藏标记？')) return;
+    const map=getChats();
+    Object.keys(map).forEach(cid=>(map[cid]||[]).forEach(m=>m.favorite=false));
+    setChats(map); renderFav();
+  };
+
+  // ---------- common ----------
   function clearCurrentChat(){
     if(!currentId) return;
     if(!confirm('清空当前聊天？')) return;
     const map=getChats(); map[currentId]=[]; setChats(map); renderChat();
   }
-
   function deleteCurrentContact(){
     if(!currentId) return;
     if(!confirm('删除当前好友及聊天记录？')) return;
-    const arr=getContacts().filter(c=>c.id!==currentId);
-    setContacts(arr);
-
-    const map=getChats();
-    delete map[currentId];
-    setChats(map);
-
-    currentId=null;
-    renderContacts($('searchInput').value||'');
-    show('wechat');
+    const arr=getContacts().filter(c=>c.id!==currentId); setContacts(arr);
+    const map=getChats(); delete map[currentId]; setChats(map);
+    currentId=null; renderContacts($('searchInput').value||''); show('wechat');
   }
 
   function resetInputH(){ $('chatInput').style.height='44px'; }
@@ -919,14 +1270,18 @@
 
   function pushUser(text){
     const map=getChats(); map[currentId]=map[currentId]||[];
-    map[currentId].push({role:'user',text,time:Date.now(),stored:true});
+    const obj={id:mid(),role:'user',text,time:Date.now(),stored:true,hidden:false,favorite:false,recalled:false};
+    if(quoteDraft) obj.quoteText = clean(quoteDraft.text).slice(0,120);
+    map[currentId].push(obj);
     setChats(map);
   }
+
   function storeCurrentInput(){
     if(!currentId) return;
     const t=clean($('chatInput').value);
     if(!t) return;
     pushUser(t);
+    quoteDraft=null;
     $('chatInput').value=''; resetInputH(); renderChat();
   }
   $('storeBtn').onclick=storeCurrentInput;
@@ -953,17 +1308,14 @@
   }
   function splitAiBubbles(raw){
     const txt=clean(raw); if(!txt) return ['...'];
-
     const byJson=parseJsonMessages(txt);
     if(byJson && byJson.length){
       const out=[];
       for(const s of byJson){
-        if(s.length>44) out.push(...forceSplitByLen(s,28));
-        else out.push(s);
+        if(s.length>44) out.push(...forceSplitByLen(s,28)); else out.push(s);
       }
       return out.filter(Boolean);
     }
-
     const normalized=txt.replace(/\r/g,'').replace(/[ \t]+\n/g,'\n').replace(/\n{3,}/g,'\n\n').trim();
     const blocks=normalized.split(/\n{2,}/).filter(Boolean);
     const pieces=[];
@@ -984,28 +1336,29 @@
     }
     return pieces.filter(Boolean).length ? pieces.filter(Boolean) : [txt];
   }
+
   function enforceCountRange(parts,min,max){
     let arr=[...(parts||[])].filter(Boolean);
     min=Math.max(1,min); max=Math.max(min,max);
-
     while(arr.length<min){
       const idx=arr.findIndex(x=>x.length>12);
       if(idx<0) break;
-      const one=arr[idx], mid=Math.floor(one.length/2);
-      const a=clean(one.slice(0,mid)), b=clean(one.slice(mid));
-      arr.splice(idx,1,...[a,b].filter(Boolean));
+      const one=arr[idx], p=Math.floor(one.length/2);
+      arr.splice(idx,1,clean(one.slice(0,p)),clean(one.slice(p)));
+      arr=arr.filter(Boolean);
     }
     while(arr.length>max){
-      const last=arr.pop();
-      arr[arr.length-1]=clean((arr[arr.length-1]||'')+' '+last);
+      const last=arr.pop(); arr[arr.length-1]=clean((arr[arr.length-1]||'')+' '+last);
     }
     return arr.filter(Boolean);
   }
 
   async function emitAiSequential(parts,map,targetId,mode){
     for(let i=0;i<parts.length;i++){
+      const msg={id:mid(),role:'assistant',text:parts[i],time:Date.now(),hidden:false,favorite:false,recalled:false};
+      if(quoteDraft) {} // assistant 不继承引用
       map[targetId]=map[targetId]||[];
-      map[targetId].push({role:'assistant',text:parts[i],time:Date.now()});
+      map[targetId].push(msg);
       setChats(map);
       if(currentId===targetId) renderChat();
 
@@ -1017,7 +1370,7 @@
     }
   }
 
-  // API
+  // ---------- API ----------
   function getApiState(){
     return getJ(K_API,{
       current:'默认',
@@ -1088,7 +1441,6 @@
     const cfg=saveApiForm();
     if(!cfg.base||!cfg.key) throw new Error('请先配置 Base URL 和 API Key');
     const url=buildUrl(cfg.base,'/v1/chat/completions');
-
     const r=await fetch(url,{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+cfg.key},
@@ -1187,11 +1539,13 @@
     const t=clean($('chatInput').value);
     if(t) pushUser(t);
 
+    quoteDraft=null; renderQuoteBar();
     $('chatInput').value=''; resetInputH();
     if(currentId===chatId) renderChat();
 
     const map=getChats();
-    const hist=(map[chatId]||[]).filter(x=>x.text).slice(-30);
+    // 隐藏/撤回消息不喂给AI，避免“隐藏还被看见”
+    const hist=(map[chatId]||[]).filter(x=>x.text && !x.hidden && !x.recalled).slice(-40);
     if(!hist.length) return;
 
     setTyping(chatId,true);
@@ -1224,7 +1578,7 @@
       renderContacts($('searchInput').value||'');
     }catch(e){
       map[chatId]=map[chatId]||[];
-      map[chatId].push({role:'assistant',text:'请求失败：'+clean(e.message),time:Date.now()});
+      map[chatId].push({id:mid(),role:'assistant',text:'请求失败：'+clean(e.message),time:Date.now(),hidden:false,favorite:false,recalled:false});
       setChats(map);
       if(currentId===chatId) renderChat();
     }finally{
@@ -1241,7 +1595,7 @@
     }
   });
 
-  // setting full page
+  // ---------- chat setting page ----------
   function refreshSettingUI(){
     const mode=$('replyModeSelect').value;
     $('onlineSettingCard').style.display = mode==='online' ? '' : 'none';
@@ -1273,6 +1627,7 @@
 
     $('showTsSwitch').checked=!!p.showTs;
     $('bubbleCssInput').value=p.bubbleCss||'';
+    if($('showHiddenSwitch')) $('showHiddenSwitch').checked=!!p.showHidden;
 
     refreshSettingUI();
     show('chatSetting');
@@ -1310,6 +1665,7 @@
       const p=getPref();
       p.showTs=!!$('showTsSwitch').checked;
       p.bubbleCss=String($('bubbleCssInput').value||'');
+      p.showHidden = $('showHiddenSwitch') ? !!$('showHiddenSwitch').checked : false;
       setPref(p);
       applyBubbleCss();
 
@@ -1321,14 +1677,14 @@
       renderContacts($('searchInput').value||'');
       show('chatRoom');
     }catch{
-      alert('保存失败：存储空间不足（已自动压缩，仍不足）');
+      alert('保存失败：存储空间不足（已自动瘦身，仍不足）');
     }
   };
 
   $('clearChatBtn2').onclick=clearCurrentChat;
   $('deleteContactBtn').onclick=deleteCurrentContact;
 
-  // import/export
+  // ---------- import/export ----------
   $('exportBtn').onclick=()=>{
     const data={
       contacts:getContacts(),
@@ -1369,7 +1725,7 @@
     }
   };
 
-  // init
+  // ---------- init ----------
   applyBubbleCss();
   refreshPresetUI();
   renderContacts();
