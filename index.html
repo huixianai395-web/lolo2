@@ -236,33 +236,35 @@
     }
 
     /* 储存键：风铃风（克制高级） */
- /* 替换你当前这段：.btn.store / .btn.store::before / .btn.store::after */
-
+ /* 替换你现在的 .btn.store / ::before / ::after */
 .btn.store{
   width:40px;
   height:40px;
   padding:0;
-  border:none;
-  border-radius:12px;
+  border-radius:999px;
+  border:1px solid #d6e0f2;
   position:relative;
   overflow:hidden;
+  font-size:0;
   background:
-    linear-gradient(180deg, rgba(255,255,255,.92), rgba(238,244,255,.88));
-  border:1px solid #d9e3f4;
+    radial-gradient(circle at 30% 22%, rgba(255,255,255,.98) 0 22%, rgba(255,255,255,.18) 45%, transparent 60%),
+    linear-gradient(180deg, #fbfdff 0%, #eef3ff 55%, #e7eefc 100%);
   box-shadow:
-    0 3px 10px rgba(60,88,145,.14),
-    inset 0 1px 0 rgba(255,255,255,.95);
-  transition:all .18s ease;
-  font-size:0; /* 保证无文字显示 */
+    0 4px 12px rgba(62,92,150,.16),
+    inset 0 1px 0 rgba(255,255,255,.95),
+    inset 0 -1px 0 rgba(180,198,232,.28);
+  transition: all .18s ease;
 }
 
 .btn.store::before{
   content:"";
   position:absolute;
-  inset:1px;
-  border-radius:11px;
-  border:1px solid rgba(255,255,255,.62);
-  pointer-events:none;
+  inset:7px;                  /* 中间那圈圆环 */
+  border-radius:999px;
+  border:1.5px solid rgba(126,151,202,.42);
+  box-shadow:
+    inset 0 1px 1px rgba(255,255,255,.72),
+    0 0 0 1px rgba(255,255,255,.55);
 }
 
 .btn.store::after{
@@ -270,31 +272,32 @@
   position:absolute;
   left:50%;
   top:50%;
-  width:16px;
-  height:16px;
+  width:8px;
+  height:8px;
   transform:translate(-50%,-50%);
   border-radius:999px;
-  background:
-    radial-gradient(circle at 50% 40%, rgba(255,255,255,.95) 0 28%, rgba(165,184,221,.7) 29% 40%, transparent 41%),
-    linear-gradient(180deg, rgba(96,121,170,.72), rgba(96,121,170,.18));
-  clip-path: polygon(46% 0,54% 0,54% 45%,70% 82%,30% 82%,46% 45%);
-  opacity:.9;
+  background:linear-gradient(180deg, rgba(132,156,205,.9), rgba(105,130,182,.85));
+  box-shadow:
+    0 0 0 2px rgba(255,255,255,.72),
+    0 1px 3px rgba(71,97,150,.24);
 }
 
 .btn.store:hover{
-  border-color:#ccd8ef;
+  border-color:#c8d6ef;
   box-shadow:
-    0 5px 14px rgba(60,88,145,.18),
-    inset 0 1px 0 rgba(255,255,255,.98);
+    0 6px 16px rgba(62,92,150,.2),
+    inset 0 1px 0 rgba(255,255,255,.98),
+    inset 0 -1px 0 rgba(180,198,232,.32);
 }
 
 .btn.store:active{
-  transform:translateY(1px) scale(.98);
+  transform:translateY(1px) scale(.985);
   box-shadow:
-    0 2px 7px rgba(60,88,145,.12),
-    inset 0 1px 0 rgba(255,255,255,.9);
+    0 3px 8px rgba(62,92,150,.14),
+    inset 0 1px 0 rgba(255,255,255,.92);
 }
-    .btn.store:active{transform:translateY(1px)}
+  <!
+<button class="btn store" id="storeBtn" aria-label="储存"></button>-- 这一行建议替换（title 会出现提示字，可去掉） -->
 
     /* modal */
     .modal{
