@@ -1,24 +1,23 @@
-
 <!doctype html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>小手机 v1.3.1 稳定</title>
+  <title>小手机 v1.3.2 稳定</title>
   <style>
     :root{
       --safe-top: env(safe-area-inset-top, 0px);
       --safe-bottom: env(safe-area-inset-bottom, 0px);
-      --line:#e9e9ef;
-      --bg:#f7f7fb;
+      --line:#e6e9f5;
+      --bg:#f6f8ff;
       --blue:#2f66d8;
-      --glass: rgba(255,255,255,.28);
-      --glass-border: rgba(255,255,255,.46);
+      --glass: rgba(255,255,255,.30);
+      --glass-border: rgba(255,255,255,.48);
     }
     *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
     html,body{
       margin:0;height:100%;
-      background:linear-gradient(160deg,#2c57c8,#5ba9ff); /* 防止出现黑底 */
+      background:linear-gradient(160deg,#2c57c8,#5ba9ff);
       font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
     }
     #app{
@@ -29,7 +28,7 @@
       margin:0 auto;
       position:relative;
       overflow:hidden;
-      background:#111;
+      background:var(--bg);
     }
 
     .screen{position:absolute;inset:0;display:none;background:var(--bg)}
@@ -40,7 +39,8 @@
       padding-top:var(--safe-top);
       display:flex;align-items:center;justify-content:space-between;
       padding-left:12px;padding-right:12px;
-      background:#fff;border-bottom:1px solid var(--line);
+      background:linear-gradient(180deg,#f8f9ff,#f6f8ff);
+      border-bottom:1px solid var(--line);
     }
 
     .btn{
@@ -56,6 +56,7 @@
       padding:12px;
       padding-bottom:calc(12px + var(--safe-bottom));
       display:flex;flex-direction:column;gap:10px;
+      background:var(--bg);
     }
 
     .card{background:#fff;border:1px solid #ececf2;border-radius:14px;padding:12px}
@@ -90,6 +91,75 @@
       font-size:72px;line-height:1.02;font-weight:760;letter-spacing:-2px;
       text-shadow:0 2px 12px rgba(0,0,0,.2);
     }
+
+    /* 风铃（更明显） */
+    .windchime{
+      position:absolute;
+      top:calc(6px + var(--safe-top));
+      right:12px;
+      width:72px;
+      height:126px;
+      transform-origin:top center;
+      animation:chimeSwing 3.2s ease-in-out infinite;
+      filter:drop-shadow(0 4px 10px rgba(0,0,0,.26));
+      pointer-events:none;
+      z-index:3;
+    }
+    .windchime .ring{
+      width:28px;height:10px;margin:0 auto;
+      border:2px solid rgba(255,255,255,.95);
+      border-radius:999px;
+      background:rgba(255,255,255,.18);
+      backdrop-filter:blur(1px);
+    }
+    .windchime .line{
+      position:absolute;top:10px;width:2px;
+      background:linear-gradient(to bottom,rgba(255,255,255,.95),rgba(255,255,255,.18));
+      transform-origin:top center;
+    }
+    .windchime .line span{
+      position:absolute;left:50%;transform:translateX(-50%);
+      border-radius:999px;
+      background:rgba(255,255,255,.92);
+      box-shadow:0 0 10px rgba(255,255,255,.5);
+    }
+    .windchime .l1{left:17px;height:42px;animation:lineSwingA 3.2s ease-in-out infinite}
+    .windchime .l2{left:35px;height:55px;animation:lineSwingB 3.2s ease-in-out infinite}
+    .windchime .l3{left:53px;height:46px;animation:lineSwingC 3.2s ease-in-out infinite}
+    .windchime .l1 span{bottom:-6px;width:8px;height:8px}
+    .windchime .l2 span{bottom:-7px;width:10px;height:10px}
+    .windchime .l3 span{bottom:-6px;width:8px;height:8px}
+    .windchime .pendulum{
+      position:absolute;left:35px;top:66px;transform:translateX(-50%);
+      width:2px;height:42px;
+      background:linear-gradient(to bottom,rgba(255,255,255,.85),rgba(255,255,255,.2));
+    }
+    .windchime .pendulum::after{
+      content:"";
+      position:absolute;left:50%;bottom:-9px;transform:translateX(-50%);
+      width:22px;height:14px;
+      border-radius:4px 4px 8px 8px;
+      background:linear-gradient(180deg,rgba(255,255,255,.95),rgba(220,240,255,.72));
+      box-shadow:0 0 12px rgba(255,255,255,.5);
+    }
+
+    @keyframes chimeSwing{
+      0%,100%{transform:rotate(8deg)}
+      50%{transform:rotate(-8deg)}
+    }
+    @keyframes lineSwingA{
+      0%,100%{transform:rotate(6deg)}
+      50%{transform:rotate(-5deg)}
+    }
+    @keyframes lineSwingB{
+      0%,100%{transform:rotate(3deg)}
+      50%{transform:rotate(-3deg)}
+    }
+    @keyframes lineSwingC{
+      0%,100%{transform:rotate(-5deg)}
+      50%{transform:rotate(5deg)}
+    }
+
     .widgets{margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:10px}
     .widget{
       background:var(--glass);border:1px solid var(--glass-border);
@@ -125,7 +195,7 @@
       height:calc(100% - (52px + var(--safe-top)) - (74px + var(--safe-bottom)));
       overflow:auto;
       padding:12px;
-      background:#eef1f6;
+      background:linear-gradient(180deg,#edf2ff,#edf1f8);
       display:flex;flex-direction:column;gap:10px;
     }
     .msg-row{display:flex;gap:8px;align-items:flex-end}
@@ -148,7 +218,8 @@
       position:absolute;left:0;right:0;bottom:0;
       padding:10px;
       padding-bottom:calc(10px + var(--safe-bottom));
-      background:#fff;border-top:1px solid #e9e9ef;
+      background:linear-gradient(180deg,#f8f9ff,#f6f8ff);
+      border-top:1px solid #e4e8f5;
       display:flex;gap:8px;align-items:flex-end;
     }
     #chatInput{
@@ -158,6 +229,25 @@
       max-height:96px;
       overflow-y:auto;
       resize:none;
+    }
+    .send-actions{
+      display:flex;gap:8px;align-items:center;align-self:flex-end;
+    }
+    .btn.store{
+      width:40px;height:40px;padding:0;border-radius:999px;
+      border:1px solid rgba(117,77,39,.45);
+      background:
+        radial-gradient(circle at 30% 25%, rgba(255,236,199,.85), rgba(191,141,84,.75) 45%, rgba(111,75,42,.88) 100%);
+      box-shadow:inset 0 1px 1px rgba(255,255,255,.35), 0 2px 6px rgba(88,52,20,.22);
+      position:relative;
+    }
+    .btn.store::after{
+      content:"";
+      position:absolute;left:50%;top:50%;
+      width:10px;height:10px;border-radius:999px;
+      transform:translate(-50%,-50%);
+      background:rgba(255,249,236,.9);
+      box-shadow:0 0 8px rgba(255,235,204,.75);
     }
 
     /* modal */
@@ -184,6 +274,14 @@
   <section id="home" class="screen active">
     <div class="wall"></div>
     <div class="home-layer">
+      <div class="windchime" aria-hidden="true">
+        <div class="ring"></div>
+        <div class="line l1"><span></span></div>
+        <div class="line l2"><span></span></div>
+        <div class="line l3"><span></span></div>
+        <div class="pendulum"></div>
+      </div>
+
       <div class="date" id="homeDate"></div>
       <div class="time" id="homeTime"></div>
 
@@ -223,9 +321,11 @@
     <div id="chatMsgs"></div>
 
     <div class="chatInputBar">
-      <button class="btn" id="storeBtn">储存</button>
       <textarea id="chatInput" class="ta" placeholder="输入消息..."></textarea>
-      <button class="btn p" id="sendBtn">发送</button>
+      <div class="send-actions">
+        <button class="btn store" id="storeBtn" title="储存" aria-label="储存"></button>
+        <button class="btn p" id="sendBtn">发送</button>
+      </div>
     </div>
   </section>
 
@@ -472,30 +572,89 @@
     setChats(map);
   }
 
-  $('storeBtn').onclick=()=>{
+  function storeCurrentInput(){
     if(!currentId) return;
     const t=clean($('chatInput').value);
     if(!t) return;
     pushUser(t);
     $('chatInput').value=''; resetInputH(); renderChat();
-  };
+  }
+
+  $('storeBtn').onclick=storeCurrentInput;
+
+  function forceSplitByLen(text, len){
+    const out=[];
+    let i=0;
+    while(i<text.length){
+      out.push(text.slice(i,i+len));
+      i+=len;
+    }
+    return out;
+  }
 
   function splitAiBubbles(raw){
     const txt=clean(raw);
     if(!txt) return ['...'];
+
     try{
       const j=JSON.parse(txt);
-      if(Array.isArray(j.messages)) return j.messages.map(x=>clean(x)).filter(Boolean);
+      if(Array.isArray(j.messages)){
+        return j.messages
+          .map(x=>clean(x))
+          .filter(Boolean)
+          .flatMap(x=>x.length>34?forceSplitByLen(x,34):[x])
+          .slice(0,18);
+      }
     }catch{}
-    return txt.split(/\n{2,}|(?<=[。！？!?])\s*/).map(s=>s.trim()).filter(Boolean).slice(0,8);
+
+    const normalized = txt
+      .replace(/\r/g,'')
+      .replace(/[ \t]+\n/g,'\n')
+      .replace(/\n{3,}/g,'\n\n')
+      .trim();
+
+    const blocks = normalized.split(/\n{2,}/).filter(Boolean);
+    const pieces = [];
+
+    for(const block of blocks){
+      const segs = block.match(/[^。！？!?；;，,\n]+[。！？!?；;，,]?/g) || [block];
+      let buf = '';
+
+      for(let seg of segs){
+        seg = seg.trim();
+        if(!seg) continue;
+
+        if(seg.length > 34){
+          const chunks = forceSplitByLen(seg, 28);
+          if(buf){ pieces.push(buf); buf=''; }
+          pieces.push(...chunks);
+          continue;
+        }
+
+        if((buf + seg).length <= 34){
+          buf += seg;
+        }else{
+          if(buf) pieces.push(buf);
+          buf = seg;
+        }
+      }
+      if(buf) pieces.push(buf);
+    }
+
+    const cleaned = pieces.map(s=>s.trim()).filter(Boolean);
+    return (cleaned.length ? cleaned : [txt]).slice(0, 18);
   }
 
   async function emitAiSequential(parts,map){
-    for(const p of parts){
-      map[currentId].push({role:'assistant',text:p,time:Date.now()});
+    for(let i=0;i<parts.length;i++){
+      map[currentId].push({role:'assistant',text:parts[i],time:Date.now()});
       setChats(map);
       renderChat();
-      await new Promise(r=>setTimeout(r,220+Math.floor(Math.random()*420)));
+
+      const delay = i===0
+        ? 130 + Math.floor(Math.random()*170)   // 首条更快
+        : 360 + Math.floor(Math.random()*620);  // 后续更慢，更像真人
+      await new Promise(r=>setTimeout(r,delay));
     }
   }
 
@@ -632,13 +791,14 @@
     try{
       const c=getContacts().find(x=>x.id===currentId);
       const messages=[
-        {role:'system',content:`你是${c?.name||'聊天对象'}。人设：${c?.persona||'自然聊天'}。用即时聊天口吻回复；内容多时请拆多条短消息。`},
+        {role:'system',content:`你是${c?.name||'聊天对象'}。人设：${c?.persona||'自然聊天'}。用即时聊天口吻回复；内容多时请拆多条短消息。每条尽量短。`},
         ...hist.map(x=>({role:x.role==='user'?'user':'assistant',content:x.text}))
       ];
       const out=await callApi(messages);
 
       const arr=map[currentId];
       if(arr.length && arr[arr.length-1].typing) arr.pop();
+
       const parts=splitAiBubbles(out);
       await emitAiSequential(parts.length?parts:['...'], map);
 
@@ -659,8 +819,17 @@
   }
 
   $('sendBtn').onclick=sendMsg;
+
+  // Enter 默认储存；Ctrl/Cmd + Enter 发送
   $('chatInput').addEventListener('keydown',e=>{
-    if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg();}
+    if(e.key==='Enter' && !e.shiftKey){
+      e.preventDefault();
+      if(e.ctrlKey || e.metaKey){
+        sendMsg();
+      }else{
+        storeCurrentInput();
+      }
+    }
   });
 
   // init
