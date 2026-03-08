@@ -636,7 +636,7 @@
   const esc=s=>String(s||'').replace(/[&<>"']/g,m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
   const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 
-  
+  
   const GlobalState = {};
   async function initAppStorage() {
     const keys = [K_CONTACT, K_CHAT, K_API, K_ME, K_PREF];
@@ -717,11 +717,25 @@
   }
 
   // contacts
+ window.deleteContactFromList = function(id, e) {
+    e.preventDefault();
+    e.stopPropagation();
+    if(!confirm('确定要删除这个联系人及所有聊天记录吗？')) return false;
+    const arr = getContacts().filter(c => c.id !== id);
+    setContacts(arr);
+    const map = getChats();
+    delete map[id];
+    setChats(map);
+    if(currentId === id) currentId = null;
+    renderContacts($('searchInput').value || '');
+    return false;
+  };
+
   function renderContacts(k=''){
     k=(k||'').trim();
     const arr=getContacts().filter(c=>!k||c.name.includes(k)||(c.preview||'').includes(k));
     $('contactList').innerHTML=arr.map(c=>`
-      <div class="item">
+      <div class="item" oncontextmenu="return deleteContactFromList('${c.id}', event)">
         <img class="avatar" src="${c.avatar||'https://via.placeholder.com/88x88?text=头像'}"/>
         <div class="main" onclick="openChat('${c.id}')">
           <div style="display:flex;justify-content:space-between;align-items:center;">
@@ -730,7 +744,7 @@
           <div class="preview">${esc(c.preview||'')}</div>
         </div>
       </div>
-    `).join('') || `<div class="card small">暂无联系人，点右上角 +联系人 创建</div>`;
+    `).join('') || '<div class="card small">暂无联系人，点右上角 +联系人 创建</div>';
   }
 
   function openCreateModal(){ $('contactModal').classList.add('active'); }
@@ -1131,7 +1145,7 @@
     return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 ${w} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
   }
 
-  
+  
   function buildOnlineSystem(c,me,st){
     const rangeRule = st.onlineStyle==='range'
       ? `本次回复请拆分为 ${st.onlineMin} 到 ${st.onlineMax} 条消息。`
@@ -1367,7 +1381,7 @@ function buildOfflineSystem(c,me,st){
   };
 
   // init
-  
+  
   initAppStorage().then(() => {
     applyBubbleCss();
     refreshPresetUI();
