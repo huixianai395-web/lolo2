@@ -403,6 +403,7 @@
   padding: 0 2px;
 }
   </style>
+<script src="https://cdn.jsdelivr.net/npm/localforage@1.10.0/dist/localforage.min.js"></script>
 </head>
 <body>
 <div id="app">
@@ -634,68 +635,24 @@
   const esc=s=>String(s||'').replace(/[&<>"']/g,m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
   const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 
-  function getJ(k,d){try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(d));}catch{return d;}}
-
-  function isQuotaErr(e){
-    const n = (e && e.name) || '';
-    const m = (e && e.message) || '';
-    return n === 'QuotaExceededError' || n === 'NS_ERROR_DOM_QUOTA_REACHED' || /quota|exceeded/i.test(m);
-  }
-
-  function trimChatsForSpace(map, keepMsg=18, maxLen=260){
-    const out={};
-    Object.keys(map||{}).forEach(id=>{
-      const arr = Array.isArray(map[id]) ? map[id] : [];
-      out[id] = arr.slice(-keepMsg).map(m=>({
-        role:m.role,
-        text:String(m.text||'').slice(0,maxLen),
-        time:m.time||Date.now()
-      }));
-    });
-    return out;
-  }
-
-  function stripDataAvatar(v){
-    if(!v) return v;
-    if(typeof v.avatar==='string' && v.avatar.startsWith('data:image/')) v.avatar='';
-    return v;
-  }
-
-  function setJ(k,v){
-    const write = (val)=>localStorage.setItem(k, JSON.stringify(val));
-    try{
-      write(v);
-      return;
-    }catch(e){
-      if(!isQuotaErr(e)) throw e;
+  
+  const GlobalState = {};
+  async function initAppStorage() {
+    const keys = [K_CONTACT, K_CHAT, K_API, K_ME, K_PREF];
+    for (let k of keys) {
+      let val = await localforage.getItem(k);
+      if (val === null) {
+        const oldRaw = localStorage.getItem(k);
+        if (oldRaw) {
+          try { val = JSON.parse(oldRaw); } catch(e){}
+          if (val !== null) await localforage.setItem(k, val);
+        }
+      }
+      GlobalState[k] = val;
     }
-
-    try{
-      const c1 = trimChatsForSpace(getJ(K_CHAT,{}), 16, 220);
-      localStorage.setItem(K_CHAT, JSON.stringify(c1));
-      write(v);
-      return;
-    }catch(e2){
-      if(!isQuotaErr(e2)) throw e2;
-    }
-
-    try{
-      const contacts = (getJ(K_CONTACT,[])||[]).map(x=>stripDataAvatar({...x}));
-      localStorage.setItem(K_CONTACT, JSON.stringify(contacts));
-
-      const me = stripDataAvatar({...getJ(K_ME,{name:'我',avatar:'',persona:'',note:''})});
-      localStorage.setItem(K_ME, JSON.stringify(me));
-
-      write(v);
-      return;
-    }catch(e3){
-      if(!isQuotaErr(e3)) throw e3;
-    }
-
-    const c2 = trimChatsForSpace(getJ(K_CHAT,{}), 8, 140);
-    localStorage.setItem(K_CHAT, JSON.stringify(c2));
-    write(v);
   }
+  function getJ(k, d) { return GlobalState[k] !== undefined && GlobalState[k] !== null ? GlobalState[k] : d; }
+  function setJ(k, v) { GlobalState[k] = v; localforage.setItem(k, v).catch(()=>{}); }
 
   function normSettings(s={}){
     const o={...DEFAULT_CHAT_SETTINGS,...(s||{})};
@@ -1427,9 +1384,12 @@
   };
 
   // init
-  applyBubbleCss();
-  refreshPresetUI();
-  renderContacts();
+  
+  initAppStorage().then(() => {
+    applyBubbleCss();
+    refreshPresetUI();
+    renderContacts();
+  });
 })();
 </script>
 </body>
