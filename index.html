@@ -1242,7 +1242,7 @@
       const i=contacts.findIndex(x=>x.id===chatId);
       if(i>=0){
         contacts[i].preview=(parts[0]||'...').slice(0,44);
-        contacts[i].time=`contacts[i].time = fmtTs(Date.now());`
+     contacts[i].time = fmtTs(Date.now());
         setContacts(contacts);
       }
       renderContacts($('searchInput').value||'');
