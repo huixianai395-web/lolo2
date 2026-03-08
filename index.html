@@ -74,17 +74,17 @@
     }
     .ta{resize:none}
     .hidden{display:none !important}
-/* HOME */
-#home{
-  color:#fff;
-  background:
-    linear-gradient(160deg, rgba(40,96,255,.34), rgba(125,221,255,.18)),
-    url('https://picsum.photos/900/1800?blur=1') center/cover no-repeat;
-}
-.wall{
-  display:none;
-}
- 
+
+    /* HOME */
+    #home{color:#fff}
+    .wall{
+      position:fixed;
+      top:-80px; left:0; right:0; bottom:0;
+      z-index:0;
+      background:
+        linear-gradient(160deg, rgba(40,96,255,.34), rgba(125,221,255,.18)),
+        url('https://picsum.photos/900/1800?blur=1') center/cover no-repeat;
+    }
     .home-layer{
       position:relative;z-index:2;height:100%;
       padding:calc(18px + var(--safe-top)) 12px calc(14px + var(--safe-bottom));
@@ -374,7 +374,7 @@
 #chatRoom:not(.offline) .msg-row .bubble-wrap{
   max-width: min(76%, 304px);transform: 
 }
-}
+
 
 #chatRoom:not(.offline) .bubble{
   padding: 9px 12px;
