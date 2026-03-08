@@ -779,8 +779,8 @@
       id:'c'+Date.now()+'_'+Math.floor(Math.random()*9999),
       name, note:'',
       avatar:createAvatar||avatarUrl||'',
-      preview:'新的聊天已创建',
-      time:'刚刚',
+      preview:'',
+      time:'',
       persona,
       settings:{...DEFAULT_CHAT_SETTINGS}
     });
@@ -906,7 +906,10 @@
   function clearCurrentChat(){
     if(!currentId) return;
     if(!confirm('清空当前聊天？')) return;
-    const map=getChats(); map[currentId]=[]; setChats(map); renderChat();
+    const map=getChats(); map[currentId]=[]; setChats(map);
+    updateContact(currentId, { preview: '', time: '' });
+    renderChat();
+    renderContacts($('searchInput').value||'');
   }
 
   function deleteCurrentContact(){
@@ -1154,6 +1157,12 @@
   $('fetchModelsBtn').onclick=fetchModels;
   $('testApiBtn').onclick=testApi;
 
+ function getSysTimeStr() {
+    const d = new Date();
+    const w = ['周日','周一','周二','周三','周四','周五','周六'][d.getDay()];
+    return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 ${w} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+  }
+
   function buildOnlineSystem(c,me,st){
     const rangeRule = st.onlineStyle==='range'
       ? `本次回复 ${st.onlineMin}-${st.onlineMax} 条消息。`
@@ -1165,8 +1174,9 @@
       `对方人设：${me?.persona||'自然聊天'}`,
       `你的备注：${c?.note||'无'}`,
       `你的人设：${c?.persona||'自然聊天'}`,
+      `【当前系统时间】：${getSysTimeStr()}`,
       `目标：像真实聊天，贴合人设，不要客服腔。`,
-      `内容多时必须拆成多条，单条不要太长。`,
+      `内容多时必须拆成多条，单条不要太长。断句自然，不要被截断。`,
       `不要输出markdown，不要解释规则。`,
       `只输出JSON：{"messages":["...","..."]}`,
       rangeRule
@@ -1181,6 +1191,7 @@
       `对方人设：${me?.persona||'自然聊天'}`,
       `你的备注：${c?.note||'无'}`,
       `你的人设：${c?.persona||'自然聊天'}`,
+      `【当前系统时间】：${getSysTimeStr()}`,
       `请输出一条沉浸式线下角色扮演回复，字数范围 ${st.offlineMin}-${st.offlineMax}。`,
       `必须严格按模板输出：`,
       `【状态栏】`,
@@ -1190,7 +1201,6 @@
       `只输出这一条，不要JSON，不要额外说明。`
     ].join('\n');
   }
-
   async function sendMsg(){
     if(!currentId) return;
     const chatId=currentId;
