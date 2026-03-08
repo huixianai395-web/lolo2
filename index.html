@@ -327,7 +327,8 @@
       padding:11px 10px 12px;
       color:#3b2f22;
       white-space:pre-wrap;
-      line-height:1.68;
+      line-height:1.55;
+      letter-spacing:0.5px;
     }
 
     .modal{
@@ -948,11 +949,6 @@
   }
   $('storeBtn').onclick=storeCurrentInput;
 
-  function forceSplitByLen(text,len){
-    const out=[]; let i=0;
-    while(i<text.length){ out.push(text.slice(i,i+len)); i+=len; }
-    return out;
-  }
   function parseJsonMessages(text){
     const t=clean(text); if(!t) return null;
     try{
@@ -968,55 +964,27 @@
     }
     return null;
   }
+
   function splitAiBubbles(raw){
     const txt=clean(raw); if(!txt) return ['...'];
-
     const byJson=parseJsonMessages(txt);
-    if(byJson && byJson.length){
-      const out=[];
-      for(const s of byJson){
-        if(s.length>44) out.push(...forceSplitByLen(s,28));
-        else out.push(s);
-      }
-      return out.filter(Boolean);
+    if(byJson && byJson.length) {
+      return byJson; // 完美保留AI自己断的句子，绝不拦腰斩断！
     }
-
+    // 降级处理
     const normalized=txt.replace(/\r/g,'').replace(/[ \t]+\n/g,'\n').replace(/\n{3,}/g,'\n\n').trim();
-    const blocks=normalized.split(/\n{2,}/).filter(Boolean);
-    const pieces=[];
-    for(const block of blocks){
-      const segs=block.match(/[^。！？!?；;，,\n]+[。！？!?；;，,]?/g)||[block];
-      let buf='';
-      for(let seg of segs){
-        seg=seg.trim(); if(!seg) continue;
-        if(seg.length>40){
-          if(buf){ pieces.push(buf); buf=''; }
-          pieces.push(...forceSplitByLen(seg,28));
-          continue;
-        }
-        if((buf+seg).length<=34) buf+=seg;
-        else { if(buf) pieces.push(buf); buf=seg; }
-      }
-      if(buf) pieces.push(buf);
-    }
-    return pieces.filter(Boolean).length ? pieces.filter(Boolean) : [txt];
+    return normalized.split(/\n{1,}/).filter(Boolean);
   }
+
   function enforceCountRange(parts,min,max){
     let arr=[...(parts||[])].filter(Boolean);
-    min=Math.max(1,min); max=Math.max(min,max);
-
-    while(arr.length<min){
-      const idx=arr.findIndex(x=>x.length>12);
-      if(idx<0) break;
-      const one=arr[idx], mid=Math.floor(one.length/2);
-      const a=clean(one.slice(0,mid)), b=clean(one.slice(mid));
-      arr.splice(idx,1,...[a,b].filter(Boolean));
+    max=Math.max(1,max);
+    if(arr.length>max){
+      const keep=arr.slice(0,max-1);
+      const tail=arr.slice(max-1).join(' ');
+      return [...keep, tail]; // 超出条数的拼在最后，绝不删字
     }
-    while(arr.length>max){
-      const last=arr.pop();
-      arr[arr.length-1]=clean((arr[arr.length-1]||'')+' '+last);
-    }
-    return arr.filter(Boolean);
+    return arr; // 不够条数就不管了，强行从中间劈开太蠢了！
   }
 
   async function emitAiSequential(parts,map,targetId,mode){
@@ -1163,10 +1131,11 @@
     return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 ${w} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
   }
 
+  
   function buildOnlineSystem(c,me,st){
     const rangeRule = st.onlineStyle==='range'
-      ? `本次回复 ${st.onlineMin}-${st.onlineMax} 条消息。`
-      : `本次条数由你根据语境自由发挥。`;
+      ? `本次回复请拆分为 ${st.onlineMin} 到 ${st.onlineMax} 条消息。`
+      : `本次回复的条数由你完全根据人设的立体性格、心理波动和当前语境自由发挥（拒绝刻板，可多可少）。`;
     return [
       `你正在扮演：${c?.name||'聊天对象'}`,
       `对方名称：${me?.name||'我'}`,
@@ -1175,15 +1144,16 @@
       `你的备注：${c?.note||'无'}`,
       `你的人设：${c?.persona||'自然聊天'}`,
       `【当前系统时间】：${getSysTimeStr()}`,
-      `目标：像真实聊天，贴合人设，不要客服腔。`,
-      `内容多时必须拆成多条，单条不要太长。断句自然，不要被截断。`,
-      `不要输出markdown，不要解释规则。`,
-      `只输出JSON：{"messages":["...","..."]}`,
+      `【核心指令】：`,
+      `1. 拒绝刻板标签！人设是立体的、多面的、有成长性的。把你扮演的角色当成一个活生生的人来对待！`,
+      `2. 说话的条数、长短、语气，必须严格根据【当前具体的语境】、【角色的情绪起伏】和【心理活动】动态自然地变化，绝不受任何固定模式限制。`,
+      `3. 绝对不要在回复中暴露你是AI或程序。`,
+      `【输出格式铁律】：`,
+      `只允许输出严格的JSON格式，包含一个"messages"数组：{"messages":["第一句...","第二句..."]}`,
       rangeRule
     ].join('\n');
   }
-
-  function buildOfflineSystem(c,me,st){
+function buildOfflineSystem(c,me,st){
     return [
       `你正在扮演：${c?.name||'聊天对象'}`,
       `对方名称：${me?.name||'我'}`,
@@ -1192,15 +1162,18 @@
       `你的备注：${c?.note||'无'}`,
       `你的人设：${c?.persona||'自然聊天'}`,
       `【当前系统时间】：${getSysTimeStr()}`,
+      `【核心指令】：你是一个有血有肉的人，请极度贴合你的人设，展现出极致的活人感与内心戏。`,
+      `【互动边界】：尽量不要代替对方（我）说话或做决定，多留出让对方反应与互动的空间（留白）。但允许根据剧情连贯性做极轻微、合理的预判，具体尺度视当前语境和人设灵活调整。`,
       `请输出一条沉浸式线下角色扮演回复，字数范围 ${st.offlineMin}-${st.offlineMax}。`,
-      `必须严格按模板输出：`,
+      `【排版与层次要求】：`,
+      `正文绝对不能是一大段密密麻麻的文字！必须合理分段，动作、神态、心理描写与对话之间要有清晰的层次感，保证阅读舒适。`,
+      `【输出格式铁律】必须严格按以下模板输出，不要输出JSON：`,
       `【状态栏】`,
       `时间｜地点｜天气｜氛围｜关系进度`,
       `【正文】`,
-      `（沉浸叙事 + 动作细节 + 对话，不要大白话，不要总结腔）`,
-      `只输出这一条，不要JSON，不要额外说明。`
+      `（你的沉浸式叙事与对话，记得分段！）`
     ].join('\n');
-  }
+  
   async function sendMsg(){
     if(!currentId) return;
     const chatId=currentId;
