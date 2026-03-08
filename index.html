@@ -535,7 +535,7 @@
     }
   }
   function getJ(k, d) { return GlobalState[k] !== undefined && GlobalState[k] !== null ? GlobalState[k] : d; }
-  function setJ(k, v) { GlobalState[k] = v; localforage.setItem(k, v).catch(()=>{}); }{
+  function setJ(k, v) { GlobalState[k] = v; localforage.setItem(k, v).catch(()=>{}); }function normSettings(s={}){
     const o={...DEFAULT_CHAT_SETTINGS,...(s||{})};
     o.mode=o.mode==='offline'?'offline':'online';
     o.onlineStyle=o.onlineStyle==='range'?'range':'free';
