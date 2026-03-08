@@ -635,7 +635,7 @@
   const esc=s=>String(s||'').replace(/[&<>"']/g,m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
   const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 
-  
+  
   const GlobalState = {};
   async function initAppStorage() {
     const keys = [K_CONTACT, K_CHAT, K_API, K_ME, K_PREF];
@@ -1242,7 +1242,7 @@
       const i=contacts.findIndex(x=>x.id===chatId);
       if(i>=0){
         contacts[i].preview=(parts[0]||'...').slice(0,44);
-        contacts[i].time='刚刚';
+        contacts[i].time=`contacts[i].time = fmtTs(Date.now());`
         setContacts(contacts);
       }
       renderContacts($('searchInput').value||'');
@@ -1394,7 +1394,7 @@
   };
 
   // init
-  
+  
   initAppStorage().then(() => {
     applyBubbleCss();
     refreshPresetUI();
