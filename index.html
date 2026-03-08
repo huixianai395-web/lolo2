@@ -528,6 +528,14 @@
       </div>
 
       <div class="card">
+        <div class="small">记忆轮数 (上下文长度)</div>
+        <div class="row" style="margin-top:8px;">
+          <input id="contextLenInput" class="input" type="number" min="5" max="500" value="30" placeholder="默认30条" />
+        </div>
+        <div class="small" style="margin-top:6px;color:#888;">数值越大AI记性越好，但API消耗也越大哦</div>
+      </div>
+
+      <div class="card">
         <div class="small">时间戳</div>
         <div class="row" style="margin-top:8px;justify-content:space-between;">
           <span class="small">显示每条消息时间</span>
@@ -1208,7 +1216,7 @@ function buildOfflineSystem(c,me,st){
     if(currentId===chatId) renderChat();
 
     const map=getChats();
-    const hist=(map[chatId]||[]).filter(x=>x.text).slice(-30);
+    const hist=(map[chatId]||[]).filter(x=>x.text).slice(-(st.contextLen||30));
     if(!hist.length) return;
 
     setTyping(chatId,true);
@@ -1287,6 +1295,7 @@ function buildOfflineSystem(c,me,st){
     $('onlineMaxInput').value=st.onlineMax;
     $('offlineMinInput').value=st.offlineMin;
     $('offlineMaxInput').value=st.offlineMax;
+    $('contextLenInput').value=st.contextLen||30;
 
     $('showTsSwitch').checked=!!p.showTs;
     $('bubbleCssInput').value=p.bubbleCss||'';
@@ -1309,6 +1318,7 @@ function buildOfflineSystem(c,me,st){
       const onlineMax=Math.max(onlineMin, Number($('onlineMaxInput').value||6));
       const offlineMin=Math.max(80, Number($('offlineMinInput').value||220));
       const offlineMax=Math.max(offlineMin, Number($('offlineMaxInput').value||420));
+      const contextLen=Math.max(5, Number($('contextLenInput').value||30));
 
       setMe({
         ...me,
@@ -1321,7 +1331,7 @@ function buildOfflineSystem(c,me,st){
         name:clean($('roleNameInput').value)||'聊天对象',
         note:clean($('roleNoteInput').value),
         persona:clean($('rolePersonaInput').value),
-        settings:normSettings({mode,onlineStyle,onlineMin,onlineMax,offlineMin,offlineMax})
+        settings:normSettings({mode,onlineStyle,onlineMin,onlineMax,offlineMin,offlineMax,contextLen})
       });
 
       const p=getPref();
@@ -1341,7 +1351,6 @@ function buildOfflineSystem(c,me,st){
       alert('保存失败：存储空间不足（已自动压缩，仍不足）');
     }
   };
-
   $('clearChatBtn2').onclick=clearCurrentChat;
   $('deleteContactBtn').onclick=deleteCurrentContact;
 
