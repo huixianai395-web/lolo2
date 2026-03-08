@@ -1,5 +1,4 @@
 <!doctype html>
-
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" /><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1,user-scalable=no" />
@@ -19,7 +18,7 @@
     *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
     html,body{
       margin:0;height:100%;
-      background:#000;
+      background::transparent;
       font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
     }
     #app{
@@ -30,342 +29,340 @@
       margin:0 auto;
       position:relative;
       overflow:hidden;
-      background:transparent;
+      background:var(--bg);
     }
 
+    .screen{position:absolute;inset:0;display:none;background:var(--bg)}
+    .screen.active{display:block}
 
-.screen{position:absolute;inset:0;display:none;background:var(--bg)}
-.screen.active{display:block}
+    .header{
+      height:calc(52px + var(--safe-top));
+      padding-top:var(--safe-top);
+      display:flex;align-items:center;justify-content:space-between;
+      padding-left:12px;padding-right:12px;
+      background:linear-gradient(180deg,#f8f9ff,#f6f8ff);
+      border-bottom:1px solid var(--line);
+      gap:8px;
+    }
 
-.header{
-  height:calc(52px + var(--safe-top));
-  padding-top:var(--safe-top);
-  display:flex;align-items:center;justify-content:space-between;
-  padding-left:12px;padding-right:12px;
-  background:linear-gradient(180deg,#f8f9ff,#f6f8ff);
-  border-bottom:1px solid var(--line);
-  gap:8px;
-}
+    .btn{
+      border:none;border-radius:10px;padding:8px 12px;font-size:13px;
+      background:#edf2ff;color:#173a7a;cursor:pointer;
+    }
+    .btn.p{background:var(--blue);color:#fff}
+    .btn.d{background:#d9534f;color:#fff}
 
-.btn{
-  border:none;border-radius:10px;padding:8px 12px;font-size:13px;
-  background:#edf2ff;color:#173a7a;cursor:pointer;
-}
-.btn.p{background:var(--blue);color:#fff}
-.btn.d{background:#d9534f;color:#fff}
+    .page{
+      height:calc(100% - (52px + var(--safe-top)));
+      overflow:auto;
+      padding:12px;
+      padding-bottom:calc(12px + var(--safe-bottom));
+      display:flex;flex-direction:column;gap:10px;
+      background:var(--bg);
+    }
 
-.page{
-  height:calc(100% - (52px + var(--safe-top)));
-  overflow:auto;
-  padding:12px;
-  padding-bottom:calc(12px + var(--safe-bottom));
-  display:flex;flex-direction:column;gap:10px;
-  background:var(--bg);
-}
+    .card{background:#fff;border:1px solid #ececf2;border-radius:14px;padding:12px}
+    .small{font-size:12px;color:#777}
+    .row{display:flex;gap:8px;align-items:center}
+    .input,.ta,.select{
+      width:100%;
+      padding:10px 12px;
+      border:1px solid #ddd;
+      border-radius:10px;
+      background:#fff;
+      font-size:16px;
+    }
+    .ta{resize:none}
+    .hidden{display:none !important}
 
-.card{background:#fff;border:1px solid #ececf2;border-radius:14px;padding:12px}
-.small{font-size:12px;color:#777}
-.row{display:flex;gap:8px;align-items:center}
-.input,.ta,.select{
-  width:100%;
-  padding:10px 12px;
-  border:1px solid #ddd;
-  border-radius:10px;
-  background:#fff;
-  font-size:16px;
-}
-.ta{resize:none}
-.hidden{display:none !important}
-
-/* HOME */
-#home{color:#fff;background:transparent !important}
-.wall{
-  position:absolute;
-  top:0;left:0;right:0;bottom:0;
+    /* HOME */
+    #home{color:#fff}
+  .wall{
+  position:fixed;
+  top:-60px;left:-10px;right:-10px;bottom:-60px;
   z-index:0;
   background:
     linear-gradient(160deg, rgba(40,96,255,.34), rgba(125,221,255,.18)),
     url('https://picsum.photos/900/1800?blur=1') center/cover no-repeat;
-}
-.home-layer{
-  position:relative;z-index:2;height:100%;
-  padding:calc(18px + var(--safe-top)) 12px calc(14px + var(--safe-bottom));
-  display:flex;flex-direction:column;
-}
-.date{font-size:15px;opacity:.95}
-.time{
-  font-size:72px;line-height:1.02;font-weight:760;letter-spacing:-2px;
-  text-shadow:0 2px 12px rgba(0,0,0,.2);
-}
+  }
+    .home-layer{
+      position:relative;z-index:2;height:100%;
+      padding:calc(18px + var(--safe-top)) 12px calc(14px + var(--safe-bottom));
+      display:flex;flex-direction:column;
+    }
+    .date{font-size:15px;opacity:.95}
+    .time{
+      font-size:72px;line-height:1.02;font-weight:760;letter-spacing:-2px;
+      text-shadow:0 2px 12px rgba(0,0,0,.2);
+    }
 
-.windchime{
-  position:absolute;
-  top:calc(6px + var(--safe-top));
-  right:12px;
-  width:72px;
-  height:126px;
-  transform-origin:top center;
-  animation:chimeSwing 3.2s ease-in-out infinite;
-  filter:drop-shadow(0 4px 10px rgba(0,0,0,.26));
-  pointer-events:none;
-  z-index:3;
-}
-.windchime .ring{
-  width:28px;height:10px;margin:0 auto;
-  border:2px solid rgba(255,255,255,.95);
-  border-radius:999px;
-  background:rgba(255,255,255,.18);
-  backdrop-filter:blur(1px);
-}
-.windchime .line{
-  position:absolute;top:10px;width:2px;
-  background:linear-gradient(to bottom,rgba(255,255,255,.95),rgba(255,255,255,.18));
-  transform-origin:top center;
-}
-.windchime .line span{
-  position:absolute;left:50%;transform:translateX(-50%);
-  border-radius:999px;
-  background:rgba(255,255,255,.92);
-  box-shadow:0 0 10px rgba(255,255,255,.5);
-}
-.windchime .l1{left:17px;height:42px;animation:lineSwingA 3.2s ease-in-out infinite}
-.windchime .l2{left:35px;height:55px;animation:lineSwingB 3.2s ease-in-out infinite}
-.windchime .l3{left:53px;height:46px;animation:lineSwingC 3.2s ease-in-out infinite}
-.windchime .l1 span{bottom:-6px;width:8px;height:8px}
-.windchime .l2 span{bottom:-7px;width:10px;height:10px}
-.windchime .l3 span{bottom:-6px;width:8px;height:8px}
-.windchime .pendulum{
-  position:absolute;left:35px;top:66px;transform:translateX(-50%);
-  width:2px;height:42px;
-  background:linear-gradient(to bottom,rgba(255,255,255,.85),rgba(255,255,255,.2));
-}
-.windchime .pendulum::after{
-  content:"";
-  position:absolute;left:50%;bottom:-9px;transform:translateX(-50%);
-  width:22px;height:14px;
-  border-radius:4px 4px 8px 8px;
-  background:linear-gradient(180deg,rgba(255,255,255,.95),rgba(220,240,255,.72));
-  box-shadow:0 0 12px rgba(255,255,255,.5);
-}
-@keyframes chimeSwing{0%,100%{transform:rotate(8deg)}50%{transform:rotate(-8deg)}}
-@keyframes lineSwingA{0%,100%{transform:rotate(6deg)}50%{transform:rotate(-5deg)}}
-@keyframes lineSwingB{0%,100%{transform:rotate(3deg)}50%{transform:rotate(-3deg)}}
-@keyframes lineSwingC{0%,100%{transform:rotate(-5deg)}50%{transform:rotate(5deg)}}
+    .windchime{
+      position:absolute;
+      top:calc(6px + var(--safe-top));
+      right:12px;
+      width:72px;
+      height:126px;
+      transform-origin:top center;
+      animation:chimeSwing 3.2s ease-in-out infinite;
+      filter:drop-shadow(0 4px 10px rgba(0,0,0,.26));
+      pointer-events:none;
+      z-index:3;
+    }
+    .windchime .ring{
+      width:28px;height:10px;margin:0 auto;
+      border:2px solid rgba(255,255,255,.95);
+      border-radius:999px;
+      background:rgba(255,255,255,.18);
+      backdrop-filter:blur(1px);
+    }
+    .windchime .line{
+      position:absolute;top:10px;width:2px;
+      background:linear-gradient(to bottom,rgba(255,255,255,.95),rgba(255,255,255,.18));
+      transform-origin:top center;
+    }
+    .windchime .line span{
+      position:absolute;left:50%;transform:translateX(-50%);
+      border-radius:999px;
+      background:rgba(255,255,255,.92);
+      box-shadow:0 0 10px rgba(255,255,255,.5);
+    }
+    .windchime .l1{left:17px;height:42px;animation:lineSwingA 3.2s ease-in-out infinite}
+    .windchime .l2{left:35px;height:55px;animation:lineSwingB 3.2s ease-in-out infinite}
+    .windchime .l3{left:53px;height:46px;animation:lineSwingC 3.2s ease-in-out infinite}
+    .windchime .l1 span{bottom:-6px;width:8px;height:8px}
+    .windchime .l2 span{bottom:-7px;width:10px;height:10px}
+    .windchime .l3 span{bottom:-6px;width:8px;height:8px}
+    .windchime .pendulum{
+      position:absolute;left:35px;top:66px;transform:translateX(-50%);
+      width:2px;height:42px;
+      background:linear-gradient(to bottom,rgba(255,255,255,.85),rgba(255,255,255,.2));
+    }
+    .windchime .pendulum::after{
+      content:"";
+      position:absolute;left:50%;bottom:-9px;transform:translateX(-50%);
+      width:22px;height:14px;
+      border-radius:4px 4px 8px 8px;
+      background:linear-gradient(180deg,rgba(255,255,255,.95),rgba(220,240,255,.72));
+      box-shadow:0 0 12px rgba(255,255,255,.5);
+    }
+    @keyframes chimeSwing{0%,100%{transform:rotate(8deg)}50%{transform:rotate(-8deg)}}
+    @keyframes lineSwingA{0%,100%{transform:rotate(6deg)}50%{transform:rotate(-5deg)}}
+    @keyframes lineSwingB{0%,100%{transform:rotate(3deg)}50%{transform:rotate(-3deg)}}
+    @keyframes lineSwingC{0%,100%{transform:rotate(-5deg)}50%{transform:rotate(5deg)}}
 
-.widgets{margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.widget{
-  background:var(--glass);border:1px solid var(--glass-border);
-  border-radius:18px;padding:10px 12px;backdrop-filter:blur(12px)
-}
-.widget .t{font-size:12px;opacity:.88}
-.widget .v{font-size:16px;font-weight:700;margin-top:4px}
+    .widgets{margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .widget{
+      background:var(--glass);border:1px solid var(--glass-border);
+      border-radius:18px;padding:10px 12px;backdrop-filter:blur(12px)
+    }
+    .widget .t{font-size:12px;opacity:.88}
+    .widget .v{font-size:16px;font-weight:700;margin-top:4px}
 
-.grid{margin-top:16px;display:grid;grid-template-columns:repeat(4,1fr);gap:14px 8px}
-.icon{text-align:center;cursor:pointer}
-.ibox{
-  width:62px;height:62px;margin:0 auto 6px;border-radius:16px;display:grid;place-items:center;
-  background:rgba(255,255,255,.28);border:1px solid rgba(255,255,255,.45);font-size:27px;
-  transition:transform .12s ease;
-}
-.icon:active .ibox{transform:scale(.88)}
-.lab{font-size:12px;text-shadow:0 1px 2px rgba(0,0,0,.25)}
+    .grid{margin-top:16px;display:grid;grid-template-columns:repeat(4,1fr);gap:14px 8px}
+    .icon{text-align:center;cursor:pointer}
+    .ibox{
+      width:62px;height:62px;margin:0 auto 6px;border-radius:16px;display:grid;place-items:center;
+      background:rgba(255,255,255,.28);border:1px solid rgba(255,255,255,.45);font-size:27px;
+      transition:transform .12s ease;
+    }
+    .icon:active .ibox{transform:scale(.88)}
+    .lab{font-size:12px;text-shadow:0 1px 2px rgba(0,0,0,.25)}
 
-/* Wechat list */
-.list{display:flex;flex-direction:column;gap:8px}
-.item{
-  background:#fff;border:1px solid #ececf2;border-radius:12px;padding:10px;
-  display:flex;gap:10px;align-items:center;
-}
-.avatar{width:44px;height:44px;border-radius:12px;object-fit:cover;background:#eef2ff;flex-shrink:0}
-.main{flex:1;min-width:0;cursor:pointer}
-.name{font-weight:600;color:#222}
-.preview{margin-top:4px;font-size:12px;color:#666;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.t{font-size:11px;color:#999}
+    /* Wechat list */
+    .list{display:flex;flex-direction:column;gap:8px}
+    .item{
+      background:#fff;border:1px solid #ececf2;border-radius:12px;padding:10px;
+      display:flex;gap:10px;align-items:center;
+    }
+    .avatar{width:44px;height:44px;border-radius:12px;object-fit:cover;background:#eef2ff;flex-shrink:0}
+    .main{flex:1;min-width:0;cursor:pointer}
+    .name{font-weight:600;color:#222}
+    .preview{margin-top:4px;font-size:12px;color:#666;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .t{font-size:11px;color:#999}
 
-/* Chat */
-#chatMsgs{
-  height:calc(100% - (52px + var(--safe-top)) - (74px + var(--safe-bottom)));
-  overflow:auto;
-  padding:10px;
-  background:linear-gradient(180deg,#edf2ff,#edf1f8);
-  display:flex;flex-direction:column;gap:10px;
-}
-.msg-row{display:flex;gap:8px;align-items:flex-end;width:100%}
-.msg-row.me{justify-content:flex-end}
-.chat-avatar{
-  width:32px;height:32px;border-radius:10px;object-fit:cover;background:#dde6ff;flex-shrink:0;
-}
-.bubble-wrap{display:flex;flex-direction:column;max-width:calc(100% - 48px)}
-.bubble-wrap.me{align-items:flex-end}
-.bubble-wrap.ai{align-items:flex-start}
-.bubble{
-  max-width:100%;
-  padding:10px 12px;
-  border-radius:14px;
-  line-height:1.45;
-  word-break:break-word;
-  white-space:pre-wrap;
-}
-.bubble.me{background:#2f66d8;color:#fff;border-bottom-right-radius:6px}
-.bubble.ai{background:#fff;border:1px solid #e8e8ef;border-bottom-left-radius:6px}
-.msg-time{
-  font-size:10px;color:#96a0b9;margin-top:4px;padding:0 2px;
-}
+    /* Chat */
+    #chatMsgs{
+      height:calc(100% - (52px + var(--safe-top)) - (74px + var(--safe-bottom)));
+      overflow:auto;
+      padding:10px;
+      background:linear-gradient(180deg,#edf2ff,#edf1f8);
+      display:flex;flex-direction:column;gap:10px;
+    }
+    .msg-row{display:flex;gap:8px;align-items:flex-end;width:100%}
+    .msg-row.me{justify-content:flex-end}
+    .chat-avatar{
+      width:32px;height:32px;border-radius:10px;object-fit:cover;background:#dde6ff;flex-shrink:0;
+    }
+    .bubble-wrap{display:flex;flex-direction:column;max-width:calc(100% - 48px)}
+    .bubble-wrap.me{align-items:flex-end}
+    .bubble-wrap.ai{align-items:flex-start}
+    .bubble{
+      max-width:100%;
+      padding:10px 12px;
+      border-radius:14px;
+      line-height:1.45;
+      word-break:break-word;
+      white-space:pre-wrap;
+    }
+    .bubble.me{background:#2f66d8;color:#fff;border-bottom-right-radius:6px}
+    .bubble.ai{background:#fff;border:1px solid #e8e8ef;border-bottom-left-radius:6px}
+    .msg-time{
+      font-size:10px;color:#96a0b9;margin-top:4px;padding:0 2px;
+    }
 
-.chatInputBar{
-  position:absolute;left:0;right:0;bottom:0;
-  padding:10px;
-  padding-bottom:calc(10px + var(--safe-bottom));
-  background:linear-gradient(180deg,#f8f9ff,#f6f8ff);
-  border-top:1px solid #e4e8f5;
-  display:flex;gap:8px;align-items:flex-end;
-}
-#chatInput{
-  flex:1;height:44px;min-height:44px;max-height:96px;overflow-y:auto;resize:none;
-}
-.send-actions{display:flex;gap:8px;align-items:center;align-self:flex-end}
+    .chatInputBar{
+      position:absolute;left:0;right:0;bottom:0;
+      padding:10px;
+      padding-bottom:calc(10px + var(--safe-bottom));
+      background:linear-gradient(180deg,#f8f9ff,#f6f8ff);
+      border-top:1px solid #e4e8f5;
+      display:flex;gap:8px;align-items:flex-end;
+    }
+    #chatInput{
+      flex:1;height:44px;min-height:44px;max-height:96px;overflow-y:auto;resize:none;
+    }
+    .send-actions{display:flex;gap:8px;align-items:center;align-self:flex-end}
 
-/* 储存键 */
-.btn.store{
-  width:40px;height:40px;padding:0;border-radius:999px;
-  border:1px solid #cfe3ff;
-  background:linear-gradient(180deg,rgba(255,255,255,.95),rgba(233,244,255,.92));
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 2px 8px rgba(88,126,196,.18);
-  position:relative;
-}
-.btn.store::after{
-  content:"";position:absolute;left:50%;top:50%;
-  width:12px;height:12px;border-radius:999px;transform:translate(-50%,-50%);
-  background:radial-gradient(circle at 35% 30%, #fff, #d8eeff 62%, #a5cfff);
-  border:1px solid rgba(167,201,244,.75);
-  box-shadow:0 0 8px rgba(186,224,255,.45);
-}
+    /* 储存键 */
+    .btn.store{
+      width:40px;height:40px;padding:0;border-radius:999px;
+      border:1px solid #cfe3ff;
+      background:linear-gradient(180deg,rgba(255,255,255,.95),rgba(233,244,255,.92));
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 2px 8px rgba(88,126,196,.18);
+      position:relative;
+    }
+    .btn.store::after{
+      content:"";position:absolute;left:50%;top:50%;
+      width:12px;height:12px;border-radius:999px;transform:translate(-50%,-50%);
+      background:radial-gradient(circle at 35% 30%, #fff, #d8eeff 62%, #a5cfff);
+      border:1px solid rgba(167,201,244,.75);
+      box-shadow:0 0 8px rgba(186,224,255,.45);
+    }
 
-.chat-head-center{
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  flex:1;
-  min-width:0;
-  padding:0 8px;
-}
-.chat-head-title{
-  width:100%;
-  text-align:center;
-  font-weight:700;
-  color:#222;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-}
-.chat-head-sub{
-  font-size:11px;
-  color:#7a86a8;
-  line-height:1.2;
-  margin-top:2px;
-  min-height:13px;
-}
+    /* 你给的头部样式（原样） */
+    .chat-head-center{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      flex:1;
+      min-width:0;
+      padding:0 8px;
+    }
+    .chat-head-title{
+      width:100%;
+      text-align:center;
+      font-weight:700;
+      color:#222;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .chat-head-sub{
+      font-size:11px;
+      color:#7a86a8;
+      line-height:1.2;
+      margin-top:2px;
+      min-height:13px;
+    }
 
-.icon-btn{
-  width:32px;
-  height:32px;
-  border-radius:10px;
-  border:1px solid #d7e3ff;
-  background:linear-gradient(180deg,#f3f7ff,#e8f0ff);
-  color:#4a67a8;
-  font-size:16px;
-  cursor:pointer;
-  display:grid;
-  place-items:center;
-  box-shadow:0 1px 3px rgba(61,93,161,.12);
-}
-.icon-btn:active{transform:translateY(1px)}
+    .icon-btn{
+      width:32px;
+      height:32px;
+      border-radius:10px;
+      border:1px solid #d7e3ff;
+      background:linear-gradient(180deg,#f3f7ff,#e8f0ff);
+      color:#4a67a8;
+      font-size:16px;
+      cursor:pointer;
+      display:grid;
+      place-items:center;
+      box-shadow:0 1px 3px rgba(61,93,161,.12);
+    }
+    .icon-btn:active{transform:translateY(1px)}
 
-/* 线下模式 */
-#chatRoom.offline #chatMsgs{
-  background:
-    radial-gradient(120% 80% at 20% 0%, rgba(255,255,255,.58), rgba(255,255,255,0) 45%),
-    linear-gradient(180deg,#f8f2e9,#f2e9dc 55%,#eee3d4);
-  padding:6px !important;
-  gap:10px;
-}
-.msg-block{
-  display:flex;flex-direction:column;gap:6px;width:100%;
-}
-.msg-block.ai,.msg-block.me{align-items:stretch !important}
-#chatRoom.offline .chat-avatar{
-  width:42px;height:42px;border-radius:12px;
-  align-self:flex-start;
-}
-#chatRoom.offline .bubble-wrap{
-  width:100% !important;
-  max-width:100% !important;
-}
-#chatRoom.offline .bubble,
-#chatRoom.offline .offline-card{
-  width:100% !important;
-  max-width:100% !important;
-}
-#chatRoom.offline .bubble{
-  border-radius:14px;line-height:1.62;
-}
+    /* 线下模式（更贴边） */
+    #chatRoom.offline #chatMsgs{
+      background:
+        radial-gradient(120% 80% at 20% 0%, rgba(255,255,255,.58), rgba(255,255,255,0) 45%),
+        linear-gradient(180deg,#f8f2e9,#f2e9dc 55%,#eee3d4);
+      padding:6px !important;
+      gap:10px;
+    }
+    .msg-block{
+      display:flex;flex-direction:column;gap:6px;width:100%;
+    }
+    .msg-block.ai,.msg-block.me{align-items:stretch !important}
+    #chatRoom.offline .chat-avatar{
+      width:42px;height:42px;border-radius:12px;
+      align-self:flex-start;
+    }
+    #chatRoom.offline .bubble-wrap{
+      width:100% !important;
+      max-width:100% !important;
+    }
+    #chatRoom.offline .bubble,
+    #chatRoom.offline .offline-card{
+      width:100% !important;
+      max-width:100% !important;
+    }
+    #chatRoom.offline .bubble{
+      border-radius:14px;line-height:1.62;
+    }
 
-.offline-card{
-  border:1px solid #e8dccb;
-  background:linear-gradient(180deg,#fffdf9,#fbf6ef);
-  border-radius:14px;
-  overflow:hidden;
-  box-shadow:0 2px 8px rgba(110,78,42,.08);
-}
-.offline-state{
-  padding:9px 10px;
-  font-size:12px;
-  color:#7b5f3a;
-  border-bottom:1px solid #efe4d5;
-  background:linear-gradient(180deg,#fff7ea,#f8efdf);
-  white-space:pre-wrap;
-  line-height:1.5;
-}
-```
+    .offline-card{
+      border:1px solid #e8dccb;
+      background:linear-gradient(180deg,#fffdf9,#fbf6ef);
+      border-radius:14px;
+      overflow:hidden;
+      box-shadow:0 2px 8px rgba(110,78,42,.08);
+    }
+    .offline-state{
+      padding:9px 10px;
+      font-size:12px;
+      color:#7b5f3a;
+      border-bottom:1px solid #efe4d5;
+      background:linear-gradient(180deg,#fff7ea,#f8efdf);
+      white-space:pre-wrap;
+      line-height:1.5;
+    }
+   .offline-body{
+      padding:12px 14px 14px;
+      color:#3b2f22;
+      white-space:pre-wrap;
+      line-height:1.62;
+      text-align:justify;
+    }
 
-.offline-body{
-padding:12px 14px 14px;
-color:#3b2f22;
-white-space:pre-wrap;
-line-height:1.62;
-text-align:justify;
-}
-
-```
-.modal{
-  position:absolute;inset:0;background:rgba(0,0,0,.35);
-  display:none;place-items:center;z-index:99;padding:12px;
-}
-.modal.active{display:grid}
-.modal-card{
-  width:100%;max-width:360px;max-height:90dvh;overflow:auto;
-  background:#fff;border-radius:14px;padding:12px;
-  box-shadow:0 10px 30px rgba(0,0,0,.18);
-}
-.preview-img{
-  width:64px;height:64px;border-radius:12px;object-fit:cover;
-  border:1px solid #eee;background:#f3f5ff;
-}
-
-/* ===== 线上模式最终版 ===== */
+    .modal{
+      position:absolute;inset:0;background:rgba(0,0,0,.35);
+      display:none;place-items:center;z-index:99;padding:12px;
+    }
+    .modal.active{display:grid}
+    .modal-card{
+      width:100%;max-width:360px;max-height:90dvh;overflow:auto;
+      background:#fff;border-radius:14px;padding:12px;
+      box-shadow:0 10px 30px rgba(0,0,0,.18);
+    }
+    .preview-img{
+      width:64px;height:64px;border-radius:12px;object-fit:cover;
+      border:1px solid #eee;background:#f3f5ff;
+    }/* ===== 线上模式最终版（浅雾蓝高级感）===== */
 #chatRoom:not(.offline) #chatMsgs{
   padding: 10px 10px 6px;
   gap: 8px;
 }
+
 #chatRoom:not(.offline) .msg-row{
   display: flex;
   align-items: flex-start;
   gap: 8px;
 }
+
 #chatRoom:not(.offline) .msg-row.me{
   justify-content: flex-end;
 }
+
 #chatRoom:not(.offline) .msg-row .chat-avatar{
   width: 34px;
   height: 34px;
@@ -373,9 +370,12 @@ text-align:justify;
   margin-top: 1px;
   flex: 0 0 34px;
 }
+
 #chatRoom:not(.offline) .msg-row .bubble-wrap{
   max-width: min(76%, 304px);
 }
+
+
 #chatRoom:not(.offline) .bubble{
   padding: 9px 12px;
   border-radius: 12px;
@@ -383,26 +383,29 @@ text-align:justify;
   font-size: 15px;
   box-shadow: 0 1px 2px rgba(25, 42, 70, 0.06);
 }
+
+/* 对方气泡：干净白 */
 #chatRoom:not(.offline) .bubble.ai{
   background: #ffffff;
   color: #1f2430;
   border: 1px solid #e7ebf3;
   border-bottom-left-radius: 4px;
 }
+
+/* 我方气泡：浅雾蓝（高级、不刺眼） */
 #chatRoom:not(.offline) .bubble.me{
   background: #5f86ee;
   color: #ffffff;
   border: 1px solid #4f77df;
   border-bottom-right-radius: 4px;
 }
+
 #chatRoom:not(.offline) .msg-time{
   font-size: 10px;
   color: #97a3ba;
   margin-top: 3px;
   padding: 0 2px;
 }
-```
-
   </style>
 <script src="https://cdn.jsdelivr.net/npm/localforage@1.10.0/dist/localforage.min.js"></script>
 </head>
@@ -410,7 +413,6 @@ text-align:justify;
 <div id="app">
 
   <!-- HOME -->
-
   <section id="home" class="screen active">
     <div class="wall"></div>
     <div class="home-layer">
@@ -422,26 +424,22 @@ text-align:justify;
         <div class="pendulum"></div>
       </div>
 
-```
-  <div class="date" id="homeDate"></div>
-  <div class="time" id="homeTime"></div>
+      <div class="date" id="homeDate"></div>
+      <div class="time" id="homeTime"></div>
 
-  <div class="widgets">
-    <div class="widget"><div class="t">纪念日</div><div class="v">第 233 天</div></div>
-    <div class="widget"><div class="t">天气</div><div class="v">22°C 晴</div></div>
-  </div>
+      <div class="widgets">
+        <div class="widget"><div class="t">纪念日</div><div class="v">第 233 天</div></div>
+        <div class="widget"><div class="t">天气</div><div class="v">22°C 晴</div></div>
+      </div>
 
-  <div class="grid">
-    <div class="icon" data-nav="wechat"><div class="ibox">💬</div><div class="lab">微信</div></div>
-    <div class="icon" data-nav="api"><div class="ibox">🔑</div><div class="lab">API</div></div>
-  </div>
-</div>
-```
-
+      <div class="grid">
+        <div class="icon" data-nav="wechat"><div class="ibox">💬</div><div class="lab">微信</div></div>
+        <div class="icon" data-nav="api"><div class="ibox">🔑</div><div class="lab">API</div></div>
+      </div>
+    </div>
   </section>
 
   <!-- WECHAT -->
-
   <section id="wechat" class="screen">
     <div class="header">
       <button class="btn" data-nav="home">‹ 返回</button>
@@ -455,35 +453,30 @@ text-align:justify;
   </section>
 
   <!-- CHAT -->
-
   <section id="chatRoom" class="screen">
     <div class="header">
       <button class="btn" data-nav="wechat">‹ 返回</button>
 
-```
-  <div class="chat-head-center">
-    <div class="chat-head-title" id="chatTitle">聊天</div>
-    <div class="chat-head-sub" id="chatSub"></div>
-  </div>
+      <div class="chat-head-center">
+        <div class="chat-head-title" id="chatTitle">聊天</div>
+        <div class="chat-head-sub" id="chatSub"></div>
+      </div>
 
-  <button class="icon-btn" id="chatSettingBtn" aria-label="设置">⋯</button>
-</div>
+      <button class="icon-btn" id="chatSettingBtn" aria-label="设置">⋯</button>
+    </div>
 
-<div id="chatMsgs"></div>
+    <div id="chatMsgs"></div>
 
-<div class="chatInputBar">
-  <textarea id="chatInput" class="ta" placeholder="输入消息..."></textarea>
-  <div class="send-actions">
-    <button class="btn store" id="storeBtn" aria-label="储存"></button>
-    <button class="btn p" id="sendBtn">发送</button>
-  </div>
-</div>
-```
-
+    <div class="chatInputBar">
+      <textarea id="chatInput" class="ta" placeholder="输入消息..."></textarea>
+      <div class="send-actions">
+        <button class="btn store" id="storeBtn" aria-label="储存"></button>
+        <button class="btn p" id="sendBtn">发送</button>
+      </div>
+    </div>
   </section>
 
   <!-- CHAT SETTING FULL SCREEN -->
-
   <section id="chatSetting" class="screen">
     <div class="header">
       <button class="btn" data-nav="chatRoom">‹ 返回</button>
@@ -500,83 +493,79 @@ text-align:justify;
         <textarea id="mePersonaInput" class="ta" style="min-height:90px;"></textarea>
       </div>
 
-```
-  <div class="card">
-    <div class="small">对方名称（当前联系人）</div>
-    <input id="roleNameInput" class="input" />
-    <div class="small" style="margin-top:8px;">对方备注（可选）</div>
-    <input id="roleNoteInput" class="input" />
-    <div class="small" style="margin-top:8px;">对方人设</div>
-    <textarea id="rolePersonaInput" class="ta" style="min-height:95px;"></textarea>
-  </div>
+      <div class="card">
+        <div class="small">对方名称（当前联系人）</div>
+        <input id="roleNameInput" class="input" />
+        <div class="small" style="margin-top:8px;">对方备注（可选）</div>
+        <input id="roleNoteInput" class="input" />
+        <div class="small" style="margin-top:8px;">对方人设</div>
+        <textarea id="rolePersonaInput" class="ta" style="min-height:95px;"></textarea>
+      </div>
 
-  <div class="card">
-    <div class="small">模式</div>
-    <select id="replyModeSelect" class="select" style="margin-top:8px;">
-      <option value="online">线上模式（多气泡）</option>
-      <option value="offline">线下模式（酒馆RP）</option>
-    </select>
-  </div>
+      <div class="card">
+        <div class="small">模式</div>
+        <select id="replyModeSelect" class="select" style="margin-top:8px;">
+          <option value="online">线上模式（多气泡）</option>
+          <option value="offline">线下模式（酒馆RP）</option>
+        </select>
+      </div>
 
-  <div class="card" id="onlineSettingCard">
-    <div class="small">线上条数</div>
-    <select id="onlineStyleSelect" class="select" style="margin-top:8px;">
-      <option value="free">自由发挥</option>
-      <option value="range">区间条数</option>
-    </select>
-    <div id="onlineRangeBox" class="row" style="margin-top:8px;display:none;">
-      <input id="onlineMinInput" class="input" type="number" min="1" max="20" value="2" placeholder="最少条数" />
-      <input id="onlineMaxInput" class="input" type="number" min="1" max="30" value="6" placeholder="最多条数" />
+      <div class="card" id="onlineSettingCard">
+        <div class="small">线上条数</div>
+        <select id="onlineStyleSelect" class="select" style="margin-top:8px;">
+          <option value="free">自由发挥</option>
+          <option value="range">区间条数</option>
+        </select>
+        <div id="onlineRangeBox" class="row" style="margin-top:8px;display:none;">
+          <input id="onlineMinInput" class="input" type="number" min="1" max="20" value="2" placeholder="最少条数" />
+          <input id="onlineMaxInput" class="input" type="number" min="1" max="30" value="6" placeholder="最多条数" />
+        </div>
+      </div>
+
+      <div class="card" id="offlineSettingCard">
+        <div class="small">线下字数区间</div>
+        <div class="row" style="margin-top:8px;">
+          <input id="offlineMinInput" class="input" type="number" min="80" max="5000" value="220" placeholder="最少字数" />
+          <input id="offlineMaxInput" class="input" type="number" min="100" max="8000" value="420" placeholder="最多字数" />
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="small">记忆轮数 (上下文长度)</div>
+        <div class="row" style="margin-top:8px;">
+          <input id="contextLenInput" class="input" type="number" min="5" max="500" value="30" placeholder="默认30条" />
+        </div>
+        <div class="small" style="margin-top:6px;color:#888;">数值越大AI记性越好，但API消耗也越大哦</div>
+      </div>
+
+      <div class="card">
+        <div class="small">时间戳</div>
+        <div class="row" style="margin-top:8px;justify-content:space-between;">
+          <span class="small">显示每条消息时间</span>
+          <input id="showTsSwitch" type="checkbox" />
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="small">气泡CSS专区（可选）</div>
+        <textarea id="bubbleCssInput" class="ta" style="min-height:130px;" placeholder=".bubble.ai{...}"></textarea>
+        <div class="small" style="margin-top:6px;">保存后立即生效，可随时清空恢复</div>
+      </div>
+
+      <div class="card">
+        <div class="small">数据工具</div>
+        <div class="row" style="margin-top:8px;flex-wrap:wrap;">
+          <button class="btn" id="exportBtn">导出数据</button>
+          <button class="btn" id="importBtn">导入数据</button>
+          <input id="importFile" type="file" accept="application/json" class="hidden" />
+          <button class="btn d" id="clearChatBtn2">清空当前聊天</button>
+          <button class="btn d" id="deleteContactBtn">删除当前好友</button>
+        </div>
+      </div>
     </div>
-  </div>
-
-  <div class="card" id="offlineSettingCard">
-    <div class="small">线下字数区间</div>
-    <div class="row" style="margin-top:8px;">
-      <input id="offlineMinInput" class="input" type="number" min="80" max="5000" value="220" placeholder="最少字数" />
-      <input id="offlineMaxInput" class="input" type="number" min="100" max="8000" value="420" placeholder="最多字数" />
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="small">记忆轮数 (上下文长度)</div>
-    <div class="row" style="margin-top:8px;">
-      <input id="contextLenInput" class="input" type="number" min="5" max="500" value="30" placeholder="默认30条" />
-    </div>
-    <div class="small" style="margin-top:6px;color:#888;">数值越大AI记性越好，但API消耗也越大哦</div>
-  </div>
-
-  <div class="card">
-    <div class="small">时间戳</div>
-    <div class="row" style="margin-top:8px;justify-content:space-between;">
-      <span class="small">显示每条消息时间</span>
-      <input id="showTsSwitch" type="checkbox" />
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="small">气泡CSS专区（可选）</div>
-    <textarea id="bubbleCssInput" class="ta" style="min-height:130px;" placeholder=".bubble.ai{...}"></textarea>
-    <div class="small" style="margin-top:6px;">保存后立即生效，可随时清空恢复</div>
-  </div>
-
-  <div class="card">
-    <div class="small">数据工具</div>
-    <div class="row" style="margin-top:8px;flex-wrap:wrap;">
-      <button class="btn" id="exportBtn">导出数据</button>
-      <button class="btn" id="importBtn">导入数据</button>
-      <input id="importFile" type="file" accept="application/json" class="hidden" />
-      <button class="btn d" id="clearChatBtn2">清空当前聊天</button>
-      <button class="btn d" id="deleteContactBtn">删除当前好友</button>
-    </div>
-  </div>
-</div>
-```
-
   </section>
 
   <!-- API -->
-
   <section id="api" class="screen">
     <div class="header">
       <button class="btn" data-nav="home">‹ 返回</button>
@@ -593,48 +582,41 @@ text-align:justify;
         </div>
       </div>
 
-```
-  <div class="card"><div class="small">Base URL</div><input id="apiBase" class="input" placeholder="https://api.xxx.com" /></div>
-  <div class="card"><div class="small">API Key</div><input id="apiKey" class="input" type="password" /></div>
-  <div class="card">
-    <div class="small">Model</div>
-    <select id="apiModel" class="select"></select>
-    <div style="margin-top:8px"><button class="btn" id="fetchModelsBtn">拉取模型</button></div>
-  </div>
-  <div class="card"><div class="small">Temperature</div><input id="apiTemp" class="input" type="number" min="0" max="2" step="0.1" value="0.8" /></div>
-  <div class="card"><button class="btn" id="testApiBtn">测试连接</button><div id="apiStatus" class="small" style="margin-top:8px;">状态：未测试</div></div>
-</div>
-```
-
+      <div class="card"><div class="small">Base URL</div><input id="apiBase" class="input" placeholder="https://api.xxx.com" /></div>
+      <div class="card"><div class="small">API Key</div><input id="apiKey" class="input" type="password" /></div>
+      <div class="card">
+        <div class="small">Model</div>
+        <select id="apiModel" class="select"></select>
+        <div style="margin-top:8px"><button class="btn" id="fetchModelsBtn">拉取模型</button></div>
+      </div>
+      <div class="card"><div class="small">Temperature</div><input id="apiTemp" class="input" type="number" min="0" max="2" step="0.1" value="0.8" /></div>
+      <div class="card"><button class="btn" id="testApiBtn">测试连接</button><div id="apiStatus" class="small" style="margin-top:8px;">状态：未测试</div></div>
+    </div>
   </section>
 
   <!-- 创建联系人 -->
-
   <div id="contactModal" class="modal">
     <div class="modal-card">
       <h3 style="margin:0 0 10px;">创建联系人</h3>
       <div class="small">昵称</div>
       <input id="newName" class="input" placeholder="例如：林闻笙" />
 
-```
-  <div class="small" style="margin-top:8px;">头像（上传 或 URL）</div>
-  <div class="row">
-    <button class="btn" id="pickAvatarBtn">上传</button>
-    <input id="newAvatarUrl" class="input" placeholder="https://..." />
-  </div>
-  <input id="newAvatarFile" type="file" accept="image/*" class="hidden" />
-  <img id="newAvatarPreview" class="preview-img hidden" style="margin-top:8px;" />
+      <div class="small" style="margin-top:8px;">头像（上传 或 URL）</div>
+      <div class="row">
+        <button class="btn" id="pickAvatarBtn">上传</button>
+        <input id="newAvatarUrl" class="input" placeholder="https://..." />
+      </div>
+      <input id="newAvatarFile" type="file" accept="image/*" class="hidden" />
+      <img id="newAvatarPreview" class="preview-img hidden" style="margin-top:8px;" />
 
-  <div class="small" style="margin-top:8px;">人设</div>
-  <textarea id="newPersona" class="ta" style="min-height:220px;"></textarea>
+      <div class="small" style="margin-top:8px;">人设</div>
+      <textarea id="newPersona" class="ta" style="min-height:220px;"></textarea>
 
-  <div class="row" style="justify-content:flex-end;margin-top:10px;">
-    <button class="btn" id="cancelCreateBtn">取消</button>
-    <button class="btn p" id="saveCreateBtn">保存</button>
-  </div>
-</div>
-```
-
+      <div class="row" style="justify-content:flex-end;margin-top:10px;">
+        <button class="btn" id="cancelCreateBtn">取消</button>
+        <button class="btn p" id="saveCreateBtn">保存</button>
+      </div>
+    </div>
   </div>
 
 </div>
@@ -885,11 +867,19 @@ window.deleteContactFromList = function(id, e) {
     const raw=String(text||'');
     const m=raw.match(/【状态栏】\s*([\s\S]*?)\s*【正文】\s*([\s\S]*)/);
     if(!m){
-      return '<div class="bubble-wrap ai"><div class="bubble ai">'+esc(raw)+'</div>'+(pref.showTs?'<div class="msg-time">'+fmtTs(ts)+'</div>':'')+'</div>';
+      return `<div class="bubble-wrap ai"><div class="bubble ai">${esc(raw)}</div>${pref.showTs?`<div class="msg-time">${fmtTs(ts)}</div>`:''}</div>`;
     }
     const state=clean(m[1]);
     const body=clean(m[2]);
-    return '<div class="bubble-wrap ai"><div class="offline-card"><div class="offline-state">'+esc(state||'状态未记录')+'</div><div class="offline-body">'+esc(body||'')+'</div></div>'+(pref.showTs?'<div class="msg-time">'+fmtTs(ts)+'</div>':'')+'</div>';
+    return `
+      <div class="bubble-wrap ai">
+        <div class="offline-card">
+          <div class="offline-state">${esc(state||'状态未记录')}</div>
+          <div class="offline-body">${esc(body||'')}</div>
+        </div>
+        ${pref.showTs?`<div class="msg-time">${fmtTs(ts)}</div>`:''}
+      </div>
+    `;
   }
 
   function renderChat(){
@@ -908,17 +898,38 @@ window.deleteContactFromList = function(id, e) {
         const av=m.role==='user'?meAvatar:roleAvatar;
 
         if(m.role==='user'){
-          return '<div class="msg-block '+cls+'"><img class="chat-avatar" src="'+av+'"><div class="bubble-wrap me"><div class="bubble me">'+esc(m.text)+'</div>'+(pref.showTs?'<div class="msg-time">'+fmtTs(m.time)+'</div>':'')+'</div></div>';
+          return `<div class="msg-block ${cls}">
+            <img class="chat-avatar" src="${av}">
+            <div class="bubble-wrap me">
+              <div class="bubble me">${esc(m.text)}</div>
+              ${pref.showTs?`<div class="msg-time">${fmtTs(m.time)}</div>`:''}
+            </div>
+          </div>`;
         }
 
-        return '<div class="msg-block '+cls+'"><img class="chat-avatar" src="'+av+'">'+renderOfflineAssistant(m.text,m.time,pref)+'</div>';
+        return `<div class="msg-block ${cls}">
+          <img class="chat-avatar" src="${av}">
+          ${renderOfflineAssistant(m.text,m.time,pref)}
+        </div>`;
       }).join('');
     }else{
       $('chatMsgs').innerHTML=arr.map(m=>{
         if(m.role==='user'){
-          return '<div class="msg-row me"><div class="bubble-wrap me"><div class="bubble me">'+esc(m.text)+'</div>'+(pref.showTs?'<div class="msg-time">'+fmtTs(m.time)+'</div>':'')+'</div><img class="chat-avatar" src="'+meAvatar+'"></div>';
+          return `<div class="msg-row me">
+            <div class="bubble-wrap me">
+              <div class="bubble me">${esc(m.text)}</div>
+              ${pref.showTs?`<div class="msg-time">${fmtTs(m.time)}</div>`:''}
+            </div>
+            <img class="chat-avatar" src="${meAvatar}">
+          </div>`;
         }
-        return '<div class="msg-row"><img class="chat-avatar" src="'+roleAvatar+'"><div class="bubble-wrap ai"><div class="bubble ai">'+esc(m.text)+'</div>'+(pref.showTs?'<div class="msg-time">'+fmtTs(m.time)+'</div>':'')+'</div></div>';
+        return `<div class="msg-row">
+          <img class="chat-avatar" src="${roleAvatar}">
+          <div class="bubble-wrap ai">
+            <div class="bubble ai">${esc(m.text)}</div>
+            ${pref.showTs?`<div class="msg-time">${fmtTs(m.time)}</div>`:''}
+          </div>
+        </div>`;
       }).join('');
     }
     $('chatMsgs').scrollTop=$('chatMsgs').scrollHeight;
@@ -989,8 +1000,9 @@ window.deleteContactFromList = function(id, e) {
     const txt=clean(raw); if(!txt) return ['...'];
     const byJson=parseJsonMessages(txt);
     if(byJson && byJson.length) {
-      return byJson;
+      return byJson; // 完美保留AI自己断的句子，绝不拦腰斩断！
     }
+    // 降级处理
     const normalized=txt.replace(/\r/g,'').replace(/[ \t]+\n/g,'\n').replace(/\n{3,}/g,'\n\n').trim();
     return normalized.split(/\n{1,}/).filter(Boolean);
   }
@@ -1001,9 +1013,9 @@ window.deleteContactFromList = function(id, e) {
     if(arr.length>max){
       const keep=arr.slice(0,max-1);
       const tail=arr.slice(max-1).join(' ');
-      return [...keep, tail];
+      return [...keep, tail]; // 超出条数的拼在最后，绝不删字
     }
-    return arr;
+    return arr; // 不够条数就不管了，强行从中间劈开太蠢了！
   }
 
   async function emitAiSequential(parts,map,targetId,mode){
@@ -1032,7 +1044,7 @@ window.deleteContactFromList = function(id, e) {
   function refreshPresetUI(){
     const s=getApiState();
     const names=Object.keys(s.presets);
-    $('apiPresetSelect').innerHTML=names.map(n=>'<option '+(n===s.current?'selected':'')+'>'+n+'</option>').join('');
+    $('apiPresetSelect').innerHTML=names.map(n=>`<option ${n===s.current?'selected':''}>${n}</option>`).join('');
     loadApiForm();
   }
   function loadApiForm(){
@@ -1040,7 +1052,7 @@ window.deleteContactFromList = function(id, e) {
     $('apiBase').value=c.base||'';
     $('apiKey').value=c.key||'';
     $('apiTemp').value=c.temp??0.8;
-    $('apiModel').innerHTML='<option value="'+(c.model||'gpt-4o-mini')+'">'+(c.model||'gpt-4o-mini')+'</option>';
+    $('apiModel').innerHTML=`<option value="${c.model||'gpt-4o-mini'}">${c.model||'gpt-4o-mini'}</option>`;
   }
   function saveApiForm(){
     const s=getApiState();
@@ -1055,7 +1067,7 @@ window.deleteContactFromList = function(id, e) {
     return s.presets[s.current];
   }
 
-  $('apiPresetSelect').onchange=function(e){
+  $('apiPresetSelect').onchange=e=>{
     const s=getApiState();
     s.presets[s.current]={
       base:clean($('apiBase').value),
@@ -1065,7 +1077,7 @@ window.deleteContactFromList = function(id, e) {
     };
     s.current=e.target.value; setApiState(s); loadApiForm();
   };
-  $('newPresetBtn').onclick=function(){
+  $('newPresetBtn').onclick=()=>{
     const name=(prompt('新预设名：')||'').trim();
     if(!name) return;
     const s=getApiState();
@@ -1073,7 +1085,7 @@ window.deleteContactFromList = function(id, e) {
     s.presets[name]={base:'',key:'',model:'gpt-4o-mini',temp:0.8};
     s.current=name; setApiState(s); refreshPresetUI();
   };
-  $('delPresetBtn').onclick=function(){
+  $('delPresetBtn').onclick=()=>{
     const s=getApiState(), names=Object.keys(s.presets);
     if(names.length<=1) return alert('至少保留一个预设');
     if(!confirm('删除当前预设？')) return;
@@ -1096,13 +1108,13 @@ window.deleteContactFromList = function(id, e) {
     const r=await fetch(url,{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+cfg.key},
-      body:JSON.stringify({model:cfg.model,temperature:cfg.temp,messages:messages})
+      body:JSON.stringify({model:cfg.model,temperature:cfg.temp,messages})
     });
 
     const ct=(r.headers.get('content-type')||'').toLowerCase();
-    var data=null, raw='';
-    if(ct.includes('application/json')) data=await r.json().catch(function(){return null;});
-    else raw=await r.text().catch(function(){return '';});
+    let data=null, raw='';
+    if(ct.includes('application/json')) data=await r.json().catch(()=>null);
+    else raw=await r.text().catch(()=>'');
 
     if(!r.ok){
       const msg=data?.error?.message||data?.message||raw?.slice(0,220)||('HTTP '+r.status);
@@ -1120,11 +1132,11 @@ window.deleteContactFromList = function(id, e) {
       $('apiStatus').textContent='状态：拉取模型中...';
       const url=buildUrl(c.base,'/v1/models');
       const r=await fetch(url,{headers:{'Authorization':'Bearer '+c.key}});
-      const data=await r.json().catch(function(){return {};});
+      const data=await r.json().catch(()=>({}));
       if(!r.ok) throw new Error(data?.error?.message || ('HTTP '+r.status));
-      const list=(data.data||[]).map(function(x){return x.id;}).filter(Boolean);
+      const list=(data.data||[]).map(x=>x.id).filter(Boolean);
       if(!list.length) throw new Error('未返回模型列表');
-      $('apiModel').innerHTML=list.map(function(m){return '<option>'+m+'</option>';}).join('');
+      $('apiModel').innerHTML=list.map(m=>`<option>${m}</option>`).join('');
       if(list.includes(c.model)) $('apiModel').value=c.model;
       $('apiStatus').textContent='状态：模型拉取成功（'+list.length+'）';
     }catch(e){
@@ -1144,56 +1156,55 @@ window.deleteContactFromList = function(id, e) {
   $('fetchModelsBtn').onclick=fetchModels;
   $('testApiBtn').onclick=testApi;
 
-  function getSysTimeStr() {
+ function getSysTimeStr() {
     const d = new Date();
     const w = ['周日','周一','周二','周三','周四','周五','周六'][d.getDay()];
-    return d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日 '+w+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+    return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 ${w} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
   }
 
+  
   function buildOnlineSystem(c,me,st){
     const rangeRule = st.onlineStyle==='range'
-      ? '本次回复请拆分为 '+st.onlineMin+' 到 '+st.onlineMax+' 条消息。'
-      : '本次回复的条数由你完全根据人设的立体性格、心理波动和当前语境自由发挥（拒绝刻板，可多可少）。';
+      ? `本次回复请拆分为 ${st.onlineMin} 到 ${st.onlineMax} 条消息。`
+      : `本次回复的条数由你完全根据人设的立体性格、心理波动和当前语境自由发挥（拒绝刻板，可多可少）。`;
     return [
-      '你正在扮演：'+(c?.name||'聊天对象'),
-      '对方名称：'+(me?.name||'我'),
-      '对方备注：'+(me?.note||'无'),
-      '对方人设：'+(me?.persona||'自然聊天'),
-      '你的备注：'+(c?.note||'无'),
-      '你的人设：'+(c?.persona||'自然聊天'),
-      '【当前系统时间】：'+getSysTimeStr(),
-      '【核心指令】：',
-      '1. 拒绝刻板标签！人设是立体的、多面的、有成长性的。把你扮演的角色当成一个活生生的人来对待！',
-      '2. 说话的条数、长短、语气，必须严格根据【当前具体的语境】、【角色的情绪起伏】和【心理活动】动态自然地变化，绝不受任何固定模式限制。',
-      '3. 绝对不要在回复中暴露你是AI或程序。',
-      '【输出格式铁律】：',
-      '只允许输出严格的JSON格式，包含一个"messages"数组：{"messages":["第一句...","第二句..."]}',
+      `你正在扮演：${c?.name||'聊天对象'}`,
+      `对方名称：${me?.name||'我'}`,
+      `对方备注：${me?.note||'无'}`,
+      `对方人设：${me?.persona||'自然聊天'}`,
+      `你的备注：${c?.note||'无'}`,
+      `你的人设：${c?.persona||'自然聊天'}`,
+      `【当前系统时间】：${getSysTimeStr()}`,
+      `【核心指令】：`,
+      `1. 拒绝刻板标签！人设是立体的、多面的、有成长性的。把你扮演的角色当成一个活生生的人来对待！`,
+      `2. 说话的条数、长短、语气，必须严格根据【当前具体的语境】、【角色的情绪起伏】和【心理活动】动态自然地变化，绝不受任何固定模式限制。`,
+      `3. 绝对不要在回复中暴露你是AI或程序。`,
+      `【输出格式铁律】：`,
+      `只允许输出严格的JSON格式，包含一个"messages"数组：{"messages":["第一句...","第二句..."]}`,
       rangeRule
     ].join('\n');
   }
-
-  function buildOfflineSystem(c,me,st){
+function buildOfflineSystem(c,me,st){
     return [
-      '你正在扮演：'+(c?.name||'聊天对象'),
-      '对方名称：'+(me?.name||'我'),
-      '对方备注：'+(me?.note||'无'),
-      '对方人设：'+(me?.persona||'自然聊天'),
-      '你的备注：'+(c?.note||'无'),
-      '你的人设：'+(c?.persona||'自然聊天'),
-      '【当前系统时间】：'+getSysTimeStr(),
-      '【核心指令】：你是一个有血有肉的人，请极度贴合你的人设，展现出极致的活人感与内心戏。',
-      '【互动边界】：尽量不要代替对方（我）说话或做决定，多留出让对方反应与互动的空间（留白）。但允许根据剧情连贯性做极轻微、合理的预判，具体尺度视当前语境和人设灵活调整。',
-      '请输出一条沉浸式线下角色扮演回复，字数范围 '+st.offlineMin+'-'+st.offlineMax+'。',
-      '【排版与层次要求】：',
-      '正文绝对不能是一大段密密麻麻的文字！必须合理分段，动作、神态、心理描写与对话之间要有清晰的层次感，保证阅读舒适。',
-      '【输出格式铁律】必须严格按以下模板输出，不要输出JSON：',
-      '【状态栏】',
-      '时间｜地点｜天气｜氛围｜关系进度',
-      '【正文】',
-      '（你的沉浸式叙事与对话，记得分段！）'
+      `你正在扮演：${c?.name||'聊天对象'}`,
+      `对方名称：${me?.name||'我'}`,
+      `对方备注：${me?.note||'无'}`,
+      `对方人设：${me?.persona||'自然聊天'}`,
+      `你的备注：${c?.note||'无'}`,
+      `你的人设：${c?.persona||'自然聊天'}`,
+      `【当前系统时间】：${getSysTimeStr()}`,
+      `【核心指令】：你是一个有血有肉的人，请极度贴合你的人设，展现出极致的活人感与内心戏。`,
+      `【互动边界】：尽量不要代替对方（我）说话或做决定，多留出让对方反应与互动的空间（留白）。但允许根据剧情连贯性做极轻微、合理的预判，具体尺度视当前语境和人设灵活调整。`,
+      `请输出一条沉浸式线下角色扮演回复，字数范围 ${st.offlineMin}-${st.offlineMax}。`,
+      `【排版与层次要求】：`,
+      `正文绝对不能是一大段密密麻麻的文字！必须合理分段，动作、神态、心理描写与对话之间要有清晰的层次感，保证阅读舒适。`,
+      `【输出格式铁律】必须严格按以下模板输出，不要输出JSON：`,
+      `【状态栏】`,
+      `时间｜地点｜天气｜氛围｜关系进度`,
+      `【正文】`,
+      `（你的沉浸式叙事与对话，记得分段！）`
     ].join('\n');
   }
-
   async function sendMsg(){
     if(!currentId) return;
     const chatId=currentId;
@@ -1208,7 +1219,7 @@ window.deleteContactFromList = function(id, e) {
     if(currentId===chatId) renderChat();
 
     const map=getChats();
-    const hist=(map[chatId]||[]).filter(function(x){return x.text;}).slice(-(st.contextLen||30));
+    const hist=(map[chatId]||[]).filter(x=>x.text).slice(-(st.contextLen||30));
     if(!hist.length) return;
 
     setTyping(chatId,true);
@@ -1216,11 +1227,12 @@ window.deleteContactFromList = function(id, e) {
     try{
       const system = st.mode==='offline' ? buildOfflineSystem(c,me,st) : buildOnlineSystem(c,me,st);
       const messages=[
-        {role:'system',content:system}
-      ].concat(hist.map(function(x){return {role:x.role==='user'?'user':'assistant',content:x.text};}));
+        {role:'system',content:system},
+        ...hist.map(x=>({role:x.role==='user'?'user':'assistant',content:x.text}))
+      ];
       const out=await callApi(messages);
 
-      var parts=[];
+      let parts=[];
       if(st.mode==='offline'){
         parts=[clean(out)||'...'];
       }else{
@@ -1231,10 +1243,10 @@ window.deleteContactFromList = function(id, e) {
       await emitAiSequential(parts.length?parts:['...'], map, chatId, st.mode);
 
       const contacts=getContacts();
-      const i=contacts.findIndex(function(x){return x.id===chatId;});
+      const i=contacts.findIndex(x=>x.id===chatId);
       if(i>=0){
         contacts[i].preview=(parts[0]||'...').slice(0,44);
-        contacts[i].time = fmtTs(Date.now());
+     contacts[i].time = fmtTs(Date.now());
         setContacts(contacts);
       }
       renderContacts($('searchInput').value||'');
@@ -1249,7 +1261,7 @@ window.deleteContactFromList = function(id, e) {
   }
 
   $('sendBtn').onclick=sendMsg;
-  $('chatInput').addEventListener('keydown',function(e){
+  $('chatInput').addEventListener('keydown',e=>{
     if(e.key==='Enter' && !e.shiftKey){
       e.preventDefault();
       if(e.ctrlKey || e.metaKey) sendMsg();
@@ -1299,7 +1311,7 @@ window.deleteContactFromList = function(id, e) {
   $('replyModeSelect').onchange=refreshSettingUI;
   $('onlineStyleSelect').onchange=refreshSettingUI;
 
-  $('saveChatSettingBtn').onclick=function(){
+  $('saveChatSettingBtn').onclick=()=>{
     if(!currentId) return;
     try{
       const me=getMe();
@@ -1312,8 +1324,8 @@ window.deleteContactFromList = function(id, e) {
       const contextLen=Math.max(5, Number($('contextLenInput').value||30));
 
       setMe({
+        ...me,
         name:clean($('meNameInput').value)||'我',
-        avatar:me.avatar||'',
         note:clean($('meNoteInput').value),
         persona:clean($('mePersonaInput').value)
       });
@@ -1322,7 +1334,7 @@ window.deleteContactFromList = function(id, e) {
         name:clean($('roleNameInput').value)||'聊天对象',
         note:clean($('roleNoteInput').value),
         persona:clean($('rolePersonaInput').value),
-        settings:normSettings({mode:mode,onlineStyle:onlineStyle,onlineMin:onlineMin,onlineMax:onlineMax,offlineMin:offlineMin,offlineMax:offlineMax,contextLen:contextLen})
+        settings:normSettings({mode,onlineStyle,onlineMin,onlineMax,offlineMin,offlineMax,contextLen})
       });
 
       const p=getPref();
@@ -1338,7 +1350,7 @@ window.deleteContactFromList = function(id, e) {
       renderChat();
       renderContacts($('searchInput').value||'');
       show('chatRoom');
-    }catch(err){
+    }catch{
       alert('保存失败：存储空间不足（已自动压缩，仍不足）');
     }
   };
@@ -1346,7 +1358,7 @@ window.deleteContactFromList = function(id, e) {
   $('deleteContactBtn').onclick=deleteCurrentContact;
 
   // import/export
-  $('exportBtn').onclick=function(){
+  $('exportBtn').onclick=()=>{
     const data={
       contacts:getContacts(),
       chats:getChats(),
@@ -1363,8 +1375,8 @@ window.deleteContactFromList = function(id, e) {
     URL.revokeObjectURL(a.href);
   };
 
-  $('importBtn').onclick=function(){ $('importFile').click(); };
-  $('importFile').onchange=async function(e){
+  $('importBtn').onclick=()=> $('importFile').click();
+  $('importFile').onchange=async e=>{
     const f=e.target.files?.[0]; if(!f) return;
     try{
       const txt=await f.text();
@@ -1379,7 +1391,7 @@ window.deleteContactFromList = function(id, e) {
       renderContacts($('searchInput').value||'');
       if(currentId) renderChat();
       alert('导入成功');
-    }catch(err){
+    }catch{
       alert('导入失败：文件格式不正确');
     }finally{
       e.target.value='';
@@ -1387,13 +1399,13 @@ window.deleteContactFromList = function(id, e) {
   };
 
   // init
-  initAppStorage().then(function(){
+  
+  initAppStorage().then(() => {
     applyBubbleCss();
     refreshPresetUI();
     renderContacts();
   });
 })();
 </script>
-
 </body>
 </html>
