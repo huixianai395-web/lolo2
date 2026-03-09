@@ -448,6 +448,20 @@
 .menu-item:active {
   background: rgba(255,255,255,0.2); /* 按下时的高亮反馈 */
 }
+/* --- 专治苹果底部留白 & 页面乱晃 --- */
+html, body {
+  height: 100%;
+  height: 100dvh; /* 只有新版手机懂的“真实全屏高度” */
+  background-color: #f2f3f5; /* 强行补色，防止露白 */
+  overflow: hidden; /* 钉死页面，不许瞎晃 */
+  position: fixed; /* 更是钉死 */
+  width: 100%;
+}
+#app {
+  height: 100%;
+  height: 100dvh;
+  overflow: hidden;
+}
   </style>
 <script src="https://cdn.jsdelivr.net/npm/localforage@1.10.0/dist/localforage.min.js"></script>
 </head>
@@ -1461,11 +1475,12 @@ function buildOfflineSystem(c,me,st){
 })();
 </script>
 <script>
-// --- 神龙菜单：防出界 + 正经提示版 ---
+// --- 神龙菜单：点击即焚 & 完美适配版 ---
 let longPressTimer;
 const superMenu = document.getElementById('super-menu');
 let currentMsg = null;
 
+// 触摸开始
 document.addEventListener('touchstart', function(e) {
   let targetNode = e.target.closest('.message, .bubble, .msg, .content, .chat-item, .msg-bubble');
   if(targetNode) {
@@ -1475,18 +1490,13 @@ document.addEventListener('touchstart', function(e) {
       
       let touch = e.touches[0];
       let screenWidth = window.innerWidth;
-      let menuWidth = 240; // 咱们设定的菜单宽度
+      let menuWidth = 240;
       
-      // 算出菜单该出现的位置
       let menuX = touch.clientX - 50;
       let menuY = touch.clientY - 50;
 
-      // --- 智能防出界逻辑 ---
-      // 如果菜单右边超出了屏幕，就强行把它拽回来
-      if (menuX + menuWidth > screenWidth) {
-        menuX = screenWidth - menuWidth - 20; // 留点缝隙
-      }
-      // 如果左边出界了，也拽回来
+      // 智能防出界
+      if (menuX + menuWidth > screenWidth) menuX = screenWidth - menuWidth - 20;
       if (menuX < 10) menuX = 10;
       if (menuY < 10) menuY = 10;
 
@@ -1499,9 +1509,11 @@ document.addEventListener('touchstart', function(e) {
   }
 }, {passive: false});
 
+// 各种取消情况
 document.addEventListener('touchend', function() { clearTimeout(longPressTimer); });
 document.addEventListener('touchmove', function() { clearTimeout(longPressTimer); });
 
+// 点别的地方立刻隐藏
 document.addEventListener('touchstart', function(e) {
   if(superMenu && superMenu.style.display === 'flex') {
     if(!e.target.closest('#super-menu')) {
@@ -1515,29 +1527,33 @@ menuButtons.forEach(button => {
   button.addEventListener('touchend', function(e) {
     e.preventDefault();
     e.stopPropagation();
-    const action = this.innerText;
+    
+    // --- 关键修改：一点按钮，菜单必须立刻原地消失！ ---
     if(superMenu) superMenu.style.display = 'none';
     
+    const action = this.innerText;
     if(!currentMsg) return;
 
-    if(action === '复制') {
-      let text = currentMsg.innerText || currentMsg.textContent;
-      let textArea = document.createElement("textarea");
-      textArea.value = text;
-      document.body.appendChild(textArea);
-      textArea.select();
-      document.execCommand("Copy");
-      textArea.remove();
-      // --- 这里改成正经提示了，满意了吧 --- 
-      alert('已复制');
-    } 
-    else if(action === '删除') {
-      currentMsg.remove();
-    }
-    else {
-      // 其他功能的提示也正经一点
-      alert('【' + action + '】功能开发中...');
-    }
+    // 用个极短的延时，让菜单先消失，再执行功能，视觉更流畅
+    setTimeout(() => {
+      if(action === '复制') {
+        let text = currentMsg.innerText || currentMsg.textContent;
+        let textArea = document.createElement("textarea");
+        textArea.value = text;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand("Copy");
+        textArea.remove();
+        // 既然朋友要看，那就不骚了，正经提示
+        alert('已复制');
+      } 
+      else if(action === '删除') {
+        currentMsg.remove();
+      }
+      else {
+        alert('【' + action + '】功能正在开发中...');
+      }
+    }, 10);
   });
 });
 </script>
