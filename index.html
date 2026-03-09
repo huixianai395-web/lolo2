@@ -453,6 +453,48 @@
   opacity: 0;
   transition: opacity 0.3s ease;
 }
+ /* --- 微信风格引用预览框 (第二步) --- */
+#quote-preview {
+  padding: 8px 30px 8px 12px; /* 右边留出关闭按钮的位置 */
+  background-color: #f2f2f2;
+  border-radius: 8px;
+  margin: 0 10px 8px 10px;
+  font-size: 14px;
+  color: #888;
+  position: relative;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#quote-preview .close-quote {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  background-color: #ccc;
+  border-radius: 50%;
+  color: white;
+  text-align: center;
+  line-height: 16px;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+/* --- 新消息气泡内的引用样式 (图二效果) --- */
+.message .quote-in-bubble {
+  background-color: rgba(0,0,0,0.05);
+  padding: 6px 10px;
+  margin: -5px 0 8px 0; /* 调整和消息内容的间距 */
+  border-radius: 8px;
+  font-size: 14px;
+  color: #555;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
   </style>
 <script src="https://cdn.jsdelivr.net/npm/localforage@1.10.0/dist/localforage.min.js"></script>
 </head>
@@ -524,7 +566,7 @@
     </div>
 
     <div id="chatMsgs"></div>
-
+<div id="quote-preview" style="display: none;"></div>
     <div class="chatInputBar">
       <textarea id="chatInput" class="ta" placeholder="输入消息..."></textarea>
       <div class="send-actions">
@@ -1466,11 +1508,19 @@ function buildOfflineSystem(c,me,st){
 })();
 </script>
 <script>
-// --- 终极之魂：暴力居中 & 无感复制最终版 ---
+// --- 终极之魂 V5: 微信风格引用最终修正版 ---
 let longPressTimer;
 const superMenu = document.getElementById('super-menu');
 let currentMsg = null;
+let quoteContent = null; // 全局变量，存储待引用的内容
 
+// 获取核心DOM元素
+const quotePreview = document.getElementById('quote-preview');
+const inputField = document.getElementById('chatInput');
+const sendButton = document.getElementById('sendBtn');
+const messageContainer = document.getElementById('chatMsgs');
+
+// 显示一个会自动消失的提示
 function showToast(text) {
   let toast = document.createElement('div');
   toast.className = 'toast-msg';
@@ -1483,6 +1533,27 @@ function showToast(text) {
   }, 1500);
 }
 
+// 更新引用预览框的函数
+function updateQuotePreview(text) {
+  if (text) {
+    quoteContent = text; // 存储引用内容
+    quotePreview.innerHTML = `<span>${text}</span><div class="close-quote">×</div>`;
+    quotePreview.style.display = 'block';
+  } else {
+    quoteContent = null; // 清除引用内容
+    quotePreview.style.display = 'none';
+  }
+}
+
+// 为预览框的关闭按钮添加事件监听
+quotePreview.addEventListener('click', function(e) {
+  if (e.target.classList.contains('close-quote')) {
+    e.stopPropagation();
+    updateQuotePreview(null);
+  }
+});
+
+// --- 原有的长按菜单逻辑 ---
 document.addEventListener('touchstart', function(e) {
   let targetNode = e.target.closest('.message, .bubble, .msg, .content, .chat-item, .msg-bubble');
   if(targetNode) {
@@ -1490,10 +1561,6 @@ document.addEventListener('touchstart', function(e) {
       e.preventDefault();
       currentMsg = targetNode;
       if(superMenu) {
-        // 暴力清除以前残留的内联位置样式，防止它乱跑！
-        superMenu.style.left = '';
-        superMenu.style.top = '';
-        superMenu.style.transform = '';
         superMenu.style.display = 'flex';
       }
     }, 600);
@@ -1504,26 +1571,27 @@ document.addEventListener('touchend', function() { clearTimeout(longPressTimer);
 document.addEventListener('touchmove', function() { clearTimeout(longPressTimer); });
 
 document.addEventListener('touchstart', function(e) {
-  if(superMenu && superMenu.style.display === 'flex') {
-    if(!e.target.closest('#super-menu')) {
-      superMenu.style.display = 'none';
-    }
+  if(superMenu && superMenu.style.display === 'flex' && !e.target.closest('#super-menu')) {
+    superMenu.style.display = 'none';
   }
 });
 
+// --- 改造后的菜单按钮逻辑 ---
 const menuButtons = document.querySelectorAll('.menu-item');
 menuButtons.forEach(button => {
   button.addEventListener('touchend', function(e) {
     e.preventDefault();
     e.stopPropagation();
     if(superMenu) superMenu.style.display = 'none';
-    
+    
     const action = this.innerText;
     if(!currentMsg) return;
 
     setTimeout(() => {
-      if(action === '复制') {
-        let text = currentMsg.innerText || currentMsg.textContent;
+      // 尝试更精确地获取消息文本，避免把时间戳也复制进去
+      let text = currentMsg.querySelector('.text-content')?.innerText || currentMsg.innerText;
+      
+      if (action === '复制') {
         let textArea = document.createElement("textarea");
         textArea.value = text;
         document.body.appendChild(textArea);
@@ -1531,8 +1599,12 @@ menuButtons.forEach(button => {
         document.execCommand("Copy");
         textArea.remove();
         showToast('已复制');
-      } 
-      else if(action === '删除') {
+      } 
+      else if (action === '引用') {
+        updateQuotePreview(text); // 调用新的函数来显示引用预览
+        inputField.focus(); // 自动聚焦到输入框
+      }
+      else if (action === '删除') {
         currentMsg.remove();
       }
       else {
@@ -1540,6 +1612,52 @@ menuButtons.forEach(button => {
       }
     }, 50);
   });
+});
+
+// --- 全面接管发送逻辑 ---
+function handleRealSend() {
+  const textToSend = inputField.value.trim();
+  if (!textToSend && !quoteContent) return; // 如果什么都没输入，也不引用，就不发送
+
+  // 创建新的消息气泡
+  const newMsgDiv = document.createElement('div');
+  newMsgDiv.className = 'message self'; // 假设发送者是自己
+  
+  let innerHTML = '';
+  // 如果有引用内容，先加上引用部分
+  if (quoteContent) {
+    innerHTML += `<div class="quote-in-bubble">${quoteContent}</div>`;
+  }
+  // 再加上本次发送的文本内容
+  if (textToSend) {
+    // 这里我们用一个带class的div把文本包起来，方便以后精确获取
+    innerHTML += `<div class="text-content">${textToSend}</div>`;
+  }
+  
+  newMsgDiv.innerHTML = innerHTML;
+  messageContainer.appendChild(newMsgDiv);
+
+  // 清空输入框和引用
+  inputField.value = '';
+  updateQuotePreview(null);
+  
+  // 滚动到底部
+  messageContainer.scrollTop = messageContainer.scrollHeight;
+}
+
+// 移除旧的事件监听器，防止冲突
+const newSendButton = sendButton.cloneNode(true);
+sendButton.parentNode.replaceChild(newSendButton, sendButton);
+
+// 绑定新的发送事件
+newSendButton.addEventListener('click', handleRealSend);
+
+// 绑定回车发送
+inputField.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        handleRealSend();
+    }
 });
 </script>
 </body>
