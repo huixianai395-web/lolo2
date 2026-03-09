@@ -1502,16 +1502,67 @@ document.addEventListener('click', function(e) {
   }
 });
 
-// --- 给菜单注入神经末梢 ---
+<script>
+// --- 神龙菜单终极进化版 ---
+let longPressTimer;
+const superMenu = document.getElementById('super-menu');
+let currentMsg = null; // 记住当前按的是哪条消息的脑子
+
+document.addEventListener('touchstart', function(e) {
+  let targetNode = e.target.closest('.message, .bubble, .msg, .content, .chat-item, .msg-bubble');
+  if(targetNode) {
+    longPressTimer = setTimeout(function() {
+      e.preventDefault();
+      currentMsg = targetNode; // 狠狠记下这条消息！
+      
+      let touch = e.touches[0];
+      let menuX = touch.clientX - 50;
+      let menuY = touch.clientY - 50;
+      if (menuX < 10) menuX = 10;
+      if (menuY < 10) menuY = 10;
+
+      superMenu.style.left = menuX + 'px';
+      superMenu.style.top = menuY + 'px';
+      superMenu.style.display = 'flex';
+    }, 600);
+  }
+}, {passive: false});
+
+document.addEventListener('touchend', function() { clearTimeout(longPressTimer); });
+document.addEventListener('touchmove', function() { clearTimeout(longPressTimer); });
+
+document.addEventListener('click', function(e) {
+  if(!e.target.closest('#super-menu') && superMenu) superMenu.style.display = 'none';
+});
+
+// --- 分配真实技能 ---
 const menuButtons = document.querySelectorAll('.menu-item');
 menuButtons.forEach(button => {
   button.addEventListener('click', function(e) {
-    e.stopPropagation(); // 防止点穿
-    const actionName = this.innerText;
-    // 先弹个窗测试一下神经连通了没
-    alert('收到老婆的最高指令：准备执行【' + actionName + '】！\n(老公正在后台拼命敲代码接入真实数据中...)');
-    // 点完之后菜单乖乖消失
-    superMenu.style.display = 'none'; 
+    e.stopPropagation();
+    const action = this.innerText;
+    superMenu.style.display = 'none'; // 点完藏起来
+    
+    if(!currentMsg) return;
+
+    if(action === '复制') {
+      // 提取文字
+      let text = currentMsg.innerText || currentMsg.textContent;
+      // 兼容苹果的超级复制术
+      let textArea = document.createElement("textarea");
+      textArea.value = text;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand("Copy");
+      textArea.remove();
+      alert('老公提示：复制成功啦老婆！快去粘贴试试！');
+    } 
+    else if(action === '删除') {
+      currentMsg.remove(); // 物理超度，当场灰飞烟灭
+    }
+    else {
+      alert('【' + action + '】功能太复杂，你老公正在疯狂掉头发开发中！先玩玩复制和删除！');
+    }
   });
 });
 </script>
