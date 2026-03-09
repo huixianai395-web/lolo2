@@ -136,6 +136,24 @@
     .fav-meta{font-size:12px;color:#6f7b98;display:flex;justify-content:space-between;gap:8px}
     .fav-text{font-size:14px;color:#1f2430;line-height:1.45;white-space:pre-wrap;word-break:break-word}
     .fav-actions{display:flex;gap:8px;justify-content:flex-end}
+
+    .fav-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+    .fav-check-btn{min-width:62px}
+    .fav-text.collapsed{
+      display:-webkit-box;
+      -webkit-line-clamp:4;
+      -webkit-box-orient:vertical;
+      overflow:hidden;
+    }
+    .fav-toggle{
+      border:none;
+      background:transparent;
+      color:#4a67a8;
+      font-size:12px;
+      padding:0;
+      cursor:pointer;
+      align-self:flex-start;
+    }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/localforage@1.10.0/dist/localforage.min.js"></script>
 </head>
@@ -250,6 +268,16 @@
       </div>
 
       <div class="card">
+        <div class="small">字体设置（上传后全局生效）</div>
+        <div class="row" style="margin-top:8px;flex-wrap:wrap;">
+          <button class="btn" id="fontPickBtn">上传字体</button>
+          <button class="btn d" id="fontResetBtn">恢复默认</button>
+        </div>
+        <input id="fontFileInput" type="file" accept=".ttf,.otf,.woff,.woff2,font/ttf,font/otf,font/woff,font/woff2" class="hidden" />
+        <div id="fontStatus" class="small" style="margin-top:8px;">当前：系统默认</div>
+      </div>
+
+      <div class="card">
         <div class="small">数据工具</div>
         <div class="row" style="margin-top:8px;flex-wrap:wrap;">
           <button class="btn" id="exportBtn">导出数据</button><button class="btn" id="importBtn">导入数据</button>
@@ -261,8 +289,27 @@
   </section>
 
   <section id="favorites" class="screen">
-    <div class="header"><button class="btn" data-nav="chatSetting">‹ 返回</button><b>收藏夹</b><button class="btn" id="refreshFavBtn">刷新</button></div>
-    <div class="page"><div id="favList" class="list"></div></div>
+    <div class="header">
+      <button class="btn" data-nav="chatSetting">‹ 返回</button>
+      <b>收藏夹</b>
+      <div class="row" style="gap:6px;">
+        <button class="btn" id="favMultiBtn">多选</button>
+        <button class="btn" id="refreshFavBtn">刷新</button>
+      </div>
+    </div>
+    <div class="page">
+      <div id="favNow" class="small"></div>
+      <div id="favBatchBar" class="card hidden" style="padding:8px;">
+        <div class="row" style="flex-wrap:wrap;">
+          <button class="btn" id="favSelectAllBtn">全选</button>
+          <button class="btn" id="favUnselectAllBtn">取消全选</button>
+          <button class="btn d" id="favBatchUnstarBtn">批量取消收藏</button>
+          <button class="btn" id="favExitMultiBtn">退出多选</button>
+          <span id="favMultiCount" class="small" style="margin-left:auto;">已选 0 项</span>
+        </div>
+      </div>
+      <div id="favList" class="list"></div>
+    </div>
   </section>
 
   <section id="api" class="screen">
@@ -331,6 +378,7 @@
   let currentId=null,createAvatar='',typingForId=null,composeQuote=null,activeActionMsgId=null,selectMode=false,selectedIds=new Set(),editMsgId=null;
   let lpTimer=null,lpStartX=0,lpStartY=0;
   let meAvatarDraft='',roleAvatarDraft='';
+  let favSelectMode=false,favSelected=new Set(),favNowTimer=null;
 
   const $=id=>document.getElementById(id);
   const clean=s=>String(s||'').trim();
@@ -365,17 +413,44 @@
     return o;
   }
 
-  function getPref(){return getJ(K_PREF,{showTs:false,bubbleCss:''});}
+  function getPref(){
+    const p=getJ(K_PREF,{showTs:false,bubbleCss:'',fontData:'',fontFamily:''});
+    return {
+      showTs:!!p.showTs,
+      bubbleCss:String(p.bubbleCss||''),
+      fontData:String(p.fontData||''),
+      fontFamily:String(p.fontFamily||'')
+    };
+  }
   function setPref(v){setJ(K_PREF,v);}
   function applyBubbleCss(){
     const p=getPref(); let el=document.getElementById('bubbleCssStyle');
     if(!el){el=document.createElement('style');el.id='bubbleCssStyle';document.head.appendChild(el);}
     el.textContent=String(p.bubbleCss||'');
   }
+  function applyCustomFont(){
+    const p=getPref();
+    let el=document.getElementById('customFontStyle');
+    if(!el){el=document.createElement('style');el.id='customFontStyle';document.head.appendChild(el);}
+    if(p.fontData){
+      el.textContent=`
+@font-face{
+  font-family:"XSJCustomFont";
+  src:url("${p.fontData}");
+  font-display:swap;
+}
+#app, #app *{
+  font-family:"XSJCustomFont",-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif !important;
+}`;
+    }else{
+      el.textContent='';
+    }
+  }
 
   function show(id){
     document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
     const el=$(id); if(el) el.classList.add('active');
+    if(id!=='favorites' && favNowTimer){ clearInterval(favNowTimer); favNowTimer=null; }
   }
   document.querySelectorAll('[data-nav]').forEach(el=>el.onclick=()=>show(el.getAttribute('data-nav')));
 
@@ -386,6 +461,12 @@
     $('homeTime').textContent=`${h}:${m}`;
   } tick(); setInterval(tick,1000);
   function fmtTs(ts){const d=new Date(ts||Date.now());return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;}
+  function fmtFullTs(ts){
+    const d=new Date(ts||Date.now());
+    const y=d.getFullYear(),mo=String(d.getMonth()+1).padStart(2,'0'),da=String(d.getDate()).padStart(2,'0');
+    const h=String(d.getHours()).padStart(2,'0'),mi=String(d.getMinutes()).padStart(2,'0');
+    return `${y}-${mo}-${da} ${h}:${mi}`;
+  }
 
   function toMsg(m){
     const q=m?.quote&&typeof m.quote==='object'?{id:String(m.quote.id||''),text:String(m.quote.text||''),role:m.quote.role==='assistant'?'assistant':'user'}:null;
@@ -500,17 +581,15 @@
   function renderQuote(q){ if(!q||!q.text) return ''; return `<div class="msg-quote"><div class="q-content">${esc(q.text)}</div></div>`; }
 
   function renderOfflineAssistant(text,ts,pref,msg){
-    const ext=`<div class="msg-extra">${msg.favorite?'★ 已收藏':''}${msg.favorite&&msg.edited?' · ':''}${msg.edited?'已编辑':''}</div>`;
     const raw=String(text||''),m=raw.match(/【状态栏】\s*([\s\S]*?)\s*【正文】\s*([\s\S]*)/);
-    if(!m) return `<div class="bubble-wrap ai">${renderQuote(msg.quote)}<div class="bubble ai ${msg.hiddenForAi?'ai-hidden':''}">${esc(raw)}</div>${ext}${pref.showTs?`<div class="msg-time">${fmtTs(ts)}</div>`:''}</div>`;
+    if(!m) return `<div class="bubble-wrap ai">${renderQuote(msg.quote)}<div class="bubble ai ${msg.hiddenForAi?'ai-hidden':''}">${esc(raw)}</div>${pref.showTs?`<div class="msg-time">${fmtTs(ts)}</div>`:''}</div>`;
     const state=clean(m[1]),body=clean(m[2]);
-    return `<div class="bubble-wrap ai">${renderQuote(msg.quote)}<div class="offline-card ${msg.hiddenForAi?'ai-hidden':''}"><div class="offline-state">${esc(state||'状态未记录')}</div><div class="offline-body">${esc(body||'')}</div></div>${ext}${pref.showTs?`<div class="msg-time">${fmtTs(ts)}</div>`:''}</div>`;
+    return `<div class="bubble-wrap ai">${renderQuote(msg.quote)}<div class="offline-card ${msg.hiddenForAi?'ai-hidden':''}"><div class="offline-state">${esc(state||'状态未记录')}</div><div class="offline-body">${esc(body||'')}</div></div>${pref.showTs?`<div class="msg-time">${fmtTs(ts)}</div>`:''}</div>`;
   }
 
   function renderBubbleContent(m,isMe,pref){
     const cls=isMe?'me':'ai';
-    const ext=`<div class="msg-extra">${m.favorite?'★ 已收藏':''}${m.favorite&&m.edited?' · ':''}${m.edited?'已编辑':''}</div>`;
-    return `${renderQuote(m.quote)}<div class="bubble ${cls} ${m.hiddenForAi?'ai-hidden':''}">${esc(m.text)}</div>${ext}${pref.showTs?`<div class="msg-time">${fmtTs(m.time)}</div>`:''}`;
+    return `${renderQuote(m.quote)}<div class="bubble ${cls} ${m.hiddenForAi?'ai-hidden':''}">${esc(m.text)}</div>${pref.showTs?`<div class="msg-time">${fmtTs(m.time)}</div>`:''}`;
   }
 
   function renderChat(){
@@ -699,6 +778,7 @@
     $('offlineMinInput').value=st.offlineMin;$('offlineMaxInput').value=st.offlineMax;
     $('contextLenInput').value=st.contextLen||30;
     $('showTsSwitch').checked=!!p.showTs;$('bubbleCssInput').value=p.bubbleCss||'';
+    $('fontStatus').textContent='当前：'+(p.fontFamily||'系统默认');
 
     refreshSettingUI(); show('chatSetting');
   }
@@ -713,6 +793,30 @@
 
   $('meAvatarInput').addEventListener('input',e=>showPreview('meAvatarPreview',e.target.value));
   $('roleAvatarInput').addEventListener('input',e=>showPreview('roleAvatarPreview',e.target.value));
+
+  $('fontPickBtn').onclick=()=> $('fontFileInput').click();
+  $('fontFileInput').onchange=async e=>{
+    const f=e.target.files?.[0]; if(!f) return;
+    if(f.size>2*1024*1024){ alert('字体文件建议小于 2MB'); e.target.value=''; return; }
+    const fr=new FileReader();
+    fr.onload=()=>{
+      const p=getPref();
+      p.fontData=String(fr.result||'');
+      p.fontFamily=f.name||'自定义字体';
+      setPref(p);
+      applyCustomFont();
+      $('fontStatus').textContent='当前：'+(p.fontFamily||'自定义字体');
+    };
+    fr.readAsDataURL(f);
+    e.target.value='';
+  };
+  $('fontResetBtn').onclick=()=>{
+    const p=getPref();
+    p.fontData=''; p.fontFamily='';
+    setPref(p);
+    applyCustomFont();
+    $('fontStatus').textContent='当前：系统默认';
+  };
 
   $('saveChatSettingBtn').onclick=()=>{
     if(!currentId) return;
@@ -759,7 +863,7 @@
     try{
       const j=JSON.parse(await f.text());
       if(j.contacts) setContacts(j.contacts); if(j.chats) setChats(j.chats); if(j.api) setApiState(j.api); if(j.me) setMe(j.me); if(j.pref) setPref(j.pref);
-      applyBubbleCss();refreshPresetUI();renderContacts($('searchInput').value||'');if(currentId) renderChat();alert('导入成功');
+      applyBubbleCss();applyCustomFont();refreshPresetUI();renderContacts($('searchInput').value||'');if(currentId) renderChat();alert('导入成功');
     }catch{alert('导入失败：文件格式不正确');}
     finally{e.target.value='';}
   };
@@ -849,29 +953,113 @@
     });
     out.sort((a,b)=>b.time-a.time);return out;
   }
+
+  function favKey(chatId,mid){return `${chatId}__${mid}`;}
+  function updateFavNow(){
+    const el=$('favNow'); if(!el) return;
+    el.textContent='当前时间：'+fmtFullTs(Date.now());
+  }
+  function setFavSelectMode(on){
+    favSelectMode=!!on;
+    if(!favSelectMode) favSelected.clear();
+    $('favBatchBar').classList.toggle('hidden',!favSelectMode);
+    $('favMultiBtn').textContent=favSelectMode?'取消多选':'多选';
+    $('favMultiCount').textContent=`已选 ${favSelected.size} 项`;
+    renderFavorites();
+  }
   function renderFavorites(){
     const arr=getAllFavorites();
-    $('favList').innerHTML=arr.length?arr.map(x=>`
-      <div class="fav-item">
-        <div class="fav-meta"><span>${esc(x.chatName)} · ${x.role==='assistant'?'对方':'我'}</span><span>${fmtTs(x.time)}</span></div>
-        <div class="fav-text">${esc(x.text)}</div>
-        <div class="fav-actions">
-          <button class="btn" onclick="window._favCopy('${x.chatId}','${x.id}')">复制</button>
-          <button class="btn" onclick="window._favJump('${x.chatId}','${x.id}')">定位</button>
-          <button class="btn d" onclick="window._favUnstar('${x.chatId}','${x.id}')">取消收藏</button>
+    $('favList').innerHTML=arr.length?arr.map(x=>{
+      const key=favKey(x.chatId,x.id),selected=favSelected.has(key),isLong=(x.text||'').length>120;
+      return `
+        <div class="fav-item">
+          <div class="fav-top">
+            <div class="fav-meta" style="flex:1;">
+              <span>${esc(x.chatName)} · ${x.role==='assistant'?'对方':'我'}</span>
+              <span>${esc(fmtFullTs(x.time))}</span>
+            </div>
+            ${favSelectMode?`<button class="btn fav-check-btn" onclick="window._favToggleSel('${x.chatId}','${x.id}')">${selected?'已选':'选择'}</button>`:''}
+          </div>
+          <div id="fav_txt_${x.chatId}_${x.id}" class="fav-text ${isLong?'collapsed':''}">${esc(x.text)}</div>
+          ${isLong?`<button class="fav-toggle" onclick="window._favToggleFold('${x.chatId}','${x.id}',this)">展开</button>`:''}
+          <div class="fav-actions">
+            <button class="btn" onclick="window._favCopy('${x.chatId}','${x.id}')">复制</button>
+            <button class="btn" onclick="window._favJump('${x.chatId}','${x.id}')">定位</button>
+            <button class="btn d" onclick="window._favUnstar('${x.chatId}','${x.id}')">取消收藏</button>
+          </div>
         </div>
-      </div>
-    `).join(''):`<div class="card small">暂无收藏消息</div>`;
+      `;
+    }).join(''):`<div class="card small">暂无收藏消息</div>`;
+    $('favMultiCount').textContent=`已选 ${favSelected.size} 项`;
   }
+  window._favToggleFold=(chatId,mid,btn)=>{
+    const el=$(`fav_txt_${chatId}_${mid}`); if(!el) return;
+    el.classList.toggle('collapsed');
+    btn.textContent=el.classList.contains('collapsed')?'展开':'收起';
+  };
+  window._favToggleSel=(chatId,mid)=>{
+    const k=favKey(chatId,mid);
+    if(favSelected.has(k)) favSelected.delete(k); else favSelected.add(k);
+    renderFavorites();
+  };
   window._favCopy=async (chatId,mid)=>{const m=getChatArr(chatId).find(x=>x.id===mid);if(!m) return;await copyText(m.text||'');};
   window._favJump=(chatId,mid)=>{openChat(chatId);setTimeout(()=>{const el=document.querySelector(`.msg-item[data-mid="${mid}"]`);if(!el) return;el.scrollIntoView({behavior:'smooth',block:'center'});el.classList.add('jumping');setTimeout(()=>el.classList.remove('jumping'),1200);},120);};
-  window._favUnstar=(chatId,mid)=>{const arr=getChatArr(chatId),i=arr.findIndex(x=>x.id===mid);if(i<0) return;arr[i].favorite=false;setChatArr(chatId,arr);if(currentId===chatId) renderChat();renderFavorites();};
+  window._favUnstar=(chatId,mid)=>{const arr=getChatArr(chatId),i=arr.findIndex(x=>x.id===mid);if(i<0) return;arr[i].favorite=false;setChatArr(chatId,arr);if(currentId===chatId) renderChat();favSelected.delete(favKey(chatId,mid));renderFavorites();};
 
-  $('openFavBtn').onclick=()=>{renderFavorites();show('favorites');};
-  $('favEntryBtn').onclick=()=>{renderFavorites();show('favorites');};
-  $('refreshFavBtn').onclick=renderFavorites;
+  $('openFavBtn').onclick=()=>{
+    renderFavorites();
+    updateFavNow();
+    if(favNowTimer) clearInterval(favNowTimer);
+    favNowTimer=setInterval(updateFavNow,1000);
+    show('favorites');
+  };
+  $('favEntryBtn').onclick=()=>{
+    renderFavorites();
+    updateFavNow();
+    if(favNowTimer) clearInterval(favNowTimer);
+    favNowTimer=setInterval(updateFavNow,1000);
+    show('favorites');
+  };
+  $('refreshFavBtn').onclick=()=>{updateFavNow();renderFavorites();};
 
-  initAppStorage().then(()=>{applyBubbleCss();refreshPresetUI();renderContacts();bindChatMsgEvents();updateQuoteBar();});
+  $('favMultiBtn').onclick=()=>setFavSelectMode(!favSelectMode);
+  $('favExitMultiBtn').onclick=()=>setFavSelectMode(false);
+  $('favSelectAllBtn').onclick=()=>{
+    const arr=getAllFavorites();
+    favSelected=new Set(arr.map(x=>favKey(x.chatId,x.id)));
+    renderFavorites();
+  };
+  $('favUnselectAllBtn').onclick=()=>{
+    favSelected.clear();
+    renderFavorites();
+  };
+  $('favBatchUnstarBtn').onclick=()=>{
+    if(!favSelected.size) return;
+    if(!confirm('批量取消收藏已选消息？')) return;
+    const map={};
+    [...favSelected].forEach(k=>{
+      const [cid,mid]=k.split('__');
+      if(!map[cid]) map[cid]=new Set();
+      map[cid].add(mid);
+    });
+    Object.keys(map).forEach(cid=>{
+      const arr=getChatArr(cid);
+      arr.forEach(m=>{ if(map[cid].has(m.id)) m.favorite=false; });
+      setChatArr(cid,arr);
+      if(currentId===cid) renderChat();
+    });
+    favSelected.clear();
+    renderFavorites();
+  };
+
+  initAppStorage().then(()=>{
+    applyBubbleCss();
+    applyCustomFont();
+    refreshPresetUI();
+    renderContacts();
+    bindChatMsgEvents();
+    updateQuoteBar();
+  });
 })();
 </script>
 </body>
