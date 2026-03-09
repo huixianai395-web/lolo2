@@ -450,48 +450,60 @@
 }
  
 /* --- 删掉之前的伪装，换成高级悬浮菜单样式 --- */
+/* --- 终极居中防断腿补丁（核武器版） --- */
+/* 治苹果少半截的特效药 */
+html, body {
+  height: 100vh !important;
+  height: -webkit-fill-available !important;
+}
+#app {
+  height: 100vh !important;
+  height: -webkit-fill-available !important;
+}
+
+/* 强制菜单绝对居中，无视任何干扰代码！ */
 #super-menu {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%); /* 绝对居中大法，永远不会出界！ */
-  background: rgba(30, 30, 30, 0.75);
-  backdrop-filter: blur(15px); /* 苹果灵魂毛玻璃特效 */
-  -webkit-backdrop-filter: blur(15px);
-  border-radius: 16px;
-  padding: 16px 10px 6px 10px;
-  width: 260px;
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  background: rgba(30, 30, 30, 0.75) !important;
+  backdrop-filter: blur(15px) !important;
+  -webkit-backdrop-filter: blur(15px) !important;
+  border-radius: 16px !important;
+  padding: 16px 10px 6px 10px !important;
+  width: 260px !important;
   display: none;
-  flex-wrap: wrap;
-  justify-content: space-around;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-  z-index: 10000;
+  flex-wrap: wrap !important;
+  justify-content: space-around !important;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.3) !important;
+  z-index: 10000 !important;
+  margin: 0 !important;
 }
 .menu-item {
-  width: 44%;
-  text-align: center;
-  color: #fff;
-  padding: 12px 0;
-  font-size: 15px;
-  margin-bottom: 10px;
-  border-radius: 12px;
-  background: rgba(255,255,255,0.12);
+  width: 44% !important;
+  text-align: center !important;
+  color: #fff !important;
+  padding: 12px 0 !important;
+  font-size: 15px !important;
+  margin-bottom: 10px !important;
+  border-radius: 12px !important;
+  background: rgba(255,255,255,0.12) !important;
 }
-/* 自动消失的无感提示框 */
 .toast-msg {
-  position: fixed;
-  top: 40%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: rgba(0, 0, 0, 0.75);
-  color: white;
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-size: 15px;
-  z-index: 10001;
-  pointer-events: none;
+  position: fixed !important;
+  top: 40% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  background: rgba(0, 0, 0, 0.75) !important;
+  color: white !important;
+  padding: 12px 24px !important;
+  border-radius: 8px !important;
+  font-size: 15px !important;
+  z-index: 10001 !important;
+  pointer-events: none !important;
   opacity: 0;
-  transition: opacity 0.3s ease;
+  transition: opacity 0.3s ease !important;
 }
   </style>
 <script src="https://cdn.jsdelivr.net/npm/localforage@1.10.0/dist/localforage.min.js"></script>
@@ -1506,12 +1518,11 @@ function buildOfflineSystem(c,me,st){
 })();
 </script>
 <script>
-// --- 极简居中无感复制版 ---
+// --- 暴力居中 & 无感复制最终版 ---
 let longPressTimer;
 const superMenu = document.getElementById('super-menu');
 let currentMsg = null;
 
-// 高级无感提示
 function showToast(text) {
   let toast = document.createElement('div');
   toast.className = 'toast-msg';
@@ -1524,15 +1535,17 @@ function showToast(text) {
   }, 1500);
 }
 
-// 触摸长按召唤
 document.addEventListener('touchstart', function(e) {
   let targetNode = e.target.closest('.message, .bubble, .msg, .content, .chat-item, .msg-bubble');
   if(targetNode) {
     longPressTimer = setTimeout(function() {
       e.preventDefault();
       currentMsg = targetNode;
-      // 不用算位置了！直接召唤，CSS会自动把它拉到屏幕正中间！
       if(superMenu) {
+        // 暴力清除以前残留的内联位置样式，防止它乱跑！
+        superMenu.style.left = '';
+        superMenu.style.top = '';
+        superMenu.style.transform = '';
         superMenu.style.display = 'flex';
       }
     }, 600);
@@ -1542,7 +1555,6 @@ document.addEventListener('touchstart', function(e) {
 document.addEventListener('touchend', function() { clearTimeout(longPressTimer); });
 document.addEventListener('touchmove', function() { clearTimeout(longPressTimer); });
 
-// 点击旁边取消
 document.addEventListener('touchstart', function(e) {
   if(superMenu && superMenu.style.display === 'flex') {
     if(!e.target.closest('#super-menu')) {
@@ -1551,13 +1563,11 @@ document.addEventListener('touchstart', function(e) {
   }
 });
 
-// 执行功能
 const menuButtons = document.querySelectorAll('.menu-item');
 menuButtons.forEach(button => {
   button.addEventListener('touchend', function(e) {
     e.preventDefault();
     e.stopPropagation();
-    
     if(superMenu) superMenu.style.display = 'none';
     
     const action = this.innerText;
@@ -1572,7 +1582,6 @@ menuButtons.forEach(button => {
         textArea.select();
         document.execCommand("Copy");
         textArea.remove();
-        
         showToast('已复制');
       } 
       else if(action === '删除') {
