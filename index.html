@@ -214,6 +214,7 @@
       background:linear-gradient(180deg,#f8f9ff,#f6f8ff);
       border-top:1px solid #e4e8f5;
       display:flex;gap:8px;align-items:flex-end;
+      flex-wrap:wrap;
     }
     #chatInput{
       flex:1;height:44px;min-height:44px;max-height:96px;overflow-y:auto;resize:none;
@@ -323,7 +324,7 @@
       white-space:pre-wrap;
       line-height:1.5;
     }
-   .offline-body{
+    .offline-body{
       padding:12px 14px 14px;
       color:#3b2f22;
       white-space:pre-wrap;
@@ -344,67 +345,197 @@
     .preview-img{
       width:64px;height:64px;border-radius:12px;object-fit:cover;
       border:1px solid #eee;background:#f3f5ff;
-    }/* ===== 线上模式最终版（浅雾蓝高级感）===== */
-#chatRoom:not(.offline) #chatMsgs{
-  padding: 10px 10px 6px;
-  gap: 8px;
-}
+    }
 
-#chatRoom:not(.offline) .msg-row{
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-}
+    /* ===== 线上模式最终版（浅雾蓝高级感）===== */
+    #chatRoom:not(.offline) #chatMsgs{
+      padding: 10px 10px 6px;
+      gap: 8px;
+    }
 
-#chatRoom:not(.offline) .msg-row.me{
-  justify-content: flex-end;
-}
+    #chatRoom:not(.offline) .msg-row{
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
 
-#chatRoom:not(.offline) .msg-row .chat-avatar{
-  width: 34px;
-  height: 34px;
-  border-radius: 9px;
-  margin-top: 1px;
-  flex: 0 0 34px;
-}
+    #chatRoom:not(.offline) .msg-row.me{
+      justify-content: flex-end;
+    }
 
-#chatRoom:not(.offline) .msg-row .bubble-wrap{
-  max-width: min(76%, 304px);transform: 
-}
-}
+    #chatRoom:not(.offline) .msg-row .chat-avatar{
+      width: 34px;
+      height: 34px;
+      border-radius: 9px;
+      margin-top: 1px;
+      flex: 0 0 34px;
+    }
 
-#chatRoom:not(.offline) .bubble{
-  padding: 9px 12px;
-  border-radius: 12px;
-  line-height: 1.45;
-  font-size: 15px;
-  box-shadow: 0 1px 2px rgba(25, 42, 70, 0.06);
-}
+    #chatRoom:not(.offline) .msg-row .bubble-wrap{
+      max-width: min(76%, 304px);
+      transform: translateY(0);
+    }
 
-/* 对方气泡：干净白 */
-#chatRoom:not(.offline) .bubble.ai{
-  background: #ffffff;
-  color: #1f2430;
-  border: 1px solid #e7ebf3;
-  border-bottom-left-radius: 4px;
-}
+    #chatRoom:not(.offline) .bubble{
+      padding: 9px 12px;
+      border-radius: 12px;
+      line-height: 1.45;
+      font-size: 15px;
+      box-shadow: 0 1px 2px rgba(25, 42, 70, 0.06);
+    }
 
-/* 我方气泡：浅雾蓝（高级、不刺眼） */
-#chatRoom:not(.offline) .bubble.me{
-  background: #5f86ee;
-  color: #ffffff;
-  border: 1px solid #4f77df;
-  border-bottom-right-radius: 4px;
-}
+    /* 对方气泡：干净白 */
+    #chatRoom:not(.offline) .bubble.ai{
+      background: #ffffff;
+      color: #1f2430;
+      border: 1px solid #e7ebf3;
+      border-bottom-left-radius: 4px;
+    }
 
-#chatRoom:not(.offline) .msg-time{
-  font-size: 10px;
-  color: #97a3ba;
-  margin-top: 3px;
-  padding: 0 2px;
-}
+    /* 我方气泡：浅雾蓝（高级、不刺眼） */
+    #chatRoom:not(.offline) .bubble.me{
+      background: #5f86ee;
+      color: #ffffff;
+      border: 1px solid #4f77df;
+      border-bottom-right-radius: 4px;
+    }
+
+    #chatRoom:not(.offline) .msg-time{
+      font-size: 10px;
+      color: #97a3ba;
+      margin-top: 3px;
+      padding: 0 2px;
+    }
+
+    /* iOS 长按系统菜单干扰处理 */
+    #chatMsgs,
+    #chatMsgs *{
+      -webkit-touch-callout:none;
+    }
+    .msg-item .bubble{
+      user-select:none;
+      -webkit-user-select:none;
+    }
+
+    /* 引用条 */
+    .quote-bar{
+      width:100%;
+      border:1px solid #d9e3f8;
+      background:#eef3ff;
+      border-radius:10px;
+      padding:6px 8px;
+      display:flex;
+      gap:8px;
+      align-items:flex-start;
+    }
+    .quote-text{
+      flex:1;
+      font-size:12px;
+      color:#445377;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .quote-close{
+      border:none;background:transparent;color:#6678a8;font-size:18px;line-height:1;cursor:pointer;
+    }
+
+    /* 消息额外信息 */
+    .msg-extra{
+      margin-top:4px;
+      font-size:10px;
+      opacity:.75;
+    }
+    .msg-quote{
+      border-left:3px solid rgba(120,140,190,.5);
+      background:rgba(235,241,255,.8);
+      color:#4d5c82;
+      border-radius:8px;
+      padding:6px 8px;
+      margin-bottom:6px;
+      font-size:12px;
+      line-height:1.35;
+      max-width:100%;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .msg-quote.me{
+      background:rgba(255,255,255,.18);
+      color:#eef3ff;
+      border-left-color:rgba(255,255,255,.55);
+    }
+    .hidden-bubble{
+      background:#f3f4f8 !important;
+      border:1px dashed #d3d8e6 !important;
+      color:#8a92a9 !important;
+    }
+
+    /* 多选态 */
+    .msg-item{
+      position:relative;
+    }
+    .msg-item.selecting{
+      padding-left:30px;
+    }
+    .msg-check{
+      position:absolute;
+      left:6px; top:50%;
+      transform:translateY(-50%);
+      width:18px;height:18px;border-radius:999px;
+      border:1px solid #b8c6e8;background:#fff;
+      display:grid;place-items:center;
+      font-size:12px;color:transparent;
+      z-index:2;
+    }
+    .msg-item.selected .msg-check{
+      background:#2f66d8;
+      border-color:#2f66d8;
+      color:#fff;
+    }
+    .msg-item.selected .bubble{
+      box-shadow:0 0 0 2px rgba(47,102,216,.22);
+    }
+
+    /* 底部多选条 */
+    .multi-bar{
+      position:absolute;
+      left:0; right:0; bottom:0;
+      z-index:55;
+      padding:10px;
+      padding-bottom:calc(10px + var(--safe-bottom));
+      background:#f8faff;
+      border-top:1px solid #dfe6fa;
+      display:flex; gap:8px; align-items:center;
+    }
+
+    /* ActionSheet */
+    .action-sheet{
+      position:absolute; inset:0; z-index:80; display:none;
+    }
+    .action-sheet.active{ display:block; }
+    .action-sheet-mask{
+      position:absolute; inset:0; background:rgba(0,0,0,.28);
+    }
+    .action-sheet-panel{
+      position:absolute; left:10px; right:10px; bottom:calc(10px + var(--safe-bottom));
+      background:#fff; border-radius:14px; overflow:hidden;
+      box-shadow:0 12px 30px rgba(0,0,0,.16);
+    }
+    .as-btn{
+      width:100%; border:none; background:#fff; padding:14px 12px;
+      font-size:16px; color:#1f2a44; border-bottom:1px solid #edf1fb;
+    }
+    .as-btn:active{ background:#f4f7ff; }
+    .as-btn.cancel{ margin-top:6px; border-bottom:none; font-weight:600; }
+
+    /* 选择模式隐藏输入条 */
+    #chatRoom.select-mode #chatInputWrap{ display:none; }
+    #chatRoom.select-mode #chatMsgs{
+      height:calc(100% - (52px + var(--safe-top)) - (64px + var(--safe-bottom)));
+    }
   </style>
-<script src="https://cdn.jsdelivr.net/npm/localforage@1.10.0/dist/localforage.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/localforage@1.10.0/dist/localforage.min.js"></script>
 </head>
 <body>
 <div id="app">
@@ -464,7 +595,12 @@
 
     <div id="chatMsgs"></div>
 
-    <div class="chatInputBar">
+    <div class="chatInputBar" id="chatInputWrap">
+      <div id="quoteBar" class="quote-bar hidden">
+        <div id="quoteText" class="quote-text"></div>
+        <button id="clearQuoteBtn" class="quote-close" aria-label="清除引用">×</button>
+      </div>
+
       <textarea id="chatInput" class="ta" placeholder="输入消息..."></textarea>
       <div class="send-actions">
         <button class="btn store" id="storeBtn" aria-label="储存"></button>
@@ -616,6 +752,44 @@
     </div>
   </div>
 
+  <!-- 消息长按菜单 -->
+  <div id="msgActionSheet" class="action-sheet">
+    <div class="action-sheet-mask" id="msgActionMask"></div>
+    <div class="action-sheet-panel">
+      <button class="as-btn" data-act="copy">复制</button>
+      <button class="as-btn" data-act="delete">删除</button>
+      <button class="as-btn" data-act="quote">引用</button>
+      <button class="as-btn" data-act="hide">隐藏消息（AI看不到）</button>
+      <button class="as-btn hidden" data-act="unhide">取消隐藏</button>
+      <button class="as-btn" data-act="multi">多选</button>
+      <button class="as-btn" data-act="all">全选</button>
+      <button class="as-btn" data-act="fav">收藏</button>
+      <button class="as-btn" data-act="edit">编辑消息</button>
+      <button class="as-btn cancel" data-act="cancel">取消</button>
+    </div>
+  </div>
+
+  <!-- 多选操作栏 -->
+  <div id="multiSelectBar" class="multi-bar hidden">
+    <button class="btn" id="multiAllBtn">全选</button>
+    <button class="btn" id="multiFavBtn">收藏</button>
+    <button class="btn d" id="multiDelBtn">删除</button>
+    <button class="btn" id="multiCancelBtn">取消</button>
+    <div id="multiCount" class="small" style="margin-left:auto;">已选 0 项</div>
+  </div>
+
+  <!-- 编辑消息弹窗 -->
+  <div id="editModal" class="modal">
+    <div class="modal-card">
+      <h3 style="margin:0 0 10px;">编辑消息</h3>
+      <textarea id="editMsgInput" class="ta" style="min-height:150px;"></textarea>
+      <div class="row" style="justify-content:flex-end;margin-top:10px;">
+        <button class="btn" id="cancelEditBtn">取消</button>
+        <button class="btn p" id="saveEditBtn">保存</button>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <script>
@@ -639,12 +813,21 @@
   let createAvatar='';
   let typingForId=null;
 
+  let composeQuote=null;
+  let activeActionMsgId=null;
+  let selectMode=false;
+  let selectedIds=new Set();
+  let editMsgId=null;
+
+  let lpTimer=null;
+  let lpStartX=0, lpStartY=0;
+
   const $ = id => document.getElementById(id);
   const clean=s=>String(s||'').trim();
   const esc=s=>String(s||'').replace(/[&<>"']/g,m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
   const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+  const uid=()=> 'm_'+Date.now()+'_'+Math.floor(Math.random()*1e8);
 
-  
   const GlobalState = {};
   async function initAppStorage() {
     const keys = [K_CONTACT, K_CHAT, K_API, K_ME, K_PREF];
@@ -671,6 +854,7 @@
     o.onlineMax=Math.max(o.onlineMin, Number(o.onlineMax||6));
     o.offlineMin=Math.max(80, Number(o.offlineMin||220));
     o.offlineMax=Math.max(o.offlineMin, Number(o.offlineMax||420));
+    o.contextLen=Math.max(5, Number(o.contextLen||30));
     return o;
   }
 
@@ -706,6 +890,24 @@
     return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
   }
 
+  function toMsg(m){
+    const q = m?.quote && typeof m.quote==='object'
+      ? {id:String(m.quote.id||''),text:String(m.quote.text||''),role:m.quote.role==='assistant'?'assistant':'user'}
+      : null;
+    return {
+      id: m?.id || uid(),
+      role: m?.role==='assistant' ? 'assistant' : 'user',
+      text: String(m?.text || ''),
+      time: Number(m?.time || Date.now()),
+      stored: m?.stored!==false,
+      hiddenForAi: !!m?.hiddenForAi,
+      hiddenInUi: !!m?.hiddenInUi,
+      favorite: !!m?.favorite,
+      edited: !!m?.edited,
+      quote: q
+    };
+  }
+
   // data
   function getContacts(){
     const arr=getJ(K_CONTACT,[]);
@@ -724,8 +926,34 @@
     setContacts(arr);
   }
 
+  function getChatArr(chatId){
+    const map=getChats();
+    const raw=Array.isArray(map[chatId]) ? map[chatId] : [];
+    const norm=raw.map(toMsg);
+    map[chatId]=norm;
+    setChats(map);
+    return norm;
+  }
+  function setChatArr(chatId, arr){
+    const map=getChats();
+    map[chatId]=(arr||[]).map(toMsg);
+    setChats(map);
+  }
+  function getMsgById(chatId, mid){
+    const arr=getChatArr(chatId);
+    return arr.find(x=>x.id===mid)||null;
+  }
+  function updateContactPreview(chatId){
+    const arr=getChatArr(chatId);
+    const last=arr[arr.length-1];
+    const preview = last ? (last.hiddenInUi ? '[消息]' : (last.text||'')).slice(0,44) : '';
+    const time = last ? fmtTs(last.time||Date.now()) : '';
+    updateContact(chatId,{preview,time});
+    renderContacts($('searchInput').value||'');
+  }
+
   // contacts
-window.deleteContactFromList = function(id, e) {
+  window.deleteContactFromList = function(id, e) {
     if(e) { e.preventDefault(); e.stopPropagation(); }
     window._isDeleting = true; setTimeout(()=>window._isDeleting=false, 500);
     if(!confirm('确定要删除这个联系人及所有聊天记录吗？')) return false;
@@ -743,7 +971,7 @@ window.deleteContactFromList = function(id, e) {
     k=(k||'').trim();
     const arr=getContacts().filter(c=>!k||c.name.includes(k)||(c.preview||'').includes(k));
     $('contactList').innerHTML=arr.map(c=>`
-      <div class="item" 
+      <div class="item"
            style="-webkit-touch-callout:none; user-select:none;"
            oncontextmenu="return deleteContactFromList('${c.id}', event)"
            ontouchstart="this._t = setTimeout(()=>deleteContactFromList('${c.id}'), 600)"
@@ -853,6 +1081,8 @@ window.deleteContactFromList = function(id, e) {
 
   window.openChat=function(id){
     currentId=id;
+    selectMode=false; selectedIds.clear(); closeActionSheet();
+    composeQuote=null; updateQuoteBar();
     const c=getContactById(id);
     $('chatTitle').textContent=c?c.name:'聊天';
     applyModeUI();
@@ -860,22 +1090,46 @@ window.deleteContactFromList = function(id, e) {
     show('chatRoom');
   };
 
-  function renderOfflineAssistant(text,ts,pref){
+  function renderQuote(q, me=false){
+    if(!q || !q.text) return '';
+    return `<div class="msg-quote ${me?'me':''}">${esc((q.role==='assistant'?'对方: ':'我: ')+q.text)}</div>`;
+  }
+
+  function renderOfflineAssistant(text,ts,pref,msg){
+    if(msg?.hiddenInUi){
+      return `<div class="bubble-wrap ai"><div class="bubble ai hidden-bubble">消息已隐藏（AI不可见）</div>${pref.showTs?`<div class="msg-time">${fmtTs(ts)}</div>`:''}</div>`;
+    }
     const raw=String(text||'');
     const m=raw.match(/【状态栏】\s*([\s\S]*?)\s*【正文】\s*([\s\S]*)/);
+    const ext = `<div class="msg-extra">${msg?.favorite?'★ 已收藏':''}${msg?.favorite&&msg?.edited?' · ':''}${msg?.edited?'已编辑':''}</div>`;
     if(!m){
-      return `<div class="bubble-wrap ai"><div class="bubble ai">${esc(raw)}</div>${pref.showTs?`<div class="msg-time">${fmtTs(ts)}</div>`:''}</div>`;
+      return `<div class="bubble-wrap ai">${renderQuote(msg?.quote,false)}<div class="bubble ai">${esc(raw)}</div>${ext}${pref.showTs?`<div class="msg-time">${fmtTs(ts)}</div>`:''}</div>`;
     }
     const state=clean(m[1]);
     const body=clean(m[2]);
     return `
       <div class="bubble-wrap ai">
+        ${renderQuote(msg?.quote,false)}
         <div class="offline-card">
           <div class="offline-state">${esc(state||'状态未记录')}</div>
           <div class="offline-body">${esc(body||'')}</div>
         </div>
+        ${ext}
         ${pref.showTs?`<div class="msg-time">${fmtTs(ts)}</div>`:''}
       </div>
+    `;
+  }
+
+  function renderBubbleContent(m, isMe, pref){
+    const cls=isMe?'me':'ai';
+    const hidden=m.hiddenInUi ? ' hidden-bubble' : '';
+    const text=m.hiddenInUi ? '消息已隐藏（AI不可见）' : esc(m.text);
+    const ext=`<div class="msg-extra">${m.favorite?'★ 已收藏':''}${m.favorite&&m.edited?' · ':''}${m.edited?'已编辑':''}</div>`;
+    return `
+      ${renderQuote(m.quote,isMe)}
+      <div class="bubble ${cls}${hidden}">${text}</div>
+      ${ext}
+      ${pref.showTs?`<div class="msg-time">${fmtTs(m.time)}</div>`:''}
     `;
   }
 
@@ -886,57 +1140,70 @@ window.deleteContactFromList = function(id, e) {
     const pref=getPref();
     const roleAvatar=c?.avatar||'https://via.placeholder.com/64x64?text=TA';
     const meAvatar=me.avatar||'https://via.placeholder.com/64x64?text=我';
-    const map=getChats();
-    const arr=map[currentId]||[];
+    const arr=getChatArr(currentId);
 
     if(st.mode==='offline'){
       $('chatMsgs').innerHTML=arr.map(m=>{
         const cls=m.role==='user'?'me':'ai';
         const av=m.role==='user'?meAvatar:roleAvatar;
-
+        const selected = selectedIds.has(m.id);
+        const sCls = selectMode ? ' selecting' : '';
+        const cHtml = selectMode ? `<div class="msg-check">✓</div>` : '';
         if(m.role==='user'){
-          return `<div class="msg-block ${cls}">
-            <img class="chat-avatar" src="${av}">
-            <div class="bubble-wrap me">
-              <div class="bubble me">${esc(m.text)}</div>
-              ${pref.showTs?`<div class="msg-time">${fmtTs(m.time)}</div>`:''}
+          return `<div class="msg-item ${selected?'selected':''}${sCls}" data-mid="${m.id}">
+            ${cHtml}
+            <div class="msg-block ${cls}">
+              <img class="chat-avatar" src="${av}">
+              <div class="bubble-wrap me">
+                ${renderBubbleContent(m,true,pref)}
+              </div>
             </div>
           </div>`;
         }
 
-        return `<div class="msg-block ${cls}">
-          <img class="chat-avatar" src="${av}">
-          ${renderOfflineAssistant(m.text,m.time,pref)}
+        return `<div class="msg-item ${selected?'selected':''}${sCls}" data-mid="${m.id}">
+          ${cHtml}
+          <div class="msg-block ${cls}">
+            <img class="chat-avatar" src="${av}">
+            ${renderOfflineAssistant(m.text,m.time,pref,m)}
+          </div>
         </div>`;
       }).join('');
     }else{
       $('chatMsgs').innerHTML=arr.map(m=>{
+        const selected = selectedIds.has(m.id);
+        const sCls = selectMode ? ' selecting' : '';
+        const cHtml = selectMode ? `<div class="msg-check">✓</div>` : '';
         if(m.role==='user'){
-          return `<div class="msg-row me">
-            <div class="bubble-wrap me">
-              <div class="bubble me">${esc(m.text)}</div>
-              ${pref.showTs?`<div class="msg-time">${fmtTs(m.time)}</div>`:''}
+          return `<div class="msg-item ${selected?'selected':''}${sCls}" data-mid="${m.id}">
+            ${cHtml}
+            <div class="msg-row me">
+              <div class="bubble-wrap me">${renderBubbleContent(m,true,pref)}</div>
+              <img class="chat-avatar" src="${meAvatar}">
             </div>
-            <img class="chat-avatar" src="${meAvatar}">
           </div>`;
         }
-        return `<div class="msg-row">
-          <img class="chat-avatar" src="${roleAvatar}">
-          <div class="bubble-wrap ai">
-            <div class="bubble ai">${esc(m.text)}</div>
-            ${pref.showTs?`<div class="msg-time">${fmtTs(m.time)}</div>`:''}
+        return `<div class="msg-item ${selected?'selected':''}${sCls}" data-mid="${m.id}">
+          ${cHtml}
+          <div class="msg-row">
+            <img class="chat-avatar" src="${roleAvatar}">
+            <div class="bubble-wrap ai">${renderBubbleContent(m,false,pref)}</div>
           </div>
         </div>`;
       }).join('');
     }
+    $('chatRoom').classList.toggle('select-mode', selectMode);
+    $('multiSelectBar').classList.toggle('hidden', !selectMode);
     $('chatMsgs').scrollTop=$('chatMsgs').scrollHeight;
+    updateMultiCount();
   }
 
   function clearCurrentChat(){
     if(!currentId) return;
     if(!confirm('清空当前聊天？')) return;
-    const map=getChats(); map[currentId]=[]; setChats(map);
+    setChatArr(currentId, []);
     updateContact(currentId, { preview: '', time: '' });
+    selectMode=false; selectedIds.clear();
     renderChat();
     renderContacts($('searchInput').value||'');
   }
@@ -963,11 +1230,33 @@ window.deleteContactFromList = function(id, e) {
     el.style.height=Math.min(el.scrollHeight,96)+'px';
   });
 
-  function pushUser(text){
-    const map=getChats(); map[currentId]=map[currentId]||[];
-    map[currentId].push({role:'user',text,time:Date.now(),stored:true});
-    setChats(map);
+  function updateQuoteBar(){
+    const bar=$('quoteBar');
+    if(!composeQuote || !composeQuote.text){
+      bar.classList.add('hidden');
+      $('quoteText').textContent='';
+      return;
+    }
+    bar.classList.remove('hidden');
+    $('quoteText').textContent=`引用${composeQuote.role==='assistant'?'对方':'我'}：${composeQuote.text}`;
   }
+  $('clearQuoteBtn').onclick=()=>{ composeQuote=null; updateQuoteBar(); };
+
+  function pushUser(text){
+    const arr=getChatArr(currentId);
+    arr.push(toMsg({
+      role:'user',
+      text,
+      time:Date.now(),
+      stored:true,
+      quote: composeQuote ? {...composeQuote} : null
+    }));
+    setChatArr(currentId, arr);
+    composeQuote=null;
+    updateQuoteBar();
+    updateContactPreview(currentId);
+  }
+
   function storeCurrentInput(){
     if(!currentId) return;
     const t=clean($('chatInput').value);
@@ -1013,13 +1302,11 @@ window.deleteContactFromList = function(id, e) {
       return [...keep, tail]; // 超出条数的拼在最后，绝不删字
     }
     return arr; // 不够条数就不管了，强行从中间劈开太蠢了！
-  }
-
-  async function emitAiSequential(parts,map,targetId,mode){
+  }async function emitAiSequential(parts,targetId,mode){
     for(let i=0;i<parts.length;i++){
-      map[targetId]=map[targetId]||[];
-      map[targetId].push({role:'assistant',text:parts[i],time:Date.now()});
-      setChats(map);
+      const arr=getChatArr(targetId);
+      arr.push(toMsg({role:'assistant',text:parts[i],time:Date.now()}));
+      setChatArr(targetId,arr);
       if(currentId===targetId) renderChat();
 
       const len=parts[i]?.length||10;
@@ -1153,13 +1440,12 @@ window.deleteContactFromList = function(id, e) {
   $('fetchModelsBtn').onclick=fetchModels;
   $('testApiBtn').onclick=testApi;
 
- function getSysTimeStr() {
+  function getSysTimeStr() {
     const d = new Date();
     const w = ['周日','周一','周二','周三','周四','周五','周六'][d.getDay()];
     return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 ${w} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
   }
 
-  
   function buildOnlineSystem(c,me,st){
     const rangeRule = st.onlineStyle==='range'
       ? `本次回复请拆分为 ${st.onlineMin} 到 ${st.onlineMax} 条消息。`
@@ -1181,7 +1467,8 @@ window.deleteContactFromList = function(id, e) {
       rangeRule
     ].join('\n');
   }
-function buildOfflineSystem(c,me,st){
+
+  function buildOfflineSystem(c,me,st){
     return [
       `你正在扮演：${c?.name||'聊天对象'}`,
       `对方名称：${me?.name||'我'}`,
@@ -1202,6 +1489,7 @@ function buildOfflineSystem(c,me,st){
       `（你的沉浸式叙事与对话，记得分段！）`
     ].join('\n');
   }
+
   async function sendMsg(){
     if(!currentId) return;
     const chatId=currentId;
@@ -1215,8 +1503,8 @@ function buildOfflineSystem(c,me,st){
     $('chatInput').value=''; resetInputH();
     if(currentId===chatId) renderChat();
 
-    const map=getChats();
-    const hist=(map[chatId]||[]).filter(x=>x.text).slice(-(st.contextLen||30));
+    const arr=getChatArr(chatId);
+    const hist=arr.filter(x=>x.text && !x.hiddenForAi).slice(-(st.contextLen||30));
     if(!hist.length) return;
 
     setTyping(chatId,true);
@@ -1237,20 +1525,15 @@ function buildOfflineSystem(c,me,st){
         if(st.onlineStyle==='range') parts=enforceCountRange(parts,st.onlineMin,st.onlineMax);
       }
 
-      await emitAiSequential(parts.length?parts:['...'], map, chatId, st.mode);
+      await emitAiSequential(parts.length?parts:['...'], chatId, st.mode);
 
-      const contacts=getContacts();
-      const i=contacts.findIndex(x=>x.id===chatId);
-      if(i>=0){
-        contacts[i].preview=(parts[0]||'...').slice(0,44);
-     contacts[i].time = fmtTs(Date.now());
-        setContacts(contacts);
-      }
-      renderContacts($('searchInput').value||'');
+      updateContactPreview(chatId);
+      if(currentId===chatId) renderChat();
     }catch(e){
-      map[chatId]=map[chatId]||[];
-      map[chatId].push({role:'assistant',text:'请求失败：'+clean(e.message),time:Date.now()});
-      setChats(map);
+      const arr2=getChatArr(chatId);
+      arr2.push(toMsg({role:'assistant',text:'请求失败：'+clean(e.message),time:Date.now()}));
+      setChatArr(chatId,arr2);
+      updateContactPreview(chatId);
       if(currentId===chatId) renderChat();
     }finally{
       setTyping(chatId,false);
@@ -1395,12 +1678,237 @@ function buildOfflineSystem(c,me,st){
     }
   };
 
+  async function copyText(text){
+    const t=String(text||'');
+    try{
+      await navigator.clipboard.writeText(t);
+    }catch{
+      const ta=document.createElement('textarea');
+      ta.value=t; document.body.appendChild(ta);
+      ta.select(); document.execCommand('copy');
+      ta.remove();
+    }
+  }
+
+  function openActionSheet(mid){
+    activeActionMsgId=mid;
+    const m=getMsgById(currentId,mid);
+    $('msgActionSheet').classList.add('active');
+    $('msgActionSheet').querySelector('[data-act="hide"]').classList.toggle('hidden', !!m?.hiddenForAi);
+    $('msgActionSheet').querySelector('[data-act="unhide"]').classList.toggle('hidden', !m?.hiddenForAi);
+  }
+  function closeActionSheet(){
+    activeActionMsgId=null;
+    $('msgActionSheet').classList.remove('active');
+  }
+
+  function enterSelectMode(seedId){
+    selectMode=true;
+    selectedIds.clear();
+    if(seedId) selectedIds.add(seedId);
+    renderChat();
+  }
+  function exitSelectMode(){
+    selectMode=false;
+    selectedIds.clear();
+    renderChat();
+  }
+  function updateMultiCount(){
+    const el=$('multiCount');
+    if(el) el.textContent=`已选 ${selectedIds.size} 项`;
+  }
+
+  function toggleSelect(mid){
+    if(selectedIds.has(mid)) selectedIds.delete(mid);
+    else selectedIds.add(mid);
+    renderChat();
+  }
+  function selectAllMessages(){
+    const arr=getChatArr(currentId);
+    selectedIds = new Set(arr.map(x=>x.id));
+    renderChat();
+  }
+  function deleteByIds(ids){
+    const arr=getChatArr(currentId);
+    const set=new Set(ids);
+    const next=arr.filter(m=>!set.has(m.id));
+    setChatArr(currentId,next);
+    updateContactPreview(currentId);
+    renderChat();
+  }
+  function favoriteByIds(ids){
+    const arr=getChatArr(currentId);
+    const set=new Set(ids);
+    arr.forEach(m=>{ if(set.has(m.id)) m.favorite=true; });
+    setChatArr(currentId,arr);
+    renderChat();
+  }
+
+  function bindChatMsgEvents(){
+    const box=$('chatMsgs');
+
+    box.addEventListener('contextmenu', e=>{
+      const item=e.target.closest('.msg-item');
+      if(!item || !currentId) return;
+      e.preventDefault();
+      if(selectMode) return;
+      openActionSheet(item.dataset.mid);
+    });
+
+    box.addEventListener('touchstart', e=>{
+      const item=e.target.closest('.msg-item');
+      if(!item || !currentId || selectMode) return;
+      const t=e.touches[0];
+      lpStartX=t.clientX; lpStartY=t.clientY;
+      clearTimeout(lpTimer);
+      lpTimer=setTimeout(()=>openActionSheet(item.dataset.mid), 420);
+    }, {passive:true});
+
+    box.addEventListener('touchmove', e=>{
+      if(!lpTimer) return;
+      const t=e.touches[0];
+      if(Math.abs(t.clientX-lpStartX)>8 || Math.abs(t.clientY-lpStartY)>8){
+        clearTimeout(lpTimer); lpTimer=null;
+      }
+    }, {passive:true});
+
+    ['touchend','touchcancel'].forEach(ev=>{
+      box.addEventListener(ev, ()=>{
+        clearTimeout(lpTimer); lpTimer=null;
+      }, {passive:true});
+    });
+
+    box.addEventListener('click', e=>{
+      const item=e.target.closest('.msg-item');
+      if(!item) return;
+      if(selectMode){
+        e.preventDefault();
+        toggleSelect(item.dataset.mid);
+      }
+    });
+  }
+
+  $('msgActionMask').onclick=closeActionSheet;
+  $('msgActionSheet').addEventListener('click', async e=>{
+    const btn=e.target.closest('.as-btn');
+    if(!btn) return;
+    const act=btn.dataset.act;
+    if(act==='cancel') return closeActionSheet();
+    const mid=activeActionMsgId;
+    const arr=getChatArr(currentId);
+    const i=arr.findIndex(x=>x.id===mid);
+    if(i<0){ closeActionSheet(); return; }
+    const msg=arr[i];
+
+    if(act==='copy'){
+      await copyText(msg.text||'');
+      closeActionSheet();
+      return;
+    }
+    if(act==='delete'){
+      closeActionSheet();
+      if(confirm('删除这条消息？')) deleteByIds([mid]);
+      return;
+    }
+    if(act==='quote'){
+      composeQuote={id:msg.id,text:msg.text,role:msg.role};
+      updateQuoteBar();
+      closeActionSheet();
+      return;
+    }
+    if(act==='hide'){
+      msg.hiddenForAi=true;
+      msg.hiddenInUi=true;
+      arr[i]=toMsg(msg); setChatArr(currentId,arr);
+      updateContactPreview(currentId);
+      renderChat();
+      closeActionSheet();
+      return;
+    }
+    if(act==='unhide'){
+      msg.hiddenForAi=false;
+      msg.hiddenInUi=false;
+      arr[i]=toMsg(msg); setChatArr(currentId,arr);
+      updateContactPreview(currentId);
+      renderChat();
+      closeActionSheet();
+      return;
+    }
+    if(act==='multi'){
+      closeActionSheet();
+      enterSelectMode(mid);
+      return;
+    }
+    if(act==='all'){
+      closeActionSheet();
+      enterSelectMode();
+      selectAllMessages();
+      return;
+    }
+    if(act==='fav'){
+      msg.favorite=!msg.favorite;
+      arr[i]=toMsg(msg); setChatArr(currentId,arr);
+      renderChat();
+      closeActionSheet();
+      return;
+    }
+    if(act==='edit'){
+      editMsgId=mid;
+      $('editMsgInput').value=msg.text||'';
+      $('editModal').classList.add('active');
+      closeActionSheet();
+      return;
+    }
+  });
+
+  $('cancelEditBtn').onclick=()=>{
+    editMsgId=null;
+    $('editModal').classList.remove('active');
+  };
+  $('editModal').addEventListener('click',e=>{
+    if(e.target.id==='editModal'){
+      editMsgId=null;
+      $('editModal').classList.remove('active');
+    }
+  });
+  $('saveEditBtn').onclick=()=>{
+    if(!currentId || !editMsgId) return;
+    const t=clean($('editMsgInput').value);
+    if(!t) return alert('消息不能为空');
+    const arr=getChatArr(currentId);
+    const i=arr.findIndex(x=>x.id===editMsgId);
+    if(i<0) return;
+    arr[i].text=t;
+    arr[i].edited=true;
+    setChatArr(currentId,arr);
+    updateContactPreview(currentId);
+    renderChat();
+    editMsgId=null;
+    $('editModal').classList.remove('active');
+  };
+
+  $('multiAllBtn').onclick=selectAllMessages;
+  $('multiFavBtn').onclick=()=>{
+    if(!selectedIds.size) return;
+    favoriteByIds([...selectedIds]);
+  };
+  $('multiDelBtn').onclick=()=>{
+    if(!selectedIds.size) return;
+    if(confirm('删除已选消息？')){
+      const ids=[...selectedIds];
+      exitSelectMode();
+      deleteByIds(ids);
+    }
+  };
+  $('multiCancelBtn').onclick=exitSelectMode;
+
   // init
-  
   initAppStorage().then(() => {
     applyBubbleCss();
     refreshPresetUI();
     renderContacts();
+    bindChatMsgEvents();
+    updateQuoteBar();
   });
 })();
 </script>
