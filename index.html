@@ -1,3 +1,5 @@
+
+
 <!doctype html>
 <html lang="zh-CN">
 <head>
@@ -18,23 +20,21 @@
     }
     *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
     html,body{
-  margin:0;height:100%;
-  background:#000;
-  overflow:hidden;
-  position:fixed;
-  width:100%;
-  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
-}
+      margin:0;height:100%;
+      background:linear-gradient(160deg,#2c57c8,#5ba9ff);
+      font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+    }
     #app{
-  width:100%;
-  max-width:430px;
-  height:var(--app-h, 100dvh);
-  min-height:var(--app-h, 100dvh);
-  margin:0 auto;
-  position:relative;
-  overflow:hidden;
-  background:transparent;
-}
+      width:100%;
+      max-width:430px;
+      height:100dvh;
+      min-height:100dvh;
+      margin:0 auto;
+      position:relative;
+      overflow:hidden;
+      background:var(--bg);
+    }
+
     .screen{position:absolute;inset:0;display:none;background:var(--bg)}
     .screen.active{display:block}
 
@@ -80,14 +80,14 @@
 
     /* HOME */
     #home{color:#fff}
-  .wall{
-  position:fixed;
-  top:-20px;left:0;right:0;bottom:-20px;
-  z-index:0;
-  background:
-    linear-gradient(160deg, rgba(40,96,255,.34), rgba(125,221,255,.18)),
-    url('https://picsum.photos/900/1800?blur=1') center/cover no-repeat;
-  }
+    .wall{
+      position:fixed;
+      top:-80px; left:0; right:0; bottom:0;
+      z-index:0;
+      background:
+        linear-gradient(160deg, rgba(40,96,255,.34), rgba(125,221,255,.18)),
+        url('https://picsum.photos/900/1800?blur=1') center/cover no-repeat;
+    }
     .home-layer{
       position:relative;z-index:2;height:100%;
       padding:calc(18px + var(--safe-top)) 12px calc(14px + var(--safe-bottom));
@@ -408,6 +408,12 @@
   color: #97a3ba;
   margin-top: 3px;
   padding: 0 2px;
+}
+/* 强行封印长按选中 */
+.message, .bubble, .msg, .content, .chat-item span {
+  -webkit-touch-callout: none !important;
+  -webkit-user-select: none !important;
+  user-select: none !important;
 }
   </style>
 <script src="https://cdn.jsdelivr.net/npm/localforage@1.10.0/dist/localforage.min.js"></script>
@@ -1403,11 +1409,6 @@ function buildOfflineSystem(c,me,st){
 
   // init
   
-  function fixVH(){
-  document.documentElement.style.setProperty('--app-h', window.innerHeight + 'px');
-}
-fixVH();
-window.addEventListener('resize', fixVH);
   initAppStorage().then(() => {
     applyBubbleCss();
     refreshPresetUI();
