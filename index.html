@@ -1466,24 +1466,10 @@ function buildOfflineSystem(c,me,st){
 })();
 </script>
 <script>
-// --- 终极之魂 V3：真·智能引用版 ---
+// --- 终极之魂：暴力居中 & 无感复制最终版 ---
 let longPressTimer;
 const superMenu = document.getElementById('super-menu');
 let currentMsg = null;
-
-// 智能查找输入框
-function findInputField() {
-  let field = document.getElementById('chat-input') || document.getElementById('input');
-  if (field) return field;
-  
-  const allInputs = document.querySelectorAll('input, textarea');
-  for (let inp of allInputs) {
-    if (inp.placeholder && inp.placeholder.includes('输入')) {
-      return inp;
-    }
-  }
-  return null;
-}
 
 function showToast(text) {
   let toast = document.createElement('div');
@@ -1504,6 +1490,7 @@ document.addEventListener('touchstart', function(e) {
       e.preventDefault();
       currentMsg = targetNode;
       if(superMenu) {
+        // 暴力清除以前残留的内联位置样式，防止它乱跑！
         superMenu.style.left = '';
         superMenu.style.top = '';
         superMenu.style.transform = '';
@@ -1530,14 +1517,13 @@ menuButtons.forEach(button => {
     e.preventDefault();
     e.stopPropagation();
     if(superMenu) superMenu.style.display = 'none';
-    
+    
     const action = this.innerText;
     if(!currentMsg) return;
 
     setTimeout(() => {
-      let text = currentMsg.innerText || currentMsg.textContent;
-      
-      if (action === '复制') {
+      if(action === '复制') {
+        let text = currentMsg.innerText || currentMsg.textContent;
         let textArea = document.createElement("textarea");
         textArea.value = text;
         document.body.appendChild(textArea);
@@ -1545,34 +1531,8 @@ menuButtons.forEach(button => {
         document.execCommand("Copy");
         textArea.remove();
         showToast('已复制');
-      } 
-      else if (action === '引用') {
-        const inputField = findInputField();
-        if (inputField) {
-          // 创建一个引用块的HTML结构
-          let quoteBlock = document.createElement('div');
-          quoteBlock.style.background = '#f0f0f0';
-          quoteBlock.style.padding = '8px';
-          quoteBlock.style.margin = '5px 0';
-          quoteBlock.style.borderLeft = '3px solid #ccc';
-          quoteBlock.style.fontSize = '14px';
-          quoteBlock.style.color = '#555';
-          quoteBlock.innerText = text;
-          
-          // 将引用块插入输入框（如果输入框支持富文本）
-          if (inputField.isContentEditable) {
-             inputField.appendChild(quoteBlock);
-          } else {
-             // 如果是普通输入框，则用文本格式
-             inputField.value = `“${text}”\\n—————————\\n` + inputField.value;
-          }
-          inputField.focus();
-          showToast('已引用');
-        } else {
-          showToast('错误: 未找到输入框');
-        }
-      }
-      else if (action === '删除') {
+      } 
+      else if(action === '删除') {
         currentMsg.remove();
       }
       else {
