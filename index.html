@@ -1461,48 +1461,6 @@ function buildOfflineSystem(c,me,st){
 })();
 </script>
 <script>
-// --- 长按召唤神龙核心逻辑 ---
-let longPressTimer;
-const superMenu = document.getElementById('super-menu');
-
-document.addEventListener('touchstart', function(e) {
-  // 只要按到聊天气泡附近
-  if(e.target.closest('.message, .bubble, .msg, .content, .chat-item, .msg-bubble')) {
-    longPressTimer = setTimeout(function() {
-      e.preventDefault(); // 再次物理阉割系统长按
-      let touch = e.touches[0];
-      let x = touch.clientX;
-      let y = touch.clientY;
-      
-      // 防止菜单跑出屏幕外，给它定个坐标
-      let menuX = x - 50;
-      let menuY = y - 50;
-      if (menuX < 10) menuX = 10;
-      if (menuY < 10) menuY = 10;
-
-      superMenu.style.left = menuX + 'px';
-      superMenu.style.top = menuY + 'px';
-      superMenu.style.display = 'flex'; // 现身吧神龙！
-    }, 600); // 600毫秒算长按
-  }
-}, {passive: false});
-
-document.addEventListener('touchend', function() {
-  clearTimeout(longPressTimer); // 手指提前松开就取消长按
-});
-
-document.addEventListener('touchmove', function() {
-  clearTimeout(longPressTimer); // 手指滑走也取消长按
-});
-
-// 点屏幕其他地方，让菜单乖乖消失
-document.addEventListener('click', function(e) {
-  if(!e.target.closest('#super-menu')) {
-    if(superMenu) superMenu.style.display = 'none';
-  }
-});
-
-<script>
 // --- 神龙菜单苹果克星版 ---
 let longPressTimer;
 const superMenu = document.getElementById('super-menu');
@@ -1533,7 +1491,6 @@ document.addEventListener('touchstart', function(e) {
 document.addEventListener('touchend', function() { clearTimeout(longPressTimer); });
 document.addEventListener('touchmove', function() { clearTimeout(longPressTimer); });
 
-// 点别的地方隐藏菜单也换成 touchstart，更灵敏
 document.addEventListener('touchstart', function(e) {
   if(superMenu && superMenu.style.display === 'flex') {
     if(!e.target.closest('#super-menu')) {
@@ -1544,7 +1501,6 @@ document.addEventListener('touchstart', function(e) {
 
 const menuButtons = document.querySelectorAll('.menu-item');
 menuButtons.forEach(button => {
-  // 绝杀：把 click 换成 touchend，苹果绝对拦不住！
   button.addEventListener('touchend', function(e) {
     e.preventDefault();
     e.stopPropagation();
