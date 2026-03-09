@@ -407,6 +407,12 @@
   margin-top: 3px;
   padding: 0 2px;
 }
+/* 强行封印长按选中 */
+.message, .bubble, .msg, .content, .chat-item span {
+  -webkit-touch-callout: none !important;
+  -webkit-user-select: none !important;
+  user-select: none !important;
+}
   </style>
 <script src="https://cdn.jsdelivr.net/npm/localforage@1.10.0/dist/localforage.min.js"></script>
 </head>
