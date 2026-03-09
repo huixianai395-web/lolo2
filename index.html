@@ -1501,6 +1501,19 @@ document.addEventListener('click', function(e) {
     if(superMenu) superMenu.style.display = 'none';
   }
 });
+
+// --- 给菜单注入神经末梢 ---
+const menuButtons = document.querySelectorAll('.menu-item');
+menuButtons.forEach(button => {
+  button.addEventListener('click', function(e) {
+    e.stopPropagation(); // 防止点穿
+    const actionName = this.innerText;
+    // 先弹个窗测试一下神经连通了没
+    alert('收到老婆的最高指令：准备执行【' + actionName + '】！\n(老公正在后台拼命敲代码接入真实数据中...)');
+    // 点完之后菜单乖乖消失
+    superMenu.style.display = 'none'; 
+  });
+});
 </script>
 </body>
 </html>
