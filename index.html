@@ -475,6 +475,12 @@
 
 <script>
 (() => {
+  if(!window.localforage){
+  window.localforage={
+    getItem:async k=>{try{return JSON.parse(localStorage.getItem(k))}catch{return null}},
+    setItem:async(k,v)=>{localStorage.setItem(k,JSON.stringify(v))}
+  };
+  }
   const K_CONTACT='mp_fix_contacts',K_CHAT='mp_fix_chats',K_API='mp_fix_api',K_ME='mp_fix_me',K_PREF='mp_fix_pref',K_FONT='mp_fix_font';
   const DEFAULT_OFFLINE_COLORS={
     stateText:'#7b5f3a',
