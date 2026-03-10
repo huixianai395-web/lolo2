@@ -1167,7 +1167,7 @@
   $('meAvatarInput').addEventListener('input',e=>showPreview('meAvatarPreview',e.target.value));
   $('roleAvatarInput').addEventListener('input',e=>showPreview('roleAvatarPreview',e.target.value));
 
- $('addOpenerBtn').onclick=()=>{
+  $('addOpenerBtn').onclick=()=>{
     if(!currentId) return;
     const t=clean($('openerInput').value); if(!t) return;
     const c=getContactById(currentId),arr=[...(c.openers||[])];
@@ -1175,7 +1175,6 @@
     updateContact(currentId,{openers:arr,openerSel:String(arr.length-1)});
     $('openerInput').value=''; renderOpenerUI();
   };
-    
   $('delOpenerBtn').onclick=()=>{
     if(!currentId) return;
     const c=getContactById(currentId),arr=[...(c.openers||[])];
