@@ -131,6 +131,11 @@
 .off-palette-row input[type="color"]{
   width:34px;height:22px;border:none;background:transparent;padding:0;cursor:pointer;
 }
+.off-palette-panel.global{
+  position:absolute;
+  top:58px; right:10px;
+  z-index:80;
+}
     .offline-state{padding:9px 10px;font-size:12px;color:#7b5f3a;border-bottom:1px solid #efe4d5;background:linear-gradient(180deg,#fff7ea,#f8efdf);white-space:pre-wrap;line-height:1.5;}
     .offline-body{padding:12px 14px 14px;color:#3b2f22;white-space:pre-wrap;line-height:1.62;text-align:justify;}
 
@@ -248,7 +253,13 @@
         <button class="icon-btn" id="chatSettingBtn" aria-label="设置">⋯</button>
       </div>
     </div>
-    <div id="chatMsgs"></div>
+    <div id="chatMsgs"></div><div id="offlinePalettePanel" class="off-palette-panel global">
+  <div class="off-palette-row"><span>状态栏</span><input type="color" data-key="state"></div>
+  <div class="off-palette-row"><span>正文</span><input type="color" data-key="body"></div>
+  <div class="off-palette-row"><span>引号</span><input type="color" data-key="dialogue"></div>
+  <div class="off-palette-row"><span>引用/特殊</span><input type="color" data-key="quote"></div>
+  <div class="off-palette-row"><span>强调</span><input type="color" data-key="em"></div>
+</div>
     <div class="chatInputBar" id="chatInputWrap">
       <div id="quoteBar" class="quote-bar hidden"><div id="quoteText" class="quote-text"></div><button id="clearQuoteBtn" class="quote-close">×</button></div>
       <textarea id="chatInput" class="ta" placeholder="输入消息..."></textarea>
@@ -316,7 +327,12 @@
         <div class="small">时间戳</div>
         <div class="row" style="margin-top:8px;justify-content:space-between;"><span class="small">显示每条消息时间</span><input id="showTsSwitch" type="checkbox" /></div>
       </div>
-
+<div class="card">
+  <div class="small">线下调色板</div>
+  <div class="row" style="margin-top:8px;">
+    <button class="btn" id="openOfflinePaletteBtn">打开调色板</button>
+  </div>
+</div>
      <div class="card">
   <div class="small">气泡CSS专区（可选）</div>
 
@@ -714,20 +730,13 @@
 
   return `<div class="bubble-wrap ai">${renderQuote(msg.quote)}
     <div class="offline-card ${msg.hiddenForAi?'ai-hidden':''}" style="${styleStr}">
-      <button class="off-palette-btn" data-mid="${msg.id}">🎨</button>
-      <div class="off-palette-panel" data-mid="${msg.id}">
-        <div class="off-palette-row"><span>状态栏</span><input type="color" data-key="state" value="${cset.state}"></div>
-        <div class="off-palette-row"><span>正文</span><input type="color" data-key="body" value="${cset.body}"></div>
-        <div class="off-palette-row"><span>引号</span><input type="color" data-key="dialogue" value="${cset.dialogue}"></div>
-        <div class="off-palette-row"><span>引用/特殊</span><input type="color" data-key="quote" value="${cset.quote}"></div>
-        <div class="off-palette-row"><span>强调</span><input type="color" data-key="em" value="${cset.em}"></div>
+        
+        <div class="offline-state">${esc(state||'状态未记录')}</div>
+        <div class="offline-body">${formatOfflineText(body||'')}</div>
       </div>
-      <div class="offline-state">${esc(state||'状态未记录')}</div>
-      <div class="offline-body">${formatOfflineText(body||'')}</div>
-    </div>
-    ${pref.showTs?`<div class="msg-time">${fmtTs(ts)}</div>`:''}
-  </div>`;
-}
+      ${pref.showTs?`<div class="msg-time">${fmtTs(ts)}</div>`:''}
+    </div>`;
+  }
   function renderBubbleContent(m,isMe,pref){
     const cls=isMe?'me':'ai';
     return `${renderQuote(m.quote)}<div class="bubble ${cls} ${m.hiddenForAi?'ai-hidden':''}">${esc(m.text)}</div>${pref.showTs?`<div class="msg-time">${fmtTs(m.time)}</div>`:''}`;
@@ -1327,6 +1336,42 @@ $('applyBubblePresetBtn').onclick=saveBubblePresetForm;
     favSelected.clear();
     renderFavorites();
   };
+  function refreshOfflinePalettePanel(){
+  if(!currentId) return;
+  const st=normSettings(getContactById(currentId)?.settings);
+  const p=st.offlineColors||DEFAULT_CHAT_SETTINGS.offlineColors;
+  document.querySelectorAll('#offlinePalettePanel input[type="color"]').forEach(inp=>{
+    const key=inp.dataset.key;
+    if(p[key]) inp.value=p[key];
+  });
+}
+
+$('openOfflinePaletteBtn').onclick=()=>{
+  if(!currentId) return;
+  const st=normSettings(getContactById(currentId)?.settings);
+  if(st.mode!=='offline') return alert('请切换到线下模式再使用调色板');
+  show('chatRoom');
+  setTimeout(()=>{
+    $('offlinePalettePanel').classList.add('show');
+    refreshOfflinePalettePanel();
+  },60);
+};
+
+$('offlinePalettePanel').addEventListener('input',e=>{
+  const key=e.target.dataset.key;
+  if(!key||!currentId) return;
+  const c=getContactById(currentId);
+  const st=normSettings(c?.settings);
+  st.offlineColors=st.offlineColors||{};
+  st.offlineColors[key]=e.target.value;
+  updateContact(currentId,{settings:st});
+  renderChat();
+});
+
+document.addEventListener('click',e=>{
+  const panel=$('offlinePalettePanel');
+  if(panel && !panel.contains(e.target)) panel.classList.remove('show');
+});
 
   initAppStorage().then(()=>{
     applyBubbleCss();
