@@ -474,7 +474,7 @@
 </div>
 
 <script>
-(() => {
+(() => {window.onerror = (m,u,l)=>alert(m+' @'+l);
   if(!window.localforage){
   window.localforage={
     getItem:async k=>{try{return JSON.parse(localStorage.getItem(k))}catch{return null}},
