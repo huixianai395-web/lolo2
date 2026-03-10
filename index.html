@@ -682,12 +682,34 @@
   };
 
   function renderQuote(q){ if(!q||!q.text) return ''; return `<div class="msg-quote"><div class="q-content">${esc(q.text)}</div></div>`; }
+  function formatOfflineText(text){
+  let t=String(text||'');
+  const marks=[];
+  function rep(re,cls){
+    t=t.replace(re,(m,inner)=>{
+      const key=`__MARK_${marks.length}__`;
+      marks.push(`<span class="${cls}">${esc(inner)}</span>`);
+      return key;
+    });
+  }
+  rep(/"([^"]{1,200})"/g,'off-dialogue');
+  rep(/"([^"]{1,200})"/g,'off-dialogue');
+  rep(/「([^」]{1,200})」/g,'off-dialogue');
+  rep(/【([^】]{1,200})】/g,'off-em');
+  rep(/\*\*([^*]{1,200})\*\*/g,'off-em');
+
+  let out=esc(t);
+  marks.forEach((html,i)=>{ out=out.replace(`__MARK_${i}__`,html); });
+  return out.replace(/\n/g,'<br>');
+}
+
 
   function renderOfflineAssistant(text,ts,pref,msg){
-    const raw=String(text||''),m=raw.match(/【状态栏】\s*([\s\S]*?)\s*【正文】\s*([\s\S]*)/);
-    if(!m) return `<div class="bubble-wrap ai">${renderQuote(msg.quote)}<div class="bubble ai ${msg.hiddenForAi?'ai-hidden':''}">${esc(raw)}</div>${pref.showTs?`<div class="msg-time">${fmtTs(ts)}</div>`:''}</div>`;
-    const state=clean(m[1]),body=clean(m[2]);
-   const cset=(getContactById(currentId)?.settings||{}).offlineColors||DEFAULT_CHAT_SETTINGS.offlineColors;
+  const raw=String(text||''),m=raw.match(/【状态栏】\s*([\s\S]*?)\s*【正文】\s*([\s\S]*)/);
+  if(!m) return `<div class="bubble-wrap ai">${renderQuote(msg.quote)}<div class="bubble ai ${msg.hiddenForAi?'ai-hidden':''}">${esc(raw)}</div>${pref.showTs?`<div class="msg-time">${fmtTs(ts)}</div>`:''}</div>`;
+  const state=clean(m[1]),body=clean(m[2]);
+
+  const cset=(getContactById(currentId)?.settings||{}).offlineColors||DEFAULT_CHAT_SETTINGS.offlineColors;
   const styleStr=`--off-state:${cset.state};--off-body:${cset.body};--off-quote:${cset.quote};--off-em:${cset.em};--off-dialogue:${cset.dialogue};`;
 
   return `<div class="bubble-wrap ai">${renderQuote(msg.quote)}
@@ -705,6 +727,7 @@
     </div>
     ${pref.showTs?`<div class="msg-time">${fmtTs(ts)}</div>`:''}
   </div>`;
+}
   function renderBubbleContent(m,isMe,pref){
     const cls=isMe?'me':'ai';
     return `${renderQuote(m.quote)}<div class="bubble ${cls} ${m.hiddenForAi?'ai-hidden':''}">${esc(m.text)}</div>${pref.showTs?`<div class="msg-time">${fmtTs(m.time)}</div>`:''}`;
@@ -718,29 +741,8 @@
     if(st.mode==='offline'){
       $('chatMsgs').innerHTML=arr.map(m=>{
         const cls=m.role==='user'?'me':'ai',av=m.role==='user'?meAvatar:roleAvatar,selected=selectedIds.has(m.id),sCls=selectMode?' selecting':'',cHtml=selectMode?`<div class="msg-check">✓</div>`:'';
-        if(m.role==='user') return `<div class="msg-item ${selected?'selected':''}${sCls}" data-mid="${m.id}">${cHtml}<div class="msg-block ${cls}"><img class="chat-avatar" src="${av}"><div class="bubble-wrap me">${renderBubbleContent(m,true,pref)}</div></div></div>`;
-        return `<div class="msg-item ${selected?'selected':''}${sCls}" data-mid="${m.id}">${cHtml}<div class="msg-block ${cls}"><img class="chat-avatar" src="${av}">$
-      function formatOfflineText(text){
-  let t=String(text||'');
-  const marks=[];
-  function rep(re,cls){
-    t=t.replace(re,(m,inner)=>{
-      const key=`__MARK_${marks.length}__`;
-      marks.push(`<span class="${cls}">${esc(inner)}</span>`);
-      return key;
-    });
-  }
-  rep(/“([^”]{1,200})”/g,'off-dialogue');
-  rep(/"([^"]{1,200})"/g,'off-dialogue');
-  rep(/「([^」]{1,200})」/g,'off-dialogue');
-  rep(/【([^】]{1,200})】/g,'off-em');
-  rep(/\*\*([^*]{1,200})\*\*/g,'off-em');
-
-  let out=esc(t);
-  marks.forEach((html,i)=>{ out=out.replace(`__MARK_${i}__`,html); });
-  return out.replace(/\n/g,'<br>');
-}  
-        {renderOfflineAssistant(m.text,m.time,pref,m)}</div></div>`;
+     if(m.role==='user') return `<div class="msg-item ${selected?'selected':''}${sCls}" data-mid="${m.id}">${cHtml}<div class="msg-block ${cls}"><img class="chat-avatar" src="${av}"><div class="bubble-wrap me">${renderBubbleContent(m,true,pref)}</div></div></div>`;
+return `<div class="msg-item ${selected?'selected':''}${sCls}" data-mid="${m.id}">${cHtml}<div class="msg-block ${cls}"><img class="chat-avatar" src="${av}">${renderOfflineAssistant(m.text,m.time,pref,m)}</div></div>`;
       }).join('');
     }else{
       $('chatMsgs').innerHTML=arr.map(m=>{
