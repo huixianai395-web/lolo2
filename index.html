@@ -154,6 +154,16 @@
       cursor:pointer;
       align-self:flex-start;
     }
+
+    .font-preview{
+      margin-top:8px;
+      padding:10px 12px;
+      border:1px dashed #d6def2;
+      border-radius:12px;
+      background:#f7f9ff;
+      line-height:1.6;
+      color:#1f2430;
+    }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/localforage@1.10.0/dist/localforage.min.js"></script>
 </head>
@@ -174,6 +184,7 @@
       <div class="grid">
         <div class="icon" data-nav="wechat"><div class="ibox">💬</div><div class="lab">微信</div></div>
         <div class="icon" data-nav="api"><div class="ibox">🔑</div><div class="lab">API</div></div>
+        <div class="icon" data-nav="fontCenter"><div class="ibox">🔤</div><div class="lab">字体</div></div>
       </div>
     </div>
   </section>
@@ -268,16 +279,6 @@
       </div>
 
       <div class="card">
-        <div class="small">字体设置（上传后全局生效）</div>
-        <div class="row" style="margin-top:8px;flex-wrap:wrap;">
-          <button class="btn" id="fontPickBtn">上传字体</button>
-          <button class="btn d" id="fontResetBtn">恢复默认</button>
-        </div>
-        <input id="fontFileInput" type="file" accept=".ttf,.otf,.woff,.woff2,font/ttf,font/otf,font/woff,font/woff2" class="hidden" />
-        <div id="fontStatus" class="small" style="margin-top:8px;">当前：系统默认</div>
-      </div>
-
-      <div class="card">
         <div class="small">数据工具</div>
         <div class="row" style="margin-top:8px;flex-wrap:wrap;">
           <button class="btn" id="exportBtn">导出数据</button><button class="btn" id="importBtn">导入数据</button>
@@ -321,6 +322,36 @@
       <div class="card"><div class="small">Model</div><select id="apiModel" class="select"></select><div style="margin-top:8px"><button class="btn" id="fetchModelsBtn">拉取模型</button></div></div>
       <div class="card"><div class="small">Temperature</div><input id="apiTemp" class="input" type="number" min="0" max="2" step="0.1" value="0.8" /></div>
       <div class="card"><button class="btn" id="testApiBtn">测试连接</button><div id="apiStatus" class="small" style="margin-top:8px;">状态：未测试</div></div>
+    </div>
+  </section>
+
+  <section id="fontCenter" class="screen">
+    <div class="header"><button class="btn" data-nav="home">‹ 返回</button><b>字体库</b><button class="btn p" id="saveFontBtn">保存</button></div>
+    <div class="page">
+      <div class="card">
+        <div class="small">字体预设</div>
+        <div class="row" style="margin-top:8px;">
+          <select id="fontPresetSelect" class="select"></select>
+          <button class="btn" id="newFontPresetBtn">新建</button>
+          <button class="btn d" id="delFontPresetBtn">删</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="small">字体文件 URL（.ttf / .otf / .woff / .woff2）</div>
+        <input id="fontUrlInput" class="input" placeholder="https://.../font.woff2" />
+        <div class="small" style="margin-top:6px;">支持公开可访问的字体文件链接</div>
+      </div>
+      <div class="card">
+        <div class="small">预览</div>
+        <div id="fontPreview" class="font-preview">春风十里不如你。The quick brown fox jumps over the lazy dog. 0123456789</div>
+      </div>
+      <div class="card">
+        <div class="small">当前使用：<span id="fontCurrentText">系统默认</span></div>
+        <div class="row" style="margin-top:8px;flex-wrap:wrap;">
+          <button class="btn p" id="applyFontBtn">应用当前预设</button>
+          <button class="btn d" id="resetFontBtn">恢复默认</button>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -372,7 +403,7 @@
 
 <script>
 (() => {
-  const K_CONTACT='mp_fix_contacts',K_CHAT='mp_fix_chats',K_API='mp_fix_api',K_ME='mp_fix_me',K_PREF='mp_fix_pref';
+  const K_CONTACT='mp_fix_contacts',K_CHAT='mp_fix_chats',K_API='mp_fix_api',K_ME='mp_fix_me',K_PREF='mp_fix_pref',K_FONT='mp_fix_font';
   const DEFAULT_CHAT_SETTINGS={mode:'online',onlineStyle:'free',onlineMin:2,onlineMax:6,offlineMin:220,offlineMax:420};
 
   let currentId=null,createAvatar='',typingForId=null,composeQuote=null,activeActionMsgId=null,selectMode=false,selectedIds=new Set(),editMsgId=null;
@@ -388,7 +419,7 @@
 
   const GlobalState={};
   async function initAppStorage(){
-    const keys=[K_CONTACT,K_CHAT,K_API,K_ME,K_PREF];
+    const keys=[K_CONTACT,K_CHAT,K_API,K_ME,K_PREF,K_FONT];
     for(let k of keys){
       let val=await localforage.getItem(k);
       if(val===null){
@@ -414,12 +445,13 @@
   }
 
   function getPref(){
-    const p=getJ(K_PREF,{showTs:false,bubbleCss:'',fontData:'',fontFamily:''});
+    const p=getJ(K_PREF,{showTs:false,bubbleCss:'',fontData:'',fontFamily:'',fontUrl:''});
     return {
       showTs:!!p.showTs,
       bubbleCss:String(p.bubbleCss||''),
       fontData:String(p.fontData||''),
-      fontFamily:String(p.fontFamily||'')
+      fontFamily:String(p.fontFamily||''),
+      fontUrl:String(p.fontUrl||'')
     };
   }
   function setPref(v){setJ(K_PREF,v);}
@@ -437,6 +469,16 @@
 @font-face{
   font-family:"XSJCustomFont";
   src:url("${p.fontData}");
+  font-display:swap;
+}
+#app, #app *{
+  font-family:"XSJCustomFont",-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif !important;
+}`;
+    }else if(p.fontUrl){
+      el.textContent=`
+@font-face{
+  font-family:"XSJCustomFont";
+  src:url("${p.fontUrl}");
   font-display:swap;
 }
 #app, #app *{
@@ -677,6 +719,92 @@
   async function testApi(){try{$('apiStatus').textContent='状态：测试中...';const out=await callApi([{role:'user',content:'只回复ok'}]);$('apiStatus').textContent='状态：连接成功 -> '+(out||'ok');}catch(e){$('apiStatus').textContent='状态：失败 -> '+e.message;}}
   $('saveApiBtn').onclick=saveApiForm;$('fetchModelsBtn').onclick=fetchModels;$('testApiBtn').onclick=testApi;
 
+  function getFontState(){
+    return getJ(K_FONT,{current:'默认',presets:{'默认':{url:''}}});
+  }
+  function setFontState(v){setJ(K_FONT,v);}
+  function updateFontPreview(){
+    const url=clean($('fontUrlInput')?.value||'');
+    let el=document.getElementById('fontPreviewStyle');
+    if(!el){el=document.createElement('style');el.id='fontPreviewStyle';document.head.appendChild(el);}
+    if(url){
+      el.textContent=`
+@font-face{
+  font-family:"XSJFontPreview";
+  src:url("${url}");
+  font-display:swap;
+}
+#fontPreview{
+  font-family:"XSJFontPreview",-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+}`;
+    }else{
+      el.textContent='';
+      const p=$('fontPreview'); if(p) p.style.fontFamily='';
+    }
+  }
+  function updateFontCurrentText(){
+    const p=getPref();
+    const label=p.fontFamily||(p.fontUrl?'自定义字体':'系统默认');
+    if($('fontCurrentText')) $('fontCurrentText').textContent=label||'系统默认';
+  }
+  function loadFontForm(){
+    const s=getFontState(),c=s.presets[s.current]||{url:''};
+    $('fontUrlInput').value=c.url||'';
+    updateFontPreview();
+  }
+  function refreshFontUI(){
+    const s=getFontState(),names=Object.keys(s.presets);
+    $('fontPresetSelect').innerHTML=names.map(n=>`<option ${n===s.current?'selected':''}>${n}</option>`).join('');
+    loadFontForm();
+    updateFontCurrentText();
+  }
+  function saveFontForm(){
+    const s=getFontState();
+    s.presets[s.current]={url:clean($('fontUrlInput').value)};
+    setFontState(s);
+    updateFontPreview();
+    updateFontCurrentText();
+    return s.presets[s.current];
+  }
+  function applyFontByUrl(url,name){
+    const p=getPref();
+    p.fontData='';
+    p.fontUrl=clean(url||'');
+    p.fontFamily=name|| (p.fontUrl?'自定义字体':'系统默认');
+    setPref(p);
+    applyCustomFont();
+    updateFontCurrentText();
+  }
+
+  $('saveFontBtn').onclick=saveFontForm;
+  $('fontPresetSelect').onchange=e=>{
+    const s=getFontState();
+    s.presets[s.current]={url:clean($('fontUrlInput').value)};
+    s.current=e.target.value; setFontState(s); loadFontForm(); updateFontCurrentText();
+  };
+  $('newFontPresetBtn').onclick=()=>{
+    const name=(prompt('新字体预设名：')||'').trim(); if(!name) return;
+    const s=getFontState(); if(s.presets[name]) return alert('预设已存在');
+    s.presets[name]={url:''}; s.current=name; setFontState(s); refreshFontUI();
+  };
+  $('delFontPresetBtn').onclick=()=>{
+    const s=getFontState(),names=Object.keys(s.presets); if(names.length<=1) return alert('至少保留一个预设');
+    if(!confirm('删除当前字体预设？')) return;
+    delete s.presets[s.current]; s.current=Object.keys(s.presets)[0]; setFontState(s); refreshFontUI();
+  };
+  $('fontUrlInput').addEventListener('input',updateFontPreview);
+  $('applyFontBtn').onclick=()=>{
+    const s=getFontState();
+    const url=clean($('fontUrlInput').value);
+    s.presets[s.current]={url}; setFontState(s);
+    applyFontByUrl(url,s.current);
+  };
+  $('resetFontBtn').onclick=()=>{
+    const s=getFontState();
+    if(!s.presets['默认']) s.presets['默认']={url:''};
+    s.current='默认'; setFontState(s); refreshFontUI(); applyFontByUrl('', '系统默认');
+  };
+
   function getSysTimeStr(){const d=new Date(),w=['周日','周一','周二','周三','周四','周五','周六'][d.getDay()];return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 ${w} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;}
 
   function buildOnlineSystem(c,me,st){
@@ -693,6 +821,8 @@
       `1. 拒绝刻板标签！人设是立体的、多面的、有成长性的。把你扮演的角色当成一个活生生的人来对待！`,
       `2. 说话的条数、长短、语气，必须严格根据【当前具体的语境】、【角色的情绪起伏】和【心理活动】动态自然地变化，绝不受任何固定模式限制。`,
       `3. 绝对不要在回复中暴露你是AI或程序。`,
+      `4. 具备真实的时间观念：根据“上一次消息时间与当前系统时间”的间隔，自然体现时间流逝（如久未回复后的轻微反应等），但不要刻意或模板化。`,
+      `5. 正常使用中文标点符号，不得用空格替代标点或分隔句子。`,
       `【输出格式铁律】：`,
       `只允许输出严格的JSON格式，包含一个"messages"数组：{"messages":["第一句...","第二句..."]}`,
       rangeRule
@@ -709,6 +839,7 @@
       `你的人设：${c?.persona||'自然聊天'}`,
       `【当前系统时间】：${getSysTimeStr()}`,
       `【核心指令】：你是一个有血有肉的人，请极度贴合你的人设，展现出极致的活人感与内心戏。`,
+      `【时间观念】：注意根据上一次消息时间与当前系统时间的间隔，给出符合人设的自然反应，但不要模板化。`,
       `【互动边界】：尽量不要代替对方（我）说话或做决定，多留出让对方反应与互动的空间（留白）。但允许根据剧情连贯性做极轻微、合理的预判，具体尺度视当前语境和人设灵活调整。`,
       `请输出一条沉浸式线下角色扮演回复，字数范围 ${st.offlineMin}-${st.offlineMax}。`,
       `【排版与层次要求】：`,
@@ -778,7 +909,6 @@
     $('offlineMinInput').value=st.offlineMin;$('offlineMaxInput').value=st.offlineMax;
     $('contextLenInput').value=st.contextLen||30;
     $('showTsSwitch').checked=!!p.showTs;$('bubbleCssInput').value=p.bubbleCss||'';
-    $('fontStatus').textContent='当前：'+(p.fontFamily||'系统默认');
 
     refreshSettingUI(); show('chatSetting');
   }
@@ -793,30 +923,6 @@
 
   $('meAvatarInput').addEventListener('input',e=>showPreview('meAvatarPreview',e.target.value));
   $('roleAvatarInput').addEventListener('input',e=>showPreview('roleAvatarPreview',e.target.value));
-
-  $('fontPickBtn').onclick=()=> $('fontFileInput').click();
-  $('fontFileInput').onchange=async e=>{
-    const f=e.target.files?.[0]; if(!f) return;
-    if(f.size>2*1024*1024){ alert('字体文件建议小于 2MB'); e.target.value=''; return; }
-    const fr=new FileReader();
-    fr.onload=()=>{
-      const p=getPref();
-      p.fontData=String(fr.result||'');
-      p.fontFamily=f.name||'自定义字体';
-      setPref(p);
-      applyCustomFont();
-      $('fontStatus').textContent='当前：'+(p.fontFamily||'自定义字体');
-    };
-    fr.readAsDataURL(f);
-    e.target.value='';
-  };
-  $('fontResetBtn').onclick=()=>{
-    const p=getPref();
-    p.fontData=''; p.fontFamily='';
-    setPref(p);
-    applyCustomFont();
-    $('fontStatus').textContent='当前：系统默认';
-  };
 
   $('saveChatSettingBtn').onclick=()=>{
     if(!currentId) return;
@@ -853,7 +959,7 @@
   $('deleteContactBtn').onclick=deleteCurrentContact;
 
   $('exportBtn').onclick=()=>{
-    const data={contacts:getContacts(),chats:getChats(),api:getApiState(),me:getMe(),pref:getPref(),ts:Date.now()};
+    const data={contacts:getContacts(),chats:getChats(),api:getApiState(),me:getMe(),pref:getPref(),font:getFontState(),ts:Date.now()};
     const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
     const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='xiaoshouji_backup_'+Date.now()+'.json';a.click();URL.revokeObjectURL(a.href);
   };
@@ -862,8 +968,8 @@
     const f=e.target.files?.[0]; if(!f) return;
     try{
       const j=JSON.parse(await f.text());
-      if(j.contacts) setContacts(j.contacts); if(j.chats) setChats(j.chats); if(j.api) setApiState(j.api); if(j.me) setMe(j.me); if(j.pref) setPref(j.pref);
-      applyBubbleCss();applyCustomFont();refreshPresetUI();renderContacts($('searchInput').value||'');if(currentId) renderChat();alert('导入成功');
+      if(j.contacts) setContacts(j.contacts); if(j.chats) setChats(j.chats); if(j.api) setApiState(j.api); if(j.me) setMe(j.me); if(j.pref) setPref(j.pref); if(j.font) setFontState(j.font);
+      applyBubbleCss();applyCustomFont();refreshPresetUI();refreshFontUI();renderContacts($('searchInput').value||'');if(currentId) renderChat();alert('导入成功');
     }catch{alert('导入失败：文件格式不正确');}
     finally{e.target.value='';}
   };
@@ -1056,6 +1162,7 @@
     applyBubbleCss();
     applyCustomFont();
     refreshPresetUI();
+    refreshFontUI();
     renderContacts();
     bindChatMsgEvents();
     updateQuoteBar();
