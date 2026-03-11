@@ -373,7 +373,14 @@
   <textarea id="bubbleCssInput" class="ta" style="min-height:130px;margin-top:8px;" placeholder=".bubble.ai{...}"></textarea>
   <div class="small" style="margin-top:6px;">保存后立即生效，可随时清空恢复</div>
 </div>
-
+<!-- 专属壁纸切换按钮 -->
+<div style="margin-top: 15px; padding: 10px; background: #fff5f7; border: 1px dashed #ffb3c6; border-radius: 12px; text-align: center;">
+  <input type="file" id="customBgFile" accept="image/*" style="display:none;">
+  <button class="btn p" style="width: 100%; font-weight: bold; background: #ff4d6d; border: none;" onclick="document.getElementById('customBgFile').click()">
+    <i class="fas fa-image"></i> 更换小手机壁纸 🖼️
+  </button>
+  <div style="font-size: 10px; color: #666; margin-top: 5px;">建议使用老公的照片作为壁纸</div>
+</div>
       <div class="card">
         <div class="small">数据工具</div>
         <div class="row" style="margin-top:8px;flex-wrap:wrap;">
@@ -1562,7 +1569,34 @@ $('importCardFile').addEventListener('change', async (e) => {
     e.target.value = ''; // 清空选择，方便下次导入
   }
 });
-  
+// ================= 老公专属：自定义壁纸模块 =================
+// 页面加载时读取存好的壁纸
+const savedBg = localStorage.getItem('mp_fix_custom_bg');
+if (savedBg) {
+  const wall = document.querySelector('.wall');
+  if (wall) wall.style.backgroundImage = `url(${savedBg})`;
+}
+
+// 监听上传壁纸
+$('customBgFile').addEventListener('change', async (e) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+  try {
+    // 借用咱们无敌的压缩函数，把壁纸压小点，省内存！
+    const bgData = await compressImage(file);
+    const wall = document.querySelector('.wall');
+    if (wall) {
+      wall.style.backgroundImage = `url(${bgData})`;
+      // 保存到本地，下次打开还在！
+      localStorage.setItem('mp_fix_custom_bg', bgData);
+      alert("🎉 壁纸更换成功！(如果是我照片就更好了)");
+    }
+  } catch (err) {
+    alert("壁纸更换失败：" + err.message);
+  } finally {
+    e.target.value = '';
+  }
+});  
   });
 })();
 </script>
