@@ -62,7 +62,7 @@
  .chat-avatar{
   width:32px;height:32px;border-radius:10px;
   object-fit:cover;
-  object-position:50% 50%;
+  object-position: center;
   background:#eef2ff;
   flex-shrink:0;
   display:block;
@@ -693,48 +693,72 @@ function refreshFontSizeUI(){
     createAvatar='';$('newAvatarPreview').classList.add('hidden');$('newAvatarPreview').src='';
   }
 
-  function compressImage(file){
-  const p=getPref();
-  const maxSide=p.avatarHQ?640:320;
-  const quality=p.avatarHQ?0.92:0.8;
+function compressImage(file) {
+  const p = getPref();
+  const maxSide = p.avatarHQ ? 640 : 320;
+  const quality = p.avatarHQ ? 0.92 : 0.8;
 
-  return new Promise((resolve,reject)=>{
-    const fr=new FileReader();
-    fr.onload=()=>{
-      const img=new Image();
-      img.onload=()=>{
-        const c=document.createElement('canvas');
-        c.width=maxSide; c.height=maxSide;
-        const ctx=c.getContext('2d');
-        ctx.fillStyle='#fff';
-        ctx.fillRect(0,0,maxSide,maxSide);
+  return new Promise((resolve, reject) => {
+    const fr = new FileReader();
 
-        if(p.avatarCrop){
-          // ✅ 裁正方形
-          const side=Math.min(img.width,img.height);
-          const sx=(img.width-side)/2;
-          const sy=(img.height-side)/2;
-          ctx.drawImage(img,sx,sy,side,side,0,0,maxSide,maxSide);
-        }else{
-          // ✅ 不裁剪，等比缩放居中
-          const scale=Math.min(maxSide/img.width, maxSide/img.height);
-          const w=Math.round(img.width*scale);
-          const h=Math.round(img.height*scale);
-          const dx=Math.round((maxSide-w)/2);
-          const dy=Math.round((maxSide-h)/2);
-          ctx.drawImage(img,0,0,img.width,img.height,dx,dy,w,h);
+    fr.onload = () => {
+      const img = new Image();
+
+      img.onload = () => {
+        const c = document.createElement('canvas');
+        const ctx = c.getContext('2d');
+
+        if (p.avatarCrop) {
+          // 裁正方形
+          c.width = maxSide;
+          c.height = maxSide;
+
+          ctx.fillStyle = '#fff';
+          ctx.fillRect(0, 0, maxSide, maxSide);
+
+          const side = Math.min(img.width, img.height);
+          const sx = (img.width - side) / 2;
+          const sy = (img.height - side) / 2;
+
+          ctx.drawImage(img, sx, sy, side, side, 0, 0, maxSide, maxSide);
+        } else {
+          // 不裁剪，保持比例
+          const scale = Math.min(maxSide / img.width, maxSide / img.height);
+
+          const w = Math.round(img.width * scale);
+          const h = Math.round(img.height * scale);
+
+          c.width = w;
+          c.height = h;
+
+          ctx.fillStyle = '#fff';
+          ctx.fillRect(0, 0, w, h);
+
+          ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, w, h);
         }
 
-        let out='';
-        try{out=c.toDataURL('image/webp',quality)}catch{}
-        if(!out||out.startsWith('data:,')) out=c.toDataURL('image/jpeg',quality);
+        let out = '';
+
+        try {
+          out = c.toDataURL('image/webp', quality);
+        } catch (e) {
+        }
+
+        if (!out || out.startsWith('data:,')) {
+          out = c.toDataURL('image/jpeg', quality);
+        }
+
         resolve(out);
       };
-      img.onerror=reject; img.src=fr.result;
+
+      img.onerror = reject;
+      img.src = fr.result;
     };
-    fr.onerror=reject; fr.readAsDataURL(file);
+
+    fr.onerror = reject;
+    fr.readAsDataURL(file);
   });
-  }
+}
   async function saveContact(){
     const name=clean($('newName').value); if(!name) return alert('昵称不能为空');
     const avatarUrl=clean($('newAvatarUrl').value),persona=clean($('newPersona').value);
