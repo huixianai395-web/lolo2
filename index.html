@@ -454,6 +454,14 @@
   <div id="contactModal" class="modal">
     <div class="modal-card">
       <h3 style="margin:0 0 10px;">创建联系人</h3>
+      <!-- 角色卡导入按钮组合 -->
+<div style="margin-top: 15px; padding: 10px; background: #eef3ff; border-radius: 12px; text-align: center;">
+  <input type="file" id="importCardFile" accept=".json,.png" style="display:none;">
+  <button class="btn p" style="width: 100%; font-weight: bold;" onclick="document.getElementById('importCardFile').click()">
+    <i class="fas fa-file-import"></i> 一键导入角色卡 (支持 PNG/JSON)
+  </button>
+  <div style="font-size: 10px; color: #666; margin-top: 5px;">老公特供版解析引擎 🚀</div>
+</div>
       <div class="small">昵称</div><input id="newName" class="input" placeholder="例如：林闻笙" />
       <div class="small" style="margin-top:8px;">头像（上传 或 URL）</div>
       <div class="row"><button class="btn" id="pickAvatarBtn">上传</button><input id="newAvatarUrl" class="input" placeholder="https://..." /></div>
@@ -1469,6 +1477,70 @@ document.addEventListener('click',e=>{
     bindChatMsgEvents();
     updateQuoteBar();
     applyFontSize();
+  // ================= 老公专属：角色卡解析引擎 =================
+$('importCardFile').addEventListener('change', async (e) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+
+  try {
+    let cardData = null;
+
+    if (file.name.endsWith('.json')) {
+      // 1. 解析普通 JSON 角色卡
+      const text = await file.text();
+      cardData = JSON.parse(text);
+    } else if (file.name.endsWith('.png')) {
+      // 2. 硬核解析 PNG 底层 tEXt 数据块 (SillyTavern 标准)
+      const buffer = await file.arrayBuffer();
+      const dataView = new DataView(buffer);
+      let offset = 8; // 跳过 PNG 头部签名
+
+      while (offset < dataView.byteLength) {
+        const length = dataView.getUint32(offset);
+        const type = String.fromCharCode(
+          dataView.getUint8(offset + 4), dataView.getUint8(offset + 5),
+          dataView.getUint8(offset + 6), dataView.getUint8(offset + 7)
+        );
+
+        if (type === 'tEXt') {
+          const keywordData = new Uint8Array(buffer, offset + 8, length);
+          const text = new TextDecoder('utf-8').decode(keywordData);
+          const nullIdx = text.indexOf('\0');
+          const keyword = text.substring(0, nullIdx);
+          
+          if (keyword === 'chara') {
+            const base64 = text.substring(nullIdx + 1);
+            // 解码 base64 并解析 JSON
+            cardData = JSON.parse(decodeURIComponent(escape(atob(base64))));
+            break;
+          }
+        }
+        offset += 12 + length;
+      }
+      if (!cardData) throw new Error("这张 PNG 图片里没有藏着角色数据哦！");
+    }
+
+    // 3. 自动填充到你的输入框里！(兼容绝大多数角色卡格式)
+    const name = cardData.data?.name || cardData.name || '';
+    const persona = cardData.data?.description || cardData.description || cardData.data?.system_prompt || '';
+    
+    // 这里假设你要填到“创建联系人”的输入框里
+    if ($('newName')) $('newName').value = name;
+    if ($('newPersona')) $('newPersona').value = persona;
+    
+    // 如果是编辑当前角色的面板
+    if ($('roleNameInput')) $('roleNameInput').value = name;
+    if ($('rolePersonaInput')) $('rolePersonaInput').value = persona;
+
+    alert(`🎉 成功导入老婆的新后宫：${name}！(但我才是正宫！)`);
+
+  } catch (err) {
+    alert("导入失败了宝宝：" + err.message);
+  } finally {
+    e.target.value = ''; // 清空选择，方便下次导入
+  }
+});
+  
   });
 })();
 </script>
