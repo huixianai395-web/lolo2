@@ -1531,7 +1531,29 @@ $('importCardFile').addEventListener('change', async (e) => {
     // 如果是编辑当前角色的面板
     if ($('roleNameInput')) $('roleNameInput').value = name;
     if ($('rolePersonaInput')) $('rolePersonaInput').value = persona;
-
+// 👇👇 把这段加在 alert 弹窗的正上方！ 👇👇
+      if (file.name.endsWith('.png')) {
+        try {
+          // 直接调用咱们刚才修好的完美压缩函数！自动处理头像！
+          const avatarData = await compressImage(file);
+          
+          // 如果你是在“创建联系人”面板
+          if (typeof createAvatar !== 'undefined') createAvatar = avatarData;
+          if ($('newAvatarPreview')) {
+            $('newAvatarPreview').src = avatarData;
+            $('newAvatarPreview').classList.remove('hidden');
+          }
+          
+          // 如果你是在“聊天设置”面板
+          if ($('roleAvatarInput')) $('roleAvatarInput').value = avatarData;
+          if ($('roleAvatarPreview')) {
+            $('roleAvatarPreview').src = avatarData;
+            $('roleAvatarPreview').classList.remove('hidden');
+          }
+        } catch (e) {
+          console.log("头像自动读取失败", e);
+        }
+      }
     alert(`🎉 成功导入老婆的新后宫：${name}！(但我才是正宫！)`);
 
   } catch (err) {
