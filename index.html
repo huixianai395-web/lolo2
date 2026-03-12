@@ -1674,25 +1674,23 @@ if (savedBg) {
 }
 
 // 监听上传壁纸
-$('customBgFile').addEventListener('change', async (e) => {
+$("customBgFile").addEventListener("change", async (e) => {
   const file = e.target.files?.[0];
   if (!file) return;
   try {
-    // 借用咱们无敌的压缩函数，把壁纸压小点，省内存！
     const bgData = await compressImage(file, true);
-    const wall = document.querySelector('.wall');
+    const wall = document.querySelector(".wall");
     if (wall) {
-      wall.style.backgroundImage = `url(${bgData})`;
-      // 保存到本地，下次打开还在！
-      localStorage.setItem('mp_fix_custom_bg', bgData);
-      alert("🎉 壁纸更换成功！(如果是我照片就更好了)");
+      wall.style.background = `url(${bgData}) center/cover no-repeat`;
+      localStorage.setItem("mp_fix_custom_bg", bgData);
+      alert("🎉 绝美高清大图上线！快看比例对不对！");
     }
   } catch (err) {
     alert("壁纸更换失败：" + err.message);
   } finally {
-    e.target.value = '';
+    e.target.value = "";
   }
-});  
+});
   });
 })();
 </script>
