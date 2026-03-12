@@ -280,7 +280,11 @@
   
   <input type="file" id="audioUploadFile" accept="audio/*,video/*" style="display:none;">
   <button class="btn" style="padding: 0 10px; font-size: 20px; color: #2f66d8; background: transparent; box-shadow: none;" onclick="document.getElementById('audioUploadFile').click()">
-    <i class="fas fa-microphone"></i>
+    <!-- 👇 直接把中间那行换成这个 🎤 表情！！ 👇 -->
+<button class="btn" style="padding: 0 10px; font-size: 20px; background: transparent; box-shadow: none;" onclick="document.getElementById('audioUploadFile').click()">
+  🎤
+</button>
+<!-- 👆 这样绝对绝对绝对能显示出来了！！ 👆 -->
   </button>
   
   <button class="btn p" id="sendBtn">发送</button>
