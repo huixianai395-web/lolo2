@@ -274,22 +274,21 @@
     <div class="chatInputBar" id="chatInputWrap">
       <div id="quoteBar" class="quote-bar hidden"><div id="quoteText" class="quote-text"></div><button id="clearQuoteBtn" class="quote-close">×</button></div>
       <textarea id="chatInput" class="ta" placeholder="输入消息..."></textarea>
-      <!-- 👇 把 277 到 282 删掉，贴上这个完整的！ 👇 -->
-<div class="send-actions">
+      <div class="send-actions">
   <button class="btn store" id="storeBtn" aria-label="储存"></button>
   
   <input type="file" id="audioUploadFile" accept="audio/*,video/*" style="display:none;">
-  <button class="btn" style="padding: 0 10px; font-size: 20px; color: #2f66d8; background: transparent; box-shadow: none;" onclick="document.getElementById('audioUploadFile').click()">
-    <!-- 👇 直接把中间那行换成这个 🎤 表情！！ 👇 -->
-<button class="btn" style="padding: 0 10px; font-size: 20px; background: transparent; box-shadow: none;" onclick="document.getElementById('audioUploadFile').click()">
-  🎤
-</button>
-<!-- 👆 这样绝对绝对绝对能显示出来了！！ 👆 -->
+  <button class="btn" style="padding: 0 8px; background: transparent; display: flex; align-items: center; justify-content: center; box-shadow: none;" onclick="document.getElementById('audioUploadFile').click()">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2f66d8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
+      <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+      <line x1="12" y1="19" x2="12" y2="22"></line>
+      <line x1="8" y1="22" x2="16" y2="22"></line>
+    </svg>
   </button>
   
   <button class="btn p" id="sendBtn">发送</button>
-</div>
-<!-- 👆 替换结束！完美无缺！ 👆 -->
+      </div>
     </div>
   </section>
 
