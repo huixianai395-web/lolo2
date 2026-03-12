@@ -749,7 +749,7 @@ function compressImage(file, isWallpaper = false) {
         const c=document.createElement('canvas');
         const ctx=c.getContext('2d');
 
-        if (p.avatarCrop) {
+      if (p.avatarCrop && !isWallpaper) {
           c.width=maxSide; c.height=maxSide;
           ctx.fillStyle='#fff'; ctx.fillRect(0,0,maxSide,maxSide);
           const side=Math.min(img.width,img.height);
