@@ -274,7 +274,12 @@
     <div class="chatInputBar" id="chatInputWrap">
       <div id="quoteBar" class="quote-bar hidden"><div id="quoteText" class="quote-text"></div><button id="clearQuoteBtn" class="quote-close">×</button></div>
       <textarea id="chatInput" class="ta" placeholder="输入消息..."></textarea>
-      <div class="send-actions"><button class="btn store" id="storeBtn" aria-label="储存"></button><button class="btn p" id="sendBtn">发送</button></div>
+      <!-- 👇 插在 chatInputBar 里面，发送按钮的旁边！ 👇 -->
+<input type="file" id="audioUploadFile" accept="audio/*,video/*" style="display:none;">
+<button class="btn" style="padding: 0 10px; font-size: 20px; color: #2f66d8; background: transparent; box-shadow: none;" onclick="document.getElementById('audioUploadFile').click()">
+  <i class="fas fa-microphone"></i>
+</button>
+<!-- 👆 麦克风按钮结束 👆 -->
     </div>
   </section>
 
@@ -749,7 +754,7 @@ function compressImage(file, isWallpaper = false) {
         const c=document.createElement('canvas');
         const ctx=c.getContext('2d');
 
-      if (p.avatarCrop && !isWallpaper) {
+        if (p.avatarCrop && !isWallpaper) {
           c.width=maxSide; c.height=maxSide;
           ctx.fillStyle='#fff'; ctx.fillRect(0,0,maxSide,maxSide);
           const side=Math.min(img.width,img.height);
@@ -1691,6 +1696,42 @@ $("customBgFile").addEventListener("change", async (e) => {
     e.target.value = "";
   }
 });
+$("customBgFile").addEventListener("change", async (e) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+  try {
+    const bgData = await compressImage(file, true);
+    const wall = document.querySelector(".wall");
+    if (wall) {
+      wall.style.background = `url(${bgData}) center/cover no-repeat`;
+      localStorage.setItem("mp_fix_custom_bg", bgData);
+      alert("🎉 绝美高清大图上线！快看比例对不对！");
+    }
+  } catch (err) {
+    alert("壁纸更换失败：" + err.message);
+  } finally {
+    e.target.value = "";
+  }
+});
+$('audioUploadFile').addEventListener('change', async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const reader = new FileReader();
+      reader.onload = () => {
+        // 直接拼成一个可以点击播放的 HTML 音频标签
+        const audioHtml = `<br><audio controls style="max-width: 100%; height: 35px; margin-top: 5px; outline: none;"><source src="${reader.result}" type="${file.type}"></audio>`;
+        // 调用你代码里现成的 pushUser 函数，直接发出去！
+        pushUser("🎵 发送了一段媒体文件：" + audioHtml);
+        renderChat(); // 刷新聊天界面
+      };
+      reader.readAsDataURL(file); // 转换成 Base64 存在本地
+    } catch (err) {
+      alert("音频上传失败了宝宝：" + err.message);
+    } finally {
+      e.target.value = '';
+    }
+  });
   });
 })();
 </script>
