@@ -623,14 +623,13 @@
   const $=id=>document.getElementById(id);
   const clean=s=>String(s||'').trim();
   const esc=s=>{
-  let t = String(s||'').replace(/[&<>"']/g,m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
-  // 豁免音频
-  t = t.replace(/&lt;br&gt;&lt;audio controls style=&quot;(.*?)&quot;&gt;&lt;source src=&quot;(.*?)&quot; type=&quot;(.*?)&quot;&gt;&lt;\/audio&gt;/g, '<br><audio controls style="$1"><source src="$2" type="$3"></audio>');
-  // 🌟 终极豁免模拟图片！🌟
-  t = t.replace(/&lt;div class=&quot;fake-img-bubble&quot;(.*?)&lt;div style=&quot;display:none;(.*?)&gt;(.*?)&lt;\/div&gt;&lt;\/div&gt;/g, function(match) {
-    return match.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&#39;/g, "'").replace(/&quot;/g, '"').replace(/&amp;/g, '&');
-  });
-  return t;
+  let t = String(s||'');
+  // 🌟 终极特权：如果是咱们自己发的音频或模拟图片，直接免检放行！不转义！绝对不卡！
+  if (t.includes('<audio controls') || t.includes('fake-img-bubble')) {
+    return t; 
+  }
+  // 普通聊天文字，正常转义防黑客
+  return t.replace(/[&<>"']/g,m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
 };
   // HTML检测与封装
   function isHtmlDoc(s){s=String(s||'');return /^\s*<!doctype html/i.test(s)||/<html[\s>]/i.test(s);} 
@@ -1865,9 +1864,7 @@ let currentFakeCover = '';
     $('fakeImgDesc').value = '';
     $('fakeImgModal').classList.remove('active');
     $('extraPanel').classList.add('hidden'); 
-  };
-  });
-  
+  };  
 })();
 </script>
 </body>
