@@ -1030,7 +1030,7 @@ return `<div class="msg-item ${selected?'selected':''}${sCls}" data-mid="${m.id}
 
     // 🌟 自动窃取老婆上传的封面！
     const userUploadedCover = document.getElementById('fakeCoverPreview')?.src;
-    const aiDefaultCover = (userUploadedCover && userUploadedCover.length > 100) ? userUploadedCover : 'https://api.dicebear.com/9.x/micah/svg?seed=Kitty&backgroundColor=fbc7d4';
+    const aiDefaultCover = (userUploadedCover && userUploadedCover.length > 100) ? userUploadedCover : 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiNlMmU4ZjAiLz48L3N2Zz4=';
 
     // 🌟 第二步：在解析好的、干净的句子里，把暗号替换成气泡！
     return bubbles.map(bubble => {
