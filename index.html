@@ -626,7 +626,7 @@
   let t = String(s||'');
   // 🌟 终极特权：如果是咱们自己发的音频或模拟图片，直接免检放行！不转义！绝对不卡！
   if (t.includes('<audio controls') || t.includes('fake-img-bubble')) {
-    return t; 
+    return t; 
   }
   // 普通聊天文字，正常转义防黑客
   return t.replace(/[&<>"']/g,m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
@@ -1013,7 +1013,7 @@ return `<div class="msg-item ${selected?'selected':''}${sCls}" data-mid="${m.id}
     if (!txt) return ['...'];
 
     let bubbles = [];
-    
+    
     // 🌟 第一步：先老老实实解析 JSON！保证结构不被破坏！
     const byJson = parseJsonMessages(txt);
     if (byJson && byJson.length) {
@@ -1293,7 +1293,13 @@ const chatId=currentId,c=getContactById(chatId),st=normSettings(c?.settings),glo
   }
 
   $('sendBtn').onclick=sendMsg;
-  $('chatInput').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();if(e.ctrlKey||e.metaKey) sendMsg(); else storeCurrentInput();}});
+$('chatInput').addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&!e.shiftKey){
+    e.preventDefault();
+    if(e.ctrlKey||e.metaKey) sendMsg();
+    else sendMsg();
+  }
+});
 
   function refreshSettingUI(){
     const mode=$('replyModeSelect').value;
@@ -1816,7 +1822,23 @@ $("customBgFile").addEventListener("change", async (e) => {
     e.target.value = "";
   }
 });
-
+$("customBgFile").addEventListener("change", async (e) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+  try {
+    const bgData = await compressImage(file, true);
+    const wall = document.querySelector(".wall");
+    if (wall) {
+      wall.style.background = `url(${bgData}) center/cover no-repeat`;
+      localStorage.setItem("mp_fix_custom_bg", bgData);
+      alert("🎉 绝美高清大图上线！快看比例对不对！");
+    }
+  } catch (err) {
+    alert("壁纸更换失败：" + err.message);
+  } finally {
+    e.target.value = "";
+  }
+});
 $('audioUploadFile').addEventListener('change', async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -1836,9 +1858,9 @@ $('audioUploadFile').addEventListener('change', async (e) => {
       e.target.value = '';
     }
   });
-  
+  });
 let currentFakeCover = '';
-  
+  
   $('fakeCoverFile').addEventListener('change', async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -1855,9 +1877,9 @@ let currentFakeCover = '';
     const desc = $('fakeImgDesc').value.trim();
     if(!desc) return alert('描述不能为空哦！');
     if(!currentFakeCover) return alert('请先上传一张封面图！');
-    
+    
 const fakeImgHtml = `<div class="fake-img-bubble" style="position:relative; width:140px; height:140px; border-radius:12px; overflow:hidden; box-shadow:0 2px 10px rgba(0,0,0,0.1); font-size:0; background:#f8f9ff;">
-      
+      
       <!-- 图片层 -->
       <div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer;" onclick="this.style.display='none'; this.nextElementSibling.style.display='block';">
         <img src="${currentFakeCover}" style="width:100%; height:100%; display:block; object-fit:cover;">
@@ -1866,7 +1888,7 @@ const fakeImgHtml = `<div class="fake-img-bubble" style="position:relative; widt
           点击查看
         </div>
       </div>
-      
+      
       <!-- 文字层：彻底抛弃Flex，改用 block 布局，暴力置顶！ -->
       <div style="display:none; position:absolute; inset:0; background:#f8f9ff; z-index:3;">
         <!-- 返回按钮 -->
@@ -1878,15 +1900,15 @@ const fakeImgHtml = `<div class="fake-img-bubble" style="position:relative; widt
           ${desc}
         </div>
       </div>
-      
+      
     </div>`;
-    
+    
     pushUser(fakeImgHtml);
-    renderChat(); 
-    
+    renderChat(); 
+    
     $('fakeImgDesc').value = '';
     $('fakeImgModal').classList.remove('active');
-    $('extraPanel').classList.add('hidden'); 
+    $('extraPanel').classList.add('hidden'); 
   };
 })();
 </script>
