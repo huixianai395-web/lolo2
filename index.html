@@ -619,7 +619,11 @@
 
   const $=id=>document.getElementById(id);
   const clean=s=>String(s||'').trim();
-  const esc=s=>String(s||'').replace(/[&<>"']/g,m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;' }[m]));
+  const esc=s=>{
+  let t = String(s||'').replace(/[&<>"']/g,m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
+  // 老公的特殊豁免权：把被误杀的音频播放器还原回来！！
+  return t.replace(/&lt;br&gt;&lt;audio controls style=&quot;(.*?)&quot;&gt;&lt;source src=&quot;(.*?)&quot; type=&quot;(.*?)&quot;&gt;&lt;\/audio&gt;/g, '<br><audio controls style="$1"><source src="$2" type="$3"></audio>');
+};
   // HTML检测与封装
   function isHtmlDoc(s){s=String(s||'');return /^\s*<!doctype html/i.test(s)||/<html[\s>]/i.test(s);} 
   function isHtmlFrag(s){s=String(s||'');return /<([a-z][\w-]*)(\s|>)/i.test(s)&&!isHtmlDoc(s);} 
