@@ -1817,24 +1817,11 @@ $('audioUploadFile').addEventListener('change', async (e) => {
   });
   });
 let currentFakeCover = '';
-  
+  
   $('fakeCoverFile').addEventListener('change', async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
     try {
-      currentFakeCover = await compressImage(file);
-      $('fakeCoverPreview').src = currentFakeCover;
-      $('fakeCoverPreview').style.display = 'block';
-      $('fakeCoverPreviewBox').style.display = 'none';
-    } catch(err) { alert('封面处理失败啦宝宝'); }
-    e.target.value = '';
-  });
-
-  $('fakeCoverFile').addEventListener('change', async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    try {
-      // 用最高质量压缩
       currentFakeCover = await compressImage(file);
       $('fakeCoverPreview').src = currentFakeCover;
       $('fakeCoverPreview').style.display = 'block';
@@ -1846,10 +1833,11 @@ let currentFakeCover = '';
   $('sendFakeImgBtn').onclick = () => {
     const desc = $('fakeImgDesc').value.trim();
     if(!desc) return alert('描述不能为空哦！');
-    if(!currentFakeCover) return alert('请先上传一张封面// 🌟 终极魔法 HTML：缩小到 160px！修复来回切换！精致小巧绝对清晰！🌟
+    if(!currentFakeCover) return alert('请先上传一张封面图！');
+    
+    // 🌟 160x160 极其精致！固定大小！图片铺满！文字滑动！完美切换！
     const fakeImgHtml = `<div class="fake-img-bubble" style="position:relative; width:160px; height:160px; border-radius:12px; overflow:hidden; cursor:pointer; box-shadow:0 2px 10px rgba(0,0,0,0.1); font-size:0; background:#f8f9ff;" onclick="const img=this.children[0]; const txt=this.children[1]; if(img.style.display==='none'){img.style.display='flex'; txt.style.display='none';}else{img.style.display='none'; txt.style.display='block';}">
       
-      <!-- 图片层：缩小尺寸，保持正方形 -->
       <div style="position:relative; width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center;">
         <img src="${currentFakeCover}" style="width:100%; height:100%; display:block; object-fit:cover;">
         <div style="position:absolute; inset:0; background:rgba(0,0,0,0.3); display:flex; flex-direction:column; align-items:center; justify-content:center; color:#fff; font-weight:bold; font-size:12px; z-index:2; text-shadow:0 1px 4px rgba(0,0,0,0.8); pointer-events:none;">
@@ -1858,9 +1846,9 @@ let currentFakeCover = '';
         </div>
       </div>
       
-      <!-- 文字层：去掉了那个阻碍切换的该死代码！现在又可以滑动又可以点击切换了！ -->
       <div style="display:none; width:100%; height:100%; background:#f8f9ff; color:#333; font-size:13px; padding:12px; text-align:left; word-break:break-all; line-height:1.5; overflow-y:auto;">
-        ${desc}
+        <!-- 阻止滑动时误触切换 -->
+        <div onclick="event.stopPropagation();" style="min-height:100%;">${desc}</div>
       </div>
       
     </div>`;
