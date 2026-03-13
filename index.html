@@ -271,15 +271,15 @@
   <div class="off-palette-row"><span>引用/特殊</span><input type="color" data-key="quote"></div>
   <div class="off-palette-row"><span>强调</span><input type="color" data-key="em"></div>
 </div>
-   <div class="chatInputBar" id="chatInputWrap" style="flex-wrap: wrap;">
-  
+ <div class="chatInputBar" id="chatInputWrap" style="flex-wrap: wrap;">
+  
   <div id="quoteBar" class="quote-bar hidden">
     <div id="quoteText" class="quote-text"></div>
     <button id="clearQuoteBtn" class="quote-close">×</button>
   </div>
-  
+  
   <div style="display: flex; width: 100%; gap: 8px; align-items: flex-end;">
-    
+    
     <!-- 🌟 左侧 1：表情包按钮 -->
     <button class="btn" style="padding: 0 4px; font-size: 26px; background: transparent; box-shadow: none;" onclick="alert('表情包功能开发中！')">
       <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#7a86a8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -289,7 +289,7 @@
         <line x1="15" y1="9" x2="15.01" y2="9"></line>
       </svg>
     </button>
-    
+    
     <!-- 🌟 左侧 2：➕ 按钮 (被发配到这里来了！) -->
     <button class="btn" style="padding: 0 4px; font-size: 26px; background: transparent; box-shadow: none;" onclick="document.getElementById('extraPanel').classList.toggle('hidden')">
       <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#7a86a8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -298,33 +298,31 @@
         <line x1="8" y1="12" x2="16" y2="12"></line>
       </svg>
     </button>
-    
+    
     <!-- 中间：输入框 -->
     <textarea id="chatInput" class="ta" placeholder="输入消息..."></textarea>
-    
+    
     <!-- 右侧操作区：只剩储存和发送，绝对不拆散它们！ -->
     <div class="send-actions">
       <button class="btn store" id="storeBtn" aria-label="储存"></button>
       <button class="btn p" id="sendBtn">发送</button>
     </div>
   </div>
-
   <!-- 🌟🌟 隐藏的 12 宫格多功能面板 🌟🌟 -->
   <div id="extraPanel" class="hidden" style="width: 100%; padding-top: 15px; border-top: 1px solid #e4e8f5; margin-top: 10px;">
     <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px 10px; text-align: center;">
-      
+      
       <!-- 1. 发图片 (真实的) -->
       <div onclick="alert('准备上传真实图片！')" style="cursor: pointer;">
         <div style="width: 50px; height: 50px; background: #fff; border-radius: 12px; margin: 0 auto; display: grid; place-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05);"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#4a90e2" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg></div>
         <div style="font-size: 11px; color: #666; margin-top: 5px;">发图片</div>
       </div>
 
-      <!-- 2. 模拟发图 (老婆自定义封面版！想用什么图就用什么图！) -->
-    <div onclick="const coverUrl=prompt('第一步：请输入你想作为【封面】的图片网址(URL)：'); if(coverUrl){ const desc=prompt('第二步：请输入点击后显示的【文字描述】：'); if(desc){ const fakeImg = `<div style='position:relative;width:200px;height:200px;border-radius:12px;overflow:hidden;border:1px solid #e4e8f5;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.08);' onclick='this.children[0].style.display=&quot;none&quot;; this.children[1].style.display=&quot;flex&quot;;'><div style='position:absolute;inset:0;background:url(&quot;${coverUrl}&quot;) center/cover;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;font-weight:bold;font-size:14px;z-index:2;text-shadow:0 1px 6px rgba(0,0,0,0.9);transition:0.3s;box-shadow:inset 0 0 40px rgba(0,0,0,0.4);'>🙈点击解锁</div><div style='display:none;width:100%;height:100%;background:#f8f9ff;color:#666;font-size:13px;padding:15px;align-items:center;justify-content:center;text-align:center;z-index:1;word-break:break-all;'>[图片内容：${desc}]</div></div>`; pushUser(`【发送了一张图片】<br>${fakeImg}`); renderChat(); } }" style="cursor: pointer;">
+      <!-- 2. 模拟发图 (触发高级弹窗) -->
+    <div onclick="document.getElementById('fakeImgModal').classList.add('active')" style="cursor: pointer;">
       <div style="width: 50px; height: 50px; background: #fff; border-radius: 12px; margin: 0 auto; display: grid; place-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05);"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#9b59b6" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg></div>
       <div style="font-size: 11px; color: #666; margin-top: 5px;">模拟发图</div>
     </div>
-
       <!-- 3. 🌟 传音频 (你要求的！隐藏的 input 放在这里) 🌟 -->
       <div onclick="document.getElementById('audioUploadFile').click()" style="cursor: pointer;">
         <input type="file" id="audioUploadFile" accept="audio/*,video/*" style="display:none;">
@@ -337,7 +335,7 @@
         <div style="width: 50px; height: 50px; background: #fff; border-radius: 12px; margin: 0 auto; display: grid; place-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05);"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#67c23a" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="22"></line></svg></div>
         <div style="font-size: 11px; color: #666; margin-top: 5px;">发语音</div>
       </div>
-      
+      
       <!-- 5. 发红包 -->
       <div onclick="alert('准备弹出红包输入框！')" style="cursor: pointer;">
         <div style="width: 50px; height: 50px; background: #fff; border-radius: 12px; margin: 0 auto; display: grid; place-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05);"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f56c6c" stroke-width="2"><rect x="3" y="6" width="18" height="15" rx="2" ry="2"></rect><path d="M3 9l9 6 9-6"></path><circle cx="12" cy="15" r="2" fill="#f56c6c"></circle></svg></div>
@@ -388,7 +386,7 @@
 
     </div>
   </div>
-   </div>
+</div>
   </section>
 
   <section id="chatSetting" class="screen">
@@ -590,6 +588,32 @@
     </div>
   </section>
 
+<div id="fakeImgModal" class="modal">
+    <div class="modal-card">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+        <h3 style="margin:0; color:#333;">发送模拟图片</h3>
+        <button class="btn" style="font-size:12px; padding:4px 8px; background:#eef3ff; color:#2f66d8;" onclick="document.getElementById('fakeCoverFile').click()">更换封面</button>
+        <input type="file" id="fakeCoverFile" accept="image/*" style="display:none;">
+      </div>
+      
+      <!-- 干净的上传提示框 -->
+      <div id="fakeCoverPreviewBox" style="width:120px; height:120px; border-radius:12px; border:2px dashed #d7e3ff; margin:0 auto 15px; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#a0b0d0; cursor:pointer;" onclick="document.getElementById('fakeCoverFile').click()">
+        <i class="fas fa-image" style="font-size:32px; margin-bottom:8px;"></i>
+        <span style="font-size:12px;">点击上传封面</span>
+      </div>
+      <!-- 真正上传后显示的图片 -->
+      <img id="fakeCoverPreview" src="" style="width:120px; height:120px; border-radius:12px; object-fit:cover; border:2px dashed #d7e3ff; display:none; margin:0 auto 15px;">
+      
+      <div class="small" style="margin-bottom:5px;">图片内容描述 (AI会看到这个)：</div>
+      <textarea id="fakeImgDesc" class="ta" placeholder="例如：一张穿着睡衣的绝美自拍..." style="height:100px; resize:none;"></textarea>
+      
+      <div style="display:flex; gap:10px; margin-top:20px;">
+        <button class="btn" style="flex:1; background:#f2f3f6; color:#666;" onclick="document.getElementById('fakeImgModal').classList.remove('active')">取消</button>
+        <button class="btn p" style="flex:1;" id="sendFakeImgBtn">发送</button>
+      </div>
+    </div>
+  </div>
+  <!-- 👆👆👆 弹窗 UI 结束 👆👆👆 -->
   <div id="contactModal" class="modal">
     <div class="modal-card">
       <h3 style="margin:0 0 10px;">创建联系人</h3>
@@ -1845,7 +1869,35 @@ $('audioUploadFile').addEventListener('change', async (e) => {
     }
   });
   });
+let currentFakeCover = '';
+  
+  $('fakeCoverFile').addEventListener('change', async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      currentFakeCover = await compressImage(file);
+      $('fakeCoverPreview').src = currentFakeCover;
+      $('fakeCoverPreview').style.display = 'block';
+      $('fakeCoverPreviewBox').style.display = 'none';
+    } catch(err) { alert('封面处理失败啦宝宝'); }
+    e.target.value = '';
+  });
+
+  $('sendFakeImgBtn').onclick = () => {
+    const desc = $('fakeImgDesc').value.trim();
+    if(!desc) return alert('描述不能为空哦！');
+    if(!currentFakeCover) return alert('请先上传一张封面图！');
+    
+    const fakeImgHtml = `<div style='position:relative;width:200px;height:200px;border-radius:12px;overflow:hidden;border:1px solid #e4e8f5;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.08);' onclick='this.children[0].style.display="none"; this.children[1].style.display="flex";'><div style='position:absolute;inset:0;background:url("${currentFakeCover}") center/cover;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:12px;color:#fff;font-weight:bold;font-size:14px;z-index:2;text-shadow:0 1px 4px rgba(0,0,0,0.6);transition:0.3s;'>🙈点击查看</div><div style='display:none;width:100%;height:100%;background:#f8f9ff;color:#666;font-size:13px;padding:15px;align-items:center;justify-content:center;text-align:center;z-index:1;word-break:break-all;'>[图片内容：${desc}]</div></div>`;
+    
+    pushUser(`【发送了一张图片】<br>${fakeImgHtml}`);
+    renderChat(); 
+    
+    $('fakeImgDesc').value = '';
+    $('fakeImgModal').classList.remove('active');
+    $('extraPanel').classList.add('hidden'); 
+  };
 })();
 </script>
 </body>
-</html>
+        </html>
