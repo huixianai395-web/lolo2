@@ -1816,23 +1816,7 @@ $("customBgFile").addEventListener("change", async (e) => {
     e.target.value = "";
   }
 });
-$("customBgFile").addEventListener("change", async (e) => {
-  const file = e.target.files?.[0];
-  if (!file) return;
-  try {
-    const bgData = await compressImage(file, true);
-    const wall = document.querySelector(".wall");
-    if (wall) {
-      wall.style.background = `url(${bgData}) center/cover no-repeat`;
-      localStorage.setItem("mp_fix_custom_bg", bgData);
-      alert("🎉 绝美高清大图上线！快看比例对不对！");
-    }
-  } catch (err) {
-    alert("壁纸更换失败：" + err.message);
-  } finally {
-    e.target.value = "";
-  }
-});
+
 $('audioUploadFile').addEventListener('change', async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
