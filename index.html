@@ -165,6 +165,8 @@
     #chatRoom:not(.offline) .bubble.me{background:#5f86ee;color:#fff;border:1px solid #4f77df;border-bottom-right-radius:4px}
     #chatRoom:not(.offline) .msg-time{font-size:10px;color:#97a3ba;margin-top:3px;padding:0 2px}
 
+    .bubble:has(.fake-img-bubble) { padding: 0 !important; background: transparent !important; border: none !important; box-shadow: none !important; }
+    
     #chatMsgs,#chatMsgs *{-webkit-touch-callout:none}
     .msg-item .bubble{user-select:none;-webkit-user-select:none}
 
@@ -276,7 +278,7 @@
     <div id="quoteText" class="quote-text"></div>
     <button id="clearQuoteBtn" class="quote-close">×</button>
   </div>
-  
+  
   <!-- 输入行：极致紧凑布局，把空间还给输入框！ -->
   <div style="display: flex; width: 100%; gap: 4px; align-items: flex-end;">
     <!-- 左侧 1：表情包 -->
@@ -287,10 +289,10 @@
     <button class="btn" style="padding: 0 2px; font-size: 26px; background: transparent; box-shadow: none;" onclick="document.getElementById('extraPanel').classList.toggle('hidden')">
       <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#7a86a8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
     </button>
-    
+    
     <!-- 中间：输入框 -->
     <textarea id="chatInput" class="ta" placeholder="输入消息..." style="flex: 1; margin: 0 4px;"></textarea>
-    
+    
     <!-- 右侧：储存和发送 -->
     <div class="send-actions" style="gap: 4px;">
       <button class="btn store" id="storeBtn" aria-label="储存"></button>
@@ -327,7 +329,7 @@
       <div onclick="alert('发文件！')" style="cursor: pointer;"><div style="width: 50px; height: 50px; background: #fff; border-radius: 12px; margin: 0 auto; display: grid; place-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05);"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f39c12" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg></div><div style="font-size: 11px; color: #666; margin-top: 5px;">发文件</div></div>
     </div>
   </div>
- </div>
+</div>
   </section>
 
   <section id="chatSetting" class="screen">
@@ -620,15 +622,13 @@
 
   const $=id=>document.getElementById(id);
   const clean=s=>String(s||'').trim();
-const esc=s=>{
+  const esc=s=>{
   let t = String(s||'').replace(/[&<>"']/g,m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
   // 豁免音频
   t = t.replace(/&lt;br&gt;&lt;audio controls style=&quot;(.*?)&quot;&gt;&lt;source src=&quot;(.*?)&quot; type=&quot;(.*?)&quot;&gt;&lt;\/audio&gt;/g, '<br><audio controls style="$1"><source src="$2" type="$3"></audio>');
-  // 🌟 豁免模拟图片！让它不再变成纯代码！🌟
-  t = t.replace(/&lt;div style=&#39;position:relative;width:200px;height:200px;border-radius:12px;(.*?)&lt;div style=&#39;display:none;(.*?)&gt;\[图片内容：(.*?)\]&lt;\/div&gt;&lt;\/div&gt;/g, function(match, p1, p2, p3) {
-    // 把转义过的单双引号和尖括号还原回去，让 HTML 重新生效！
-    let restored = match.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&#39;/g, "'").replace(/&quot;/g, '"').replace(/&amp;/g, '&');
-    return restored;
+  // 🌟 终极豁免模拟图片！🌟
+  t = t.replace(/&lt;div class=&quot;fake-img-bubble&quot;(.*?)&lt;div style=&quot;display:none;(.*?)&gt;(.*?)&lt;\/div&gt;&lt;\/div&gt;/g, function(match) {
+    return match.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&#39;/g, "'").replace(/&quot;/g, '"').replace(/&amp;/g, '&');
   });
   return t;
 };
@@ -1831,14 +1831,35 @@ let currentFakeCover = '';
     e.target.value = '';
   });
 
+  $('fakeCoverFile').addEventListener('change', async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      // 用最高质量压缩
+      currentFakeCover = await compressImage(file);
+      $('fakeCoverPreview').src = currentFakeCover;
+      $('fakeCoverPreview').style.display = 'block';
+      $('fakeCoverPreviewBox').style.display = 'none';
+    } catch(err) { alert('封面处理失败啦宝宝'); }
+    e.target.value = '';
+  });
+
   $('sendFakeImgBtn').onclick = () => {
     const desc = $('fakeImgDesc').value.trim();
     if(!desc) return alert('描述不能为空哦！');
     if(!currentFakeCover) return alert('请先上传一张封面图！');
     
-    const fakeImgHtml = `<div style='position:relative;width:200px;height:200px;border-radius:12px;overflow:hidden;border:1px solid #e4e8f5;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.08);' onclick='this.children[0].style.display="none"; this.children[1].style.display="flex";'><div style='position:absolute;inset:0;background:url("${currentFakeCover}") center/cover;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:12px;color:#fff;font-weight:bold;font-size:14px;z-index:2;text-shadow:0 1px 4px rgba(0,0,0,0.6);transition:0.3s;'>🙈点击查看</div><div style='display:none;width:100%;height:100%;background:#f8f9ff;color:#666;font-size:13px;padding:15px;align-items:center;justify-content:center;text-align:center;z-index:1;word-break:break-all;'>[图片内容：${desc}]</div></div>`;
+    // 终极魔法 HTML：无边框、来回切换、自适应高清、纯净描述！
+    const fakeImgHtml = `<div class="fake-img-bubble" style="position:relative; max-width:240px; border-radius:12px; overflow:hidden; cursor:pointer; box-shadow:0 2px 10px rgba(0,0,0,0.1);" onclick="const img=this.children[0]; const txt=this.children[1]; if(img.style.display==='none'){img.style.display='flex'; txt.style.display='none';}else{img.style.display='none'; txt.style.display='flex';}">
+      <div style="position:relative; width:100%; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+        <img src="${currentFakeCover}" style="width:100%; display:block; object-fit:contain;">
+        <div style="position:absolute; inset:0; background:rgba(0,0,0,0.3); display:flex; flex-direction:column; align-items:center; justify-content:flex-end; padding-bottom:12px; color:#fff; font-weight:bold; font-size:14px; z-index:2; text-shadow:0 1px 4px rgba(0,0,0,0.8);">🙈点击查看</div>
+      </div>
+      <div style="display:none; width:100%; min-height:150px; background:#f8f9ff; color:#333; font-size:14px; padding:15px; align-items:center; justify-content:center; text-align:center; word-break:break-all;">${desc}</div>
+    </div>`;
     
-    pushUser(`【发送了一张图片】<br>${fakeImgHtml}`);
+    // 直接发送，不要任何多余的文字和 <br>！
+    pushUser(fakeImgHtml);
     renderChat(); 
     
     $('fakeImgDesc').value = '';
@@ -1848,4 +1869,4 @@ let currentFakeCover = '';
 })();
 </script>
 </body>
-        </html>
+</html>
