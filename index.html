@@ -928,23 +928,27 @@ return `<div class="msg-item ${selected?'selected':''}${sCls}" data-mid="${m.id}
   function splitAiBubbles(raw){
   const txt=clean(raw);
   if(!txt) return ['...'];
-
   const byJson=parseJsonMessages(txt);
   if(byJson && byJson.length) return byJson;
 
-  // 句子级切分：一句话一个气泡
-  const s = txt
-    .replace(/\r/g,'')
-    .replace(/[ \t]+\n/g,'\n')
-    .replace(/\n{2,}/g,'\n');
+  const s=txt.replace(/\r/g,'').replace(/[ \t]+\n/g,'\n').replace(/\n{2,}/g,'\n');
 
-  const parts = s
-    .split(/(?<=[。！？!?…])\s*(?![”’」])|[\n]/)
-    .map(x=>x.trim())
-    .filter(Boolean);
+  const parts=[];
+  let buf='';
+  for(let i=0;i<s.length;i++){
+    const ch=s[i];
+    buf+=ch;
+    if('。！？!?…'.includes(ch) || ch==='\n'){
+      const t=buf.trim();
+      if(t) parts.push(t);
+      buf='';
+    }
+  }
+  const last=buf.trim();
+  if(last) parts.push(last);
 
   return parts.length?parts:[txt];
-}
+  }
   function enforceCountRange(parts,min,max){let arr=[...(parts||[])].filter(Boolean);max=Math.max(1,max);if(arr.length>max){const keep=arr.slice(0,max-1),tail=arr.slice(max-1).join(' ');return [...keep,tail];}return arr;}
 
   async function emitAiSequential(parts,targetId,mode){
