@@ -655,7 +655,7 @@ function refreshFontSizeUI(){
   function show(id){
     document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
     const el=$(id); if(el) el.classList.add('active');
-    if(id!=='favorites' && favNowTimer){ clearInterval(favNowTimer); favNowTimer=null; }
+    if(id!=='favorites' && favNowTimer){ clearInterval(favNowTimer); favNowTimer=null; }if(id==='chatRoom') setTimeout(scrollChatBottom, 30);
   }
   document.querySelectorAll('[data-nav]').forEach(el=>el.onclick=()=>show(el.getAttribute('data-nav')));
 
@@ -801,10 +801,11 @@ function compressImage(file, isWallpaper = false) {
   function updateChatSub(){$('chatSub').textContent=(currentId&&typingForId===currentId)?'对方正在输入中…':'';}
   function applyModeUI(){const c=getContactById(currentId),st=normSettings(c?.settings);$('chatRoom').classList.toggle('offline',st.mode==='offline');updateChatSub();}
 
-  window.openChat=function(id){
-    currentId=id;selectMode=false;selectedIds.clear();closeFloatMenu();composeQuote=null;updateQuoteBar();
-    const c=getContactById(id);$('chatTitle').textContent=c?c.name:'聊天';applyModeUI();renderChat();show('chatRoom');
-  };
+window.openChat=function(id){
+  currentId=id;selectMode=false;selectedIds.clear();closeFloatMenu();composeQuote=null;updateQuoteBar();
+  const c=getContactById(id);$('chatTitle').textContent=c?c.name:'聊天';applyModeUI();renderChat();show('chatRoom');
+  scrollChatBottom();
+};
 
   function renderQuote(q){ if(!q||!q.text) return ''; return `<div class="msg-quote"><div class="q-content">${esc(q.text)}</div></div>`; }
   function formatOfflineText(text){
@@ -876,6 +877,12 @@ rep(/"([^"]{1,200})"/g,'off-dialogue');
       persona: st.mePersona || globalMe.persona || '',
       note: st.meNote || globalMe.note || ''
     };
+    function scrollChatBottom(){
+  const el=$('chatMsgs');
+  if(!el) return;
+  requestAnimationFrame(()=>{ el.scrollTop=el.scrollHeight; });
+  setTimeout(()=>{ el.scrollTop=el.scrollHeight; },80);
+}
     const roleAvatar=c?.avatar||'https://via.placeholder.com/64x64?text=TA',meAvatar=me.avatar||'https://via.placeholder.com/64x64?text=我';
     const arr=getChatArr(currentId);
 
