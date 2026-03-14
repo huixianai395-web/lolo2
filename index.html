@@ -165,8 +165,6 @@
     #chatRoom:not(.offline) .bubble.me{background:#5f86ee;color:#fff;border:1px solid #4f77df;border-bottom-right-radius:4px}
     #chatRoom:not(.offline) .msg-time{font-size:10px;color:#97a3ba;margin-top:3px;padding:0 2px}
 
-    .bubble:has(.fake-img-bubble) { padding: 0 !important; background: transparent !important; border: none !important; box-shadow: none !important; }
-    
     #chatMsgs,#chatMsgs *{-webkit-touch-callout:none}
     .msg-item .bubble{user-select:none;-webkit-user-select:none}
 
@@ -273,63 +271,11 @@
   <div class="off-palette-row"><span>引用/特殊</span><input type="color" data-key="quote"></div>
   <div class="off-palette-row"><span>强调</span><input type="color" data-key="em"></div>
 </div>
- <div class="chatInputBar" id="chatInputWrap" style="flex-wrap: wrap;">
-  <div id="quoteBar" class="quote-bar hidden">
-    <div id="quoteText" class="quote-text"></div>
-    <button id="clearQuoteBtn" class="quote-close">×</button>
-  </div>
-  
-  <!-- 输入行：极致紧凑布局，把空间还给输入框！ -->
-  <div style="display: flex; width: 100%; gap: 4px; align-items: flex-end;">
-    <!-- 左侧 1：表情包 -->
-    <button class="btn" style="padding: 0 2px; font-size: 26px; background: transparent; box-shadow: none;" onclick="alert('表情包功能开发中！')">
-      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#7a86a8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
-    </button>
-    <!-- 左侧 2：➕ 按钮 -->
-    <button class="btn" style="padding: 0 2px; font-size: 26px; background: transparent; box-shadow: none;" onclick="document.getElementById('extraPanel').classList.toggle('hidden')">
-      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#7a86a8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
-    </button>
-    
-    <!-- 中间：输入框 -->
-    <textarea id="chatInput" class="ta" placeholder="输入消息..." style="flex: 1; margin: 0 4px;"></textarea>
-    
-    <!-- 右侧：储存和发送 -->
-    <div class="send-actions" style="gap: 4px;">
-      <button class="btn store" id="storeBtn" aria-label="储存"></button>
-      <button class="btn p" id="sendBtn">发送</button>
+    <div class="chatInputBar" id="chatInputWrap">
+      <div id="quoteBar" class="quote-bar hidden"><div id="quoteText" class="quote-text"></div><button id="clearQuoteBtn" class="quote-close">×</button></div>
+      <textarea id="chatInput" class="ta" placeholder="输入消息..."></textarea>
+      <div class="send-actions"><button class="btn store" id="storeBtn" aria-label="储存"></button><button class="btn p" id="sendBtn">发送</button></div>
     </div>
-  </div>
-
-  <!-- 隐藏的 12 宫格面板 -->
-  <div id="extraPanel" class="hidden" style="width: 100%; padding-top: 15px; border-top: 1px solid #e4e8f5; margin-top: 10px;">
-    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px 10px; text-align: center;">
-      <!-- 1 -->
-      <div onclick="alert('准备上传真实图片！')" style="cursor: pointer;"><div style="width: 50px; height: 50px; background: #fff; border-radius: 12px; margin: 0 auto; display: grid; place-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05);"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#4a90e2" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg></div><div style="font-size: 11px; color: #666; margin-top: 5px;">发图片</div></div>
-      <!-- 2. 模拟发图 (改回弹窗触发) -->
-      <div onclick="document.getElementById('fakeImgModal').classList.add('active')" style="cursor: pointer;"><div style="width: 50px; height: 50px; background: #fff; border-radius: 12px; margin: 0 auto; display: grid; place-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05);"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#9b59b6" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg></div><div style="font-size: 11px; color: #666; margin-top: 5px;">模拟发图</div></div>
-      <!-- 3 -->
-      <div onclick="document.getElementById('audioUploadFile').click()" style="cursor: pointer;"><input type="file" id="audioUploadFile" accept="audio/*,video/*" style="display:none;"><div style="width: 50px; height: 50px; background: #fff; border-radius: 12px; margin: 0 auto; display: grid; place-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05);"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2f66d8" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="22"></line><line x1="8" y1="22" x2="16" y2="22"></line></svg></div><div style="font-size: 11px; color: #666; margin-top: 5px;">传音频</div></div>
-      <!-- 4 -->
-      <div onclick="alert('发语音！')" style="cursor: pointer;"><div style="width: 50px; height: 50px; background: #fff; border-radius: 12px; margin: 0 auto; display: grid; place-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05);"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#67c23a" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="22"></line></svg></div><div style="font-size: 11px; color: #666; margin-top: 5px;">发语音</div></div>
-      <!-- 5 -->
-      <div onclick="alert('发红包！')" style="cursor: pointer;"><div style="width: 50px; height: 50px; background: #fff; border-radius: 12px; margin: 0 auto; display: grid; place-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05);"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f56c6c" stroke-width="2"><rect x="3" y="6" width="18" height="15" rx="2" ry="2"></rect><path d="M3 9l9 6 9-6"></path><circle cx="12" cy="15" r="2" fill="#f56c6c"></circle></svg></div><div style="font-size: 11px; color: #666; margin-top: 5px;">发红包</div></div>
-      <!-- 6 -->
-      <div onclick="alert('转账！')" style="cursor: pointer;"><div style="width: 50px; height: 50px; background: #fff; border-radius: 12px; margin: 0 auto; display: grid; place-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05);"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f5a623" stroke-width="2"><path d="M16 3h5v5"></path><path d="M4 20L21 3"></path><path d="M21 16v5h-5"></path><path d="M15 15l6 6"></path><path d="M4 4l5 5"></path></svg></div><div style="font-size: 11px; color: #666; margin-top: 5px;">转账</div></div>
-      <!-- 7 -->
-      <div onclick="alert('定位！')" style="cursor: pointer;"><div style="width: 50px; height: 50px; background: #fff; border-radius: 12px; margin: 0 auto; display: grid; place-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05);"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1abc9c" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg></div><div style="font-size: 11px; color: #666; margin-top: 5px;">定位</div></div>
-      <!-- 8 -->
-      <div onclick="alert('送礼！')" style="cursor: pointer;"><div style="width: 50px; height: 50px; background: #fff; border-radius: 12px; margin: 0 auto; display: grid; place-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05);"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ff4d6d" stroke-width="2"><polyline points="20 12 20 22 4 22 4 12"></polyline><rect x="2" y="7" width="20" height="5"></rect><line x1="12" y1="22" x2="12" y2="7"></line><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"></path><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"></path></svg></div><div style="font-size: 11px; color: #666; margin-top: 5px;">送礼物</div></div>
-      <!-- 9 -->
-      <div onclick="alert('外卖！')" style="cursor: pointer;"><div style="width: 50px; height: 50px; background: #fff; border-radius: 12px; margin: 0 auto; display: grid; place-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05);"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#e6a23c" stroke-width="2"><path d="M18 8h1a4 4 0 0 1 0 8h-1"></path><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"></path><line x1="6" y1="1" x2="6" y2="4"></line><line x1="10" y1="1" x2="10" y2="4"></line><line x1="14" y1="1" x2="14" y2="4"></line></svg></div><div style="font-size: 11px; color: #666; margin-top: 5px;">点外卖</div></div>
-      <!-- 10 -->
-      <div onclick="alert('语音通话！')" style="cursor: pointer;"><div style="width: 50px; height: 50px; background: #fff; border-radius: 12px; margin: 0 auto; display: grid; place-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05);"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#67c23a" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg></div><div style="font-size: 11px; color: #666; margin-top: 5px;">语音通话</div></div>
-      <!-- 11 -->
-      <div onclick="alert('视频通话！')" style="cursor: pointer;"><div style="width: 50px; height: 50px; background: #fff; border-radius: 12px; margin: 0 auto; display: grid; place-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05);"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#4a90e2" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg></div><div style="font-size: 11px; color: #666; margin-top: 5px;">视频通话</div></div>
-      <!-- 12 -->
-      <div onclick="alert('发文件！')" style="cursor: pointer;"><div style="width: 50px; height: 50px; background: #fff; border-radius: 12px; margin: 0 auto; display: grid; place-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05);"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f39c12" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg></div><div style="font-size: 11px; color: #666; margin-top: 5px;">发文件</div></div>
-    </div>
-  </div>
-</div>
   </section>
 
   <section id="chatSetting" class="screen">
@@ -531,32 +477,6 @@
     </div>
   </section>
 
-<div id="fakeImgModal" class="modal">
-    <div class="modal-card">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-        <h3 style="margin:0; color:#333;">发送模拟图片</h3>
-        <button class="btn" style="font-size:12px; padding:4px 8px; background:#eef3ff; color:#2f66d8;" onclick="document.getElementById('fakeCoverFile').click()">更换封面</button>
-        <input type="file" id="fakeCoverFile" accept="image/*" style="display:none;">
-      </div>
-      
-      <!-- 干净的上传提示框 -->
-      <div id="fakeCoverPreviewBox" style="width:120px; height:120px; border-radius:12px; border:2px dashed #d7e3ff; margin:0 auto 15px; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#a0b0d0; cursor:pointer;" onclick="document.getElementById('fakeCoverFile').click()">
-        <i class="fas fa-image" style="font-size:32px; margin-bottom:8px;"></i>
-        <span style="font-size:12px;">点击上传封面</span>
-      </div>
-      <!-- 真正上传后显示的图片 -->
-      <img id="fakeCoverPreview" src="" style="width:120px; height:120px; border-radius:12px; object-fit:cover; border:2px dashed #d7e3ff; display:none; margin:0 auto 15px;">
-      
-      <div class="small" style="margin-bottom:5px;">图片内容描述 (AI会看到这个)：</div>
-      <textarea id="fakeImgDesc" class="ta" placeholder="例如：一张穿着睡衣的绝美自拍..." style="height:100px; resize:none;"></textarea>
-      
-      <div style="display:flex; gap:10px; margin-top:20px;">
-        <button class="btn" style="flex:1; background:#f2f3f6; color:#666;" onclick="document.getElementById('fakeImgModal').classList.remove('active')">取消</button>
-        <button class="btn p" style="flex:1;" id="sendFakeImgBtn">发送</button>
-      </div>
-    </div>
-  </div>
-  <!-- 👆👆👆 弹窗 UI 结束 👆👆👆 -->
   <div id="contactModal" class="modal">
     <div class="modal-card">
       <h3 style="margin:0 0 10px;">创建联系人</h3>
@@ -622,15 +542,7 @@
 
   const $=id=>document.getElementById(id);
   const clean=s=>String(s||'').trim();
-  const esc=s=>{
-  let t = String(s||'');
-  // 🌟 终极特权：如果是咱们自己发的音频或模拟图片，直接免检放行！不转义！绝对不卡！
-  if (t.includes('<audio controls') || t.includes('fake-img-bubble')) {
-    return t; 
-  }
-  // 普通聊天文字，正常转义防黑客
-  return t.replace(/[&<>"']/g,m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
-};
+  const esc=s=>String(s||'').replace(/[&<>"']/g,m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;' }[m]));
   // HTML检测与封装
   function isHtmlDoc(s){s=String(s||'');return /^\s*<!doctype html/i.test(s)||/<html[\s>]/i.test(s);} 
   function isHtmlFrag(s){s=String(s||'');return /<([a-z][\w-]*)(\s|>)/i.test(s)&&!isHtmlDoc(s);} 
@@ -837,7 +749,7 @@ function compressImage(file, isWallpaper = false) {
         const c=document.createElement('canvas');
         const ctx=c.getContext('2d');
 
-        if (p.avatarCrop && !isWallpaper) {
+      if (p.avatarCrop && !isWallpaper) {
           c.width=maxSide; c.height=maxSide;
           ctx.fillStyle='#fff'; ctx.fillRect(0,0,maxSide,maxSide);
           const side=Math.min(img.width,img.height);
@@ -946,12 +858,7 @@ rep(/"([^"]{1,200})"/g,'off-dialogue');
       return `${quote}<div class="bubble ${cls} ${hidden}"><div class="html-embed"><iframe sandbox="allow-same-origin allow-scripts" referrerpolicy="no-referrer" src="${src}"></iframe></div></div>${ts}`;
     }
     if(!isMe && isHtmlFrag(t)){
-  const src=toHtmlDataUrl(t);
-  return `${quote}<div class="bubble ${cls} ${hidden}">
-    <div class="html-embed">
-      <iframe sandbox="allow-same-origin allow-scripts" referrerpolicy="no-referrer" src="${src}"></iframe>
-    </div>
-  </div>${ts}`;
+      return `${quote}<div class="bubble ${cls} ${hidden}">${t}</div>${ts}`;
     }
     return `${quote}<div class="bubble ${cls} ${hidden}">${esc(t)}</div>${ts}`;
   }
@@ -1013,42 +920,7 @@ return `<div class="msg-item ${selected?'selected':''}${sCls}" data-mid="${m.id}
     if(m){try{const j=JSON.parse(m[0]);if(Array.isArray(j?.messages)) return j.messages.map(x=>clean(x)).filter(Boolean);}catch{}}
     return null;
   }
-  function splitAiBubbles(raw) {
-    const txt = clean(raw);
-    if (!txt) return ['...'];
-
-    let bubbles = [];
-    
-    // 🌟 第一步：先老老实实解析 JSON！保证结构不被破坏！
-    const byJson = parseJsonMessages(txt);
-    if (byJson && byJson.length) {
-      bubbles = byJson;
-    } else {
-      // 如果 AI 真的抽风没发 JSON，启动终极暴力清洗
-      let fallbackTxt = txt.replace(/```json/gi, '').replace(/```/g, '').trim();
-      fallbackTxt = fallbackTxt.replace(/^\{[\s\S]*?"messages"\s*:\s*\[/i, '');
-      fallbackTxt = fallbackTxt.replace(/\]\s*\}\s*$/i, '');
-      fallbackTxt = fallbackTxt.replace(/",\s*"/g, '\n');
-      fallbackTxt = fallbackTxt.replace(/^"|"$/g, '');
-      bubbles = fallbackTxt.split(/\n{1,}/).filter(Boolean);
-    }
-
-    // 🌟 自动窃取老婆上传的封面！
-    const userUploadedCover = document.getElementById('fakeCoverPreview')?.src;
-    const aiDefaultCover = (userUploadedCover && userUploadedCover.length > 100) ? userUploadedCover : 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiNlMmU4ZjAiLz48L3N2Zz4=';
-
-    // 🌟 第二步：在解析好的、干净的句子里，把暗号替换成气泡！
-    return bubbles.map(bubble => {
-      // 清理残留的孤儿引号和逗号
-      let cleanBubble = bubble.replace(/^"|"$/g, '').trim();
-      cleanBubble = cleanBubble.replace(/",$/, '').trim();
-
-      return cleanBubble.replace(/\[发送图片：(.*?)\]/g, function(match, p1) {
-        const desc = p1.trim();
-        return `<div class="fake-img-bubble" style="position:relative; width:140px; height:140px; border-radius:12px; overflow:hidden; box-shadow:0 2px 10px rgba(0,0,0,0.1); font-size:0; background:#f8f9ff;"><div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer;" onclick="this.style.display='none'; this.nextElementSibling.style.display='block';"><img src="${aiDefaultCover}" style="width:100%; height:100%; display:block; object-fit:cover;"><div style="position:absolute; bottom:15%; width:100%; text-align:center; color:#fff; font-weight:bold; font-size:12px; letter-spacing:2px; z-index:2; pointer-events:none; text-shadow:0 1px 4px rgba(0,0,0,0.8);">点击查看</div></div><div style="display:none; position:absolute; inset:0; background:#f8f9ff; z-index:3;"><div style="position:absolute; top:4px; right:4px; width:22px; height:22px; background:rgba(0,0,0,0.08); border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; z-index:10; color:#555;" onclick="this.parentElement.style.display='none'; this.parentElement.previousElementSibling.style.display='flex';"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></div><div style="position:absolute; top:0; left:0; right:0; bottom:0; padding:20px 10px 10px 10px; text-align:left; word-break:break-all; line-height:1.5; font-size:12px; color:#333; overflow-y:auto; -webkit-overflow-scrolling:touch; display:block;">${desc}</div></div></div>`;
-      });
-    }).filter(b => b.trim() !== ''); // 过滤掉空气泡
-  }
+  function splitAiBubbles(raw){const txt=clean(raw);if(!txt) return ['...'];const byJson=parseJsonMessages(txt);if(byJson&&byJson.length) return byJson;return txt.replace(/\r/g,'').replace(/[ \t]+\n/g,'\n').replace(/\n{3,}/g,'\n\n').trim().split(/\n{1,}/).filter(Boolean);} 
   function enforceCountRange(parts,min,max){let arr=[...(parts||[])].filter(Boolean);max=Math.max(1,max);if(arr.length>max){const keep=arr.slice(0,max-1),tail=arr.slice(max-1).join(' ');return [...keep,tail];}return arr;}
 
   async function emitAiSequential(parts,targetId,mode){
@@ -1233,7 +1105,6 @@ $('applyBubblePresetBtn').onclick=saveBubblePresetForm;
       `3. 绝对不要在回复中暴露你是AI或程序。`,
       `4. 具备真实的时间观念：根据“上一次消息时间与当前系统时间”的间隔，自然体现时间流逝（如久未回复后的轻微反应等），但不要刻意或模板化。`,
       `5. 正常使用中文标点符号，不得用空格替代标点或分隔句子。`,
-      `6.【发送图片指令】：当你需要向对方发送图片时，必须严格使用此格式：[发送图片：这里详细描述图片的内容和细节]。此格式会被系统自动渲染为图片气泡。`,
       `【输出格式铁律】：`,
       `只允许输出严格的JSON格式，包含一个"messages"数组：{"messages":["第一句...","第二句..."]}`,
       rangeRule
@@ -1281,8 +1152,7 @@ const chatId=currentId,c=getContactById(chatId),st=normSettings(c?.settings),glo
 
     try{
       const system=st.mode==='offline'?buildOfflineSystem(c,me,st):buildOnlineSystem(c,me,st);
-      const cleanHist = hist.map(x => ({ role: x.role === 'user' ? 'user' : 'assistant', content: x.text.replace(/<div class="fake-img-bubble"[\s\S]*?<\/div><\/div><\/div>/g, '[图片]') }));
-      const messages = [{ role: 'system', content: system }, ...cleanHist];
+      const messages=[{role:'system',content:system},...hist.map(x=>({role:x.role==='user'?'user':'assistant',content:x.text}))];
       const out=await callApi(messages);
 
       let parts=[];
@@ -1821,94 +1691,7 @@ $("customBgFile").addEventListener("change", async (e) => {
     e.target.value = "";
   }
 });
-$("customBgFile").addEventListener("change", async (e) => {
-  const file = e.target.files?.[0];
-  if (!file) return;
-  try {
-    const bgData = await compressImage(file, true);
-    const wall = document.querySelector(".wall");
-    if (wall) {
-      wall.style.background = `url(${bgData}) center/cover no-repeat`;
-      localStorage.setItem("mp_fix_custom_bg", bgData);
-      alert("🎉 绝美高清大图上线！快看比例对不对！");
-    }
-  } catch (err) {
-    alert("壁纸更换失败：" + err.message);
-  } finally {
-    e.target.value = "";
-  }
-});
-$('audioUploadFile').addEventListener('change', async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    try {
-      const reader = new FileReader();
-      reader.onload = () => {
-        // 直接拼成一个可以点击播放的 HTML 音频标签
-        const audioHtml = `<br><audio controls style="max-width: 100%; height: 35px; margin-top: 5px; outline: none;"><source src="${reader.result}" type="${file.type}"></audio>`;
-        // 调用你代码里现成的 pushUser 函数，直接发出去！
-        pushUser("🎵 发送了一段媒体文件：" + audioHtml);
-        renderChat(); // 刷新聊天界面
-      };
-      reader.readAsDataURL(file); // 转换成 Base64 存在本地
-    } catch (err) {
-      alert("音频上传失败了宝宝：" + err.message);
-    } finally {
-      e.target.value = '';
-    }
   });
-  });
-let currentFakeCover = '';
-  
-  $('fakeCoverFile').addEventListener('change', async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    try {
-      currentFakeCover = await compressImage(file);
-      $('fakeCoverPreview').src = currentFakeCover;
-      $('fakeCoverPreview').style.display = 'block';
-      $('fakeCoverPreviewBox').style.display = 'none';
-    } catch(err) { alert('封面处理失败啦宝宝'); }
-    e.target.value = '';
-  });
-
-  $('sendFakeImgBtn').onclick = () => {
-    const desc = $('fakeImgDesc').value.trim();
-    if(!desc) return alert('描述不能为空哦！');
-    if(!currentFakeCover) return alert('请先上传一张封面图！');
-    
-const fakeImgHtml = `<div class="fake-img-bubble" style="position:relative; width:140px; height:140px; border-radius:12px; overflow:hidden; box-shadow:0 2px 10px rgba(0,0,0,0.1); font-size:0; background:#f8f9ff;">
-      
-      <!-- 图片层 -->
-      <div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer;" onclick="this.style.display='none'; this.nextElementSibling.style.display='block';">
-        <img src="${currentFakeCover}" style="width:100%; height:100%; display:block; object-fit:cover;">
-        <!-- 👇 这里把黑色遮罩彻底扒光了！只留四个字，放在中间偏下的位置！ 👇 -->
-        <div style="position:absolute; bottom:15%; width:100%; text-align:center; color:#fff; font-weight:bold; font-size:12px; letter-spacing:2px; z-index:2; pointer-events:none; text-shadow:0 1px 4px rgba(0,0,0,0.8);">
-          点击查看
-        </div>
-      </div>
-      
-      <!-- 文字层：彻底抛弃Flex，改用 block 布局，暴力置顶！ -->
-      <div style="display:none; position:absolute; inset:0; background:#f8f9ff; z-index:3;">
-        <!-- 返回按钮 -->
-        <div style="position:absolute; top:4px; right:4px; width:22px; height:22px; background:rgba(0,0,0,0.08); border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; z-index:10; color:#555;" onclick="this.parentElement.style.display='none'; this.parentElement.previousElementSibling.style.display='flex';">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-        </div>
-        <!-- 文字区：暴力置顶，丝滑滚动 -->
-        <div style="position:absolute; top:0; left:0; right:0; bottom:0; padding:20px 10px 10px 10px; text-align:left; word-break:break-all; line-height:1.5; font-size:12px; color:#333; overflow-y:auto; -webkit-overflow-scrolling:touch; display:block;">
-          ${desc}
-        </div>
-      </div>
-      
-    </div>`;
-    
-    pushUser(fakeImgHtml);
-    renderChat(); 
-    
-    $('fakeImgDesc').value = '';
-    $('fakeImgModal').classList.remove('active');
-    $('extraPanel').classList.add('hidden'); 
-  };
 })();
 </script>
 </body>
