@@ -994,8 +994,8 @@ return `<div class="msg-item ${selected?'selected':''}${sCls}" data-mid="${m.id}
 
   // ✨ 蓝色宝宝的智能识别魔法 V2.0！✨
   // 用更精确的正则表达式来判断是不是真的HTML，而不是表情包！
-  const isHtmlLike = /<[a-z][\s\S]*>/i.test(txt); 
-  
+  const isHtmlLike = /<[a-z][\s\S]*>/i.test(txt); 
+  
   const isCodeLike =
     isHtmlLike || // 使用我们新的、更聪明的判断！
     (txt.includes('{') && txt.includes('}')) ||
@@ -1027,27 +1027,7 @@ return `<div class="msg-item ${selected?'selected':''}${sCls}" data-mid="${m.id}
   return parts.length ? parts : [txt];
   }
 
-  // --- 下面是原来的逻辑，处理普通对话 ---
-  const byJson = parseJsonMessages(txt);
-  if (byJson && byJson.length) return byJson;
-
-  const s = txt.replace(/\r/g, '').replace(/[ \t]+\n/g, '\n').replace(/\n{2,}/g, '\n');
-  const parts = [];
-  let buf = '';
-  for (let i = 0; i < s.length; i++) {
-    const ch = s[i];
-    buf += ch;
-    if ('。！？!?…'.includes(ch) || ch === '\n') {
-      const t = buf.trim();
-      if (t) parts.push(t);
-      buf = '';
-    }
-  }
-  const last = buf.trim();
-  if (last) parts.push(last);
-
-  return parts.length ? parts : [txt];
-}
+ 
   function enforceCountRange(parts,min,max){let arr=[...(parts||[])].filter(Boolean);max=Math.max(1,max);if(arr.length>max){const keep=arr.slice(0,max-1),tail=arr.slice(max-1).join(' ');return [...keep,tail];}return arr;}
 
   async function emitAiSequential(parts,targetId,mode){
