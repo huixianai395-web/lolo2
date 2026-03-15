@@ -322,7 +322,8 @@
   <div class="func-icon" data-func="redpacket"><div class="ibox2">🧧</div><div class="lab2">发红包</div></div>
   <div class="func-icon" data-func="location"><div class="ibox2">📍</div><div class="lab2">定位</div></div>
   <div class="func-icon" data-func="gift"><div class="ibox2">🎁</div><div class="lab2">送礼物</div></div>
-</div>
+<div class="func-icon" data-func="imgupload"><div class="ibox2">🖼️</div><div class="lab2">图片</div></div>
+<input id="imgUploadInput" type="file" accept="image/*" class="hidden"/></div>
       <div class="left-actions"><button class="btn" id="emojiBtn" style="width:40px;height:40px;padding:0;border-radius:999px;font-size:18px;">😊</button><button class="btn" id="funcToggleBtn" style="width:40px;height:40px;padding:0;border-radius:999px;font-size:20px;">+</button></div><textarea id="chatInput" class="ta" placeholder="输入消息..."></textarea>
       <div class="send-actions"><button class="btn store" id="storeBtn" aria-label="储存"></button><button class="btn p" id="sendBtn">发送</button></div>
     </div>
@@ -915,7 +916,10 @@ rep(/"([^"]{1,200})"/g,'off-dialogue');
     if(isHtmlFrag(t)){
   return `${quote}<div class="bubble ${cls} ${hidden} bubble-card">${t}</div>${ts}`;
 }
-    return `${quote}<div class="bubble ${cls} ${hidden}">${esc(t)}</div>${ts}`;
+    if(t.startsWith('__IMG__')){
+  const src=t.slice(7);
+  return `${quote}<div class="bubble ${cls} ${hidden} bubble-card"><img src="${src}" style="max-width:160px;max-height:160px;border-radius:8px;display:block;cursor:pointer;" onclick="window._viewImg('${src}')"></div>${ts}`;
+}return `${quote}<div class="bubble ${cls} ${hidden}">${esc(t)}</div>${ts}`;
   }
 
   function renderChat(){
@@ -1193,7 +1197,7 @@ $('applyBubblePresetBtn').onclick=saveBubblePresetForm;
       `4. 具备真实的时间观念：根据“上一次消息时间与当前系统时间”的间隔，自然体现时间流逝（如久未回复后的轻微反应等），但不要刻意或模板化。`,
       `5. 正常使用中文标点符号，不得用空格替代标点或分隔句子。`,
       `6.【气泡规则】：尽量做到一句话一个气泡；如果包含多句，请拆成多个气泡。除非特殊语境，不要把多句塞进一个气泡。`,
-`7.【渲染提示】：收到对方红包时选择——【领取】输出：<div class="card-redpacket received"><div style="width:100%"><div style="display:flex;gap:12px;align-items:center;"><div class="rp-icon">🧧</div><div class="rp-info"><div class="rp-title">已领取</div></div></div></div></div>；【拒绝】输出：<div class="card-redpacket rejected"><div style="width:100%"><div style="display:flex;gap:12px;align-items:center;"><div class="rp-icon">🧧</div><div class="rp-info"><div class="rp-title">已退回</div></div></div></div></div>。收到转账时选择——【收款】输出：<div class="card-transfer received"><div class="ct-header"><span>💸</span>微信转账</div><div class="ct-amount">✓ 已收款</div><div class="ct-note">微信安全转账</div></div>；【拒收】输出：<div class="card-transfer rejected"><div class="ct-header"><span>💸</span>微信转账</div><div class="ct-amount">已拒收</div><div class="ct-note">微信安全转账</div></div>。AI主动发红包：<div class="card-redpacket"><div class="rp-main"><div class="rp-icon">🧧</div><div><div class="rp-title">祝福语</div><div class="rp-sub">¥金额 微信红包</div></div></div><hr class="rp-divider"><div class="rp-footer"><div class="rp-label">微信红包</div><button class="rp-btn">点击领取</button></div></div>。AI主动发转账：<div class="card-transfer"><div class="ct-header"><span>💸</span>微信转账</div><div class="ct-amount">¥金额</div><div class="ct-note">备注</div><hr class="ct-divider"><div class="ct-footer"><div class="ct-label">微信安全转账</div><button class="ct-btn">确认收款</button></div></div>。发礼物：<div class="card-gift"><div class="gift-icon">🎁</div><div class="gift-name">礼物名</div><div class="gift-note">留言</div></div>。发定位：<div class="card-location"><div class="loc-map">📍</div><div class="loc-info"><div class="loc-name">地点名</div><div class="loc-addr">地址</div></div></div>。以上所有卡片必须是纯HTML字符串直接放在messages数组元素里，禁止输出JSON对象格式，禁止用花括号包裹卡片内容。收到红包/转账时，只输出对应的卡片HTML，前后不能有任何文字，不能有"啊""好的""谢谢"等语句出现在同一个messages元素里。文字回应要单独作为一条messages元素。卡片HTML里的属性值必须用单引号，例如 class='card-redpacket'，不能用双引号，否则会破坏JSON结构。`,
+`7.【渲染提示】：收到对方红包时选择——【领取】输出：<div class="card-redpacket received"><div style="width:100%"><div style="display:flex;gap:12px;align-items:center;"><div class="rp-icon">🧧</div><div class="rp-info"><div class="rp-title">已领取</div></div></div></div></div>；【拒绝】输出：<div class="card-redpacket rejected"><div style="width:100%"><div style="display:flex;gap:12px;align-items:center;"><div class="rp-icon">🧧</div><div class="rp-info"><div class="rp-title">已退回</div></div></div></div></div>。收到转账时选择——【收款】输出：<div class="card-transfer received"><div class="ct-header"><span>💸</span>微信转账</div><div class="ct-amount">✓ 已收款</div><div class="ct-note">微信安全转账</div></div>；【拒收】输出：<div class="card-transfer rejected"><div class="ct-header"><span>💸</span>微信转账</div><div class="ct-amount">已拒收</div><div class="ct-note">微信安全转账</div></div>。AI主动发红包：<div class="card-redpacket"><div class="rp-main"><div class="rp-icon">🧧</div><div><div class="rp-title">祝福语</div><div class="rp-sub">¥金额 微信红包</div></div></div><hr class="rp-divider"><div class="rp-footer"><div class="rp-label">微信红包</div><button class="rp-btn">点击领取</button></div></div>。AI主动发转账：<div class="card-transfer"><div class="ct-header"><span>💸</span>微信转账</div><div class="ct-amount">¥金额</div><div class="ct-note">备注</div><hr class="ct-divider"><div class="ct-footer"><div class="ct-label">微信安全转账</div><button class="ct-btn">确认收款</button></div></div>。发礼物：<div class="card-gift"><div class="gift-icon">🎁</div><div class="gift-name">礼物名</div><div class="gift-note">留言</div></div>。发定位：<div class="card-location"><div class="loc-map">📍</div><div class="loc-info"><div class="loc-name">地点名</div><div class="loc-addr">地址</div></div></div>。以上所有卡片必须是纯HTML字符串直接放在messages数组元素里，禁止输出JSON对象格式，禁止用花括号包裹卡片内容。收到红包/转账时，只输出对应的卡片HTML，前后不能有任何文字，不能有"啊""好的""谢谢"等语句出现在同一个messages元素里。文字回应要单独作为一条messages元素。`,
 `8.【输出格式铁律】：`,
        `只允许输出严格的JSON格式，包含一个"messages"数组：{"messages":["第一句...","第二句..."]}`,
       rangeRule
@@ -1242,7 +1246,12 @@ const chatId=currentId,c=getContactById(chatId),st=normSettings(c?.settings),glo
 
     try{
       const system=st.mode==='offline'?buildOfflineSystem(c,me,st):buildOnlineSystem(c,me,st);
-      const messages=[{role:'system',content:system},...hist.map(x=>({role:x.role==='user'?'user':'assistant',content:x.text}))];
+      const messages=[{role:'system',content:system},...hist.map(x=>{
+  if(x.role==='user'&&x.text.startsWith('__IMG__')){
+    return {role:'user',content:[{type:'image_url',image_url:{url:x.text.slice(7)}}]};
+  }
+  return {role:x.role==='user'?'user':'assistant',content:x.text};
+})];
       const out=await callApi(messages);
 
       let parts=[];
@@ -1701,7 +1710,13 @@ offPanel.addEventListener('change',applyOfflineColor); // 手机端更稳
 document.addEventListener('click',e=>{
   if(offPanel && !offPanel.contains(e.target)) offPanel.classList.remove('show');
 });
-
+window._viewImg=function(src){
+  const o=document.createElement('div');
+  o.style.cssText='position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.85);display:grid;place-items:center;';
+  o.innerHTML=`<img src="${src}" style="max-width:95vw;max-height:90vh;border-radius:10px;">`;
+  o.onclick=()=>o.remove();
+  document.body.appendChild(o);
+};
   initAppStorage().then(()=>{
     applyBubbleCss();
     applyCustomFont();
@@ -1871,7 +1886,14 @@ $("customBgFile").addEventListener("change", async (e) => {
     e.target.value = "";
   }
 });
-  });
+  });$('imgUploadInput').onchange=async e=>{
+  const f=e.target.files?.[0]; if(!f||!currentId) return;
+  const compressed=await compressImage(f);
+  const arr=getChatArr(currentId);
+  arr.push(toMsg({role:'user',text:'__IMG__'+compressed,time:Date.now()}));
+  setChatArr(currentId,arr);updateContactPreview(currentId);renderChat();
+  e.target.value='';
+};
   // 功能面板
 $('funcToggleBtn').onclick=()=>{
   const p=$('funcPanel');
@@ -1896,7 +1918,10 @@ function buildFuncCard(type,data){
 document.querySelectorAll('.func-icon[data-func]').forEach(el=>{
   el.onclick=()=>{
     $('funcPanel').classList.remove('show');
-    const type=el.dataset.func,cfg=FUNC_DIALOGS[type]; if(!cfg) return;
+    const type=el.dataset.func,cfg=FUNC_DIALOGS[type]; if(type==='imgupload'){
+  $('imgUploadInput').click();
+  return;
+}if(!cfg) return;
     let html=`<b>${cfg.title}</b><br><br>`;
     cfg.fields.forEach(f=>{ html+=`<div style="margin-bottom:8px;"><div class="small">${f.label}</div><input id="fd_${f.key}" class="input" type="${f.type||'text'}" placeholder="${f.placeholder}" style="margin-top:4px;"></div>`; });
     const modal=document.createElement('div');
