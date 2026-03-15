@@ -299,6 +299,10 @@
     box-shadow: inset 0 2px 4px rgba(130, 160, 210, 0.15);
     background: linear-gradient(180deg, #e4eefe, #e8f1ff);
 }
+/* 让我们的新SVG图标继承按钮的颜色！*/
+.chat-action-btn svg {
+    color: inherit; /* 这一句是魔法！它会自动使用 .chat-action-btn 上设置的 #5c87e9 颜色！*/
+}
   </style>
   <script src="https://cdn.jsdelivr.net/npm/localforage@1.10.0/dist/localforage.min.js"></script>
 </head>
@@ -354,7 +358,7 @@
   <div class="func-icon" data-func="gift"><div class="ibox2">🎁</div><div class="lab2">送礼物</div></div>
 <div class="func-icon" data-func="imgupload"><div class="ibox2">🖼️</div><div class="lab2">图片</div></div>
 <input id="imgUploadInput" type="file" accept="image/*" class="hidden"/></div>
-      <div class="left-actions"><button class="chat-action-btn" id="emojiBtn" >😊</button><button class="btn" id="funcToggleBtn" style="width:40px;height:40px;padding:0;border-radius:999px;font-size:20px;">+</button></div><textarea id="chatInput" class="ta" placeholder="输入消息..."></textarea>
+      <div class="left-actions"><button class="chat-action-btn" id="emojiBtn" ><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg></button><button class="btn" id="funcToggleBtn" style="width:40px;height:40px;padding:0;border-radius:999px;font-size:20px;">+</button></div><textarea id="chatInput" class="ta" placeholder="输入消息..."></textarea>
       <div class="send-actions"><button class="btn store" id="storeBtn" aria-label="储存"></button><button class="btn p" id="sendBtn">发送</button></div>
     </div>
   </section>
