@@ -918,7 +918,8 @@ rep(/"([^"]{1,200})"/g,'off-dialogue');
 }
     if(t.startsWith('__IMG__')){
   const src=t.slice(7);
-  return `${quote}<div class="bubble ${cls} ${hidden} bubble-card"><img src="${src}" style="max-width:160px;max-height:160px;border-radius:8px;display:block;cursor:pointer;" onclick="window._viewImg('${src}')"></div>${ts}`;
+  return `${quote}<div class="bubble ${cls} ${hidden} bubble-card"><img src="${src}" style="width:120px;height:120px;object-fit:cover;border-radius:8px;display:block;"></div>${ts}`;
+}
 }return `${quote}<div class="bubble ${cls} ${hidden}">${esc(t)}</div>${ts}`;
   }
 
@@ -1710,13 +1711,7 @@ offPanel.addEventListener('change',applyOfflineColor); // 手机端更稳
 document.addEventListener('click',e=>{
   if(offPanel && !offPanel.contains(e.target)) offPanel.classList.remove('show');
 });
-window._viewImg=function(src){
-  const o=document.createElement('div');
-  o.style.cssText='position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.85);display:grid;place-items:center;';
-  o.innerHTML=`<img src="${src}" style="max-width:95vw;max-height:90vh;border-radius:10px;">`;
-  o.onclick=()=>o.remove();
-  document.body.appendChild(o);
-};
+
   initAppStorage().then(()=>{
     applyBubbleCss();
     applyCustomFont();
