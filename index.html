@@ -233,63 +233,45 @@
 .func-icon .lab2{font-size:11px;color:#555;}
 .func-icon:active .ibox2{transform:scale(.88);}
 
-/* 转账卡片 */
-.card-transfer{background:linear-gradient(135deg,#c0392b,#e74c3c);color:#fff;border-radius:14px;padding:12px 14px;min-width:180px;}
-.card-transfer .ct-amount{font-size:22px;font-weight:700;margin:4px 0;}
-.card-transfer .ct-note{font-size:12px;opacity:.85;}
-.card-transfer .ct-label{font-size:11px;opacity:.7;border-top:1px solid rgba(255,255,255,.25);margin-top:8px;padding-top:6px;}
+.card-transfer{background:linear-gradient(145deg,#1c1828,#13101e);border:1px solid rgba(160,140,255,.15);border-radius:14px;padding:12px 14px;width:200px;box-shadow:0 6px 20px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.06);color:#e8e0ff;position:relative;overflow:hidden;}
+.card-transfer::before{content:"";position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(180,160,255,.35),transparent);}
+.card-transfer .ct-header{display:flex;align-items:center;gap:6px;font-size:11px;color:#7060a8;margin-bottom:8px;}
+.card-transfer .ct-header span{font-size:14px;}
+.card-transfer .ct-amount{font-size:22px;font-weight:700;color:#c8b8ff;letter-spacing:-0.5px;line-height:1;}
+.card-transfer .ct-note{font-size:11px;color:#6858a0;margin-top:4px;}
+.card-transfer .ct-divider{border:none;border-top:1px solid rgba(120,100,200,.12);margin:10px 0 8px;}
+.card-transfer .ct-footer{display:flex;align-items:center;justify-content:space-between;}
+.card-transfer .ct-label{font-size:10px;color:#504880;}
+.card-transfer .ct-btn{background:rgba(160,140,255,.14);border:1px solid rgba(160,140,255,.25);color:#c0b0ff;border-radius:12px;padding:4px 12px;font-size:11px;cursor:pointer;}
+.card-transfer .ct-received{font-size:11px;color:#9080c0;margin-top:4px;}
+.card-transfer.received,.card-redpacket.received{filter:saturate(.25) brightness(.7);pointer-events:none;}
+.card-transfer.rejected,.card-redpacket.rejected{filter:saturate(.15) brightness(.6);opacity:.65;pointer-events:none;}
 
-/* 红包卡片 */
-.card-redpacket{background:linear-gradient(135deg,#c0392b,#e67e22);color:#fff;border-radius:14px;padding:12px 14px;min-width:160px;display:flex;align-items:center;gap:10px;}
-.card-redpacket .rp-icon{font-size:32px;}
-.card-redpacket .rp-info .rp-title{font-size:14px;font-weight:700;}
-.card-redpacket .rp-info .rp-note{font-size:11px;opacity:.8;margin-top:2px;}
-.card-redpacket .rp-open{margin-top:8px;font-size:11px;opacity:.65;border-top:1px solid rgba(255,255,255,.25);padding-top:6px;text-align:center;}
+.card-redpacket{background:linear-gradient(145deg,#1e1218,#150e14);border:1px solid rgba(220,100,80,.15);border-radius:14px;padding:11px 13px;width:200px;box-shadow:0 6px 20px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.05);color:#ffe0d8;position:relative;overflow:hidden;}
+.card-redpacket::before{content:"";position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,120,90,.35),transparent);}
+.card-redpacket .rp-main{display:flex;gap:10px;align-items:center;}
+.card-redpacket .rp-icon{font-size:28px;filter:drop-shadow(0 3px 6px rgba(255,80,40,.35));flex-shrink:0;}
+.card-redpacket .rp-title{font-size:13px;font-weight:600;color:#ffb8a8;line-height:1.3;}
+.card-redpacket .rp-sub{font-size:10px;color:#c08070;margin-top:2px;}
+.card-redpacket .rp-divider{border:none;border-top:1px solid rgba(200,80,60,.12);margin:9px 0 7px;}
+.card-redpacket .rp-footer{display:flex;align-items:center;justify-content:space-between;}
+.card-redpacket .rp-label{font-size:10px;color:#7a5040;}
+.card-redpacket .rp-btn{background:rgba(255,120,90,.14);border:1px solid rgba(255,120,90,.25);color:#ffb0a0;border-radius:12px;padding:4px 12px;font-size:11px;cursor:pointer;}
+.card-redpacket .rp-opened{font-size:11px;color:#c08070;margin-top:4px;}
 
-/* 定位卡片 */
-.card-location{border:1px solid #e4e8f5;background:#fff;border-radius:14px;overflow:hidden;min-width:190px;}
-.card-location .loc-map{height:80px;background:linear-gradient(135deg,#a8d8ea,#7fb3c8);display:grid;place-items:center;font-size:28px;}
-.card-location .loc-info{padding:8px 10px;}
-.card-location .loc-name{font-weight:600;font-size:13px;color:#222;}
-.card-location .loc-addr{font-size:11px;color:#888;margin-top:2px;}
+.card-location{background:linear-gradient(145deg,#111820,#0c1218);border:1px solid rgba(80,200,160,.12);border-radius:14px;overflow:hidden;width:200px;box-shadow:0 6px 20px rgba(0,0,0,.35);}
+.card-location .loc-map{height:70px;background:linear-gradient(135deg,#0d2030,#0a1a28);display:grid;place-items:center;font-size:26px;position:relative;overflow:hidden;}
+.card-location .loc-map::after{content:"";position:absolute;inset:0;background:radial-gradient(circle at 40% 50%,rgba(80,200,160,.1),transparent 70%);}
+.card-location .loc-info{padding:9px 12px;}
+.card-location .loc-name{font-size:12px;font-weight:600;color:#a8e0c8;}
+.card-location .loc-addr{font-size:10px;color:#507060;margin-top:2px;}
 
-/* 礼物卡片 */
-.card-gift{border:1px solid #f3d5e8;background:linear-gradient(135deg,#fff0f8,#ffe8f5);border-radius:14px;padding:12px 14px;min-width:160px;text-align:center;}
-.card-gift .gift-icon{font-size:36px;margin-bottom:4px;}
-.card-gift .gift-name{font-weight:700;font-size:13px;color:#b5006e;}
-.card-gift .gift-note{font-size:11px;color:#c06090;margin-top:4px;}
- .bubble.bubble-card{background:transparent!important;border:none!important;padding:0!important;box-shadow:none!important;}
-    .card-transfer.received,.card-redpacket.received{filter:saturate(.4) brightness(.85);pointer-events:none;}
-.card-transfer.rejected,.card-redpacket.rejected{filter:saturate(.2) brightness(.75);opacity:.7;pointer-events:none;}
-.card-rejected-tip{font-size:11px;color:#999;margin-top:6px;text-align:center;}
- .card-transfer{background:linear-gradient(135deg,#b71c1c,#e53935);color:#fff;border-radius:16px;padding:14px 16px;min-width:180px;box-shadow:0 4px 16px rgba(183,28,28,.35);}
-.card-transfer .ct-amount{font-size:26px;font-weight:800;margin:6px 0 4px;letter-spacing:1px;}
-.card-transfer .ct-note{font-size:12px;opacity:.85;}
-.card-transfer .ct-label{font-size:11px;opacity:.65;border-top:1px solid rgba(255,255,255,.2);margin-top:10px;padding-top:8px;display:flex;align-items:center;gap:4px;}
-.card-transfer .ct-btn{margin-top:10px;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:20px;padding:6px 16px;font-size:12px;cursor:pointer;backdrop-filter:blur(4px);}
-.card-transfer .ct-received{margin-top:10px;font-size:12px;opacity:.7;}
-
-.card-redpacket{background:linear-gradient(135deg,#b71c1c,#e65100);color:#fff;border-radius:16px;padding:14px 16px;min-width:190px;box-shadow:0 4px 16px rgba(183,28,28,.35);display:flex;gap:12px;align-items:center;}
-.card-redpacket .rp-icon{font-size:38px;filter:drop-shadow(0 2px 4px rgba(0,0,0,.3));}
-.card-redpacket .rp-info .rp-title{font-size:15px;font-weight:700;}
-.card-redpacket .rp-info .rp-note{font-size:12px;opacity:.8;margin-top:3px;}
-.card-redpacket .rp-open{font-size:11px;opacity:.6;border-top:1px solid rgba(255,255,255,.2);margin-top:10px;padding-top:8px;width:100%;text-align:center;}
-.card-redpacket .rp-btn{margin-top:8px;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:20px;padding:5px 14px;font-size:12px;cursor:pointer;}
-.card-redpacket .rp-opened{font-size:12px;opacity:.7;margin-top:8px;}
-
-.card-location{border:1px solid #dde4f0;background:#fff;border-radius:16px;overflow:hidden;min-width:200px;box-shadow:0 4px 14px rgba(60,80,140,.12);}
-.card-location .loc-map{height:90px;background:linear-gradient(135deg,#bbdefb,#90caf9);display:grid;place-items:center;font-size:32px;position:relative;}
-.card-location .loc-map::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 60%,rgba(0,0,0,.08));}
-.card-location .loc-info{padding:10px 12px;}
-.card-location .loc-name{font-weight:700;font-size:13px;color:#1a237e;}
-.card-location .loc-addr{font-size:11px;color:#90a4ae;margin-top:3px;}
-
-.card-gift{border:1px solid #f8bbd0;background:linear-gradient(135deg,#fff0f6,#ffe4f0);border-radius:16px;padding:14px 16px;min-width:170px;text-align:center;box-shadow:0 4px 14px rgba(194,24,91,.12);}
-.card-gift .gift-icon{font-size:40px;margin-bottom:6px;filter:drop-shadow(0 2px 6px rgba(194,24,91,.25));}
-.card-gift .gift-name{font-weight:700;font-size:14px;color:#880e4f;}
-.card-gift .gift-note{font-size:12px;color:#ad1457;margin-top:5px;opacity:.85;}
-.card-gift .gift-tag{display:inline-block;margin-top:8px;background:#f48fb1;color:#fff;border-radius:20px;padding:3px 10px;font-size:11px;}
-
+.card-gift{background:linear-gradient(145deg,#12161e,#0e1218);border:1px solid rgba(120,180,255,.12);border-radius:14px;padding:12px 14px;width:160px;box-shadow:0 6px 20px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.05);text-align:center;position:relative;overflow:hidden;}
+.card-gift::before{content:"";position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(140,200,255,.3),transparent);}
+.card-gift .gift-icon{font-size:28px;margin-bottom:6px;filter:drop-shadow(0 4px 8px rgba(100,160,255,.3));}
+.card-gift .gift-name{font-size:13px;font-weight:600;color:#b8d4ff;}
+.card-gift .gift-note{font-size:11px;color:#6080a8;margin-top:4px;}
+.card-gift .gift-tag{display:inline-block;margin-top:8px;background:rgba(100,160,255,.12);border:1px solid rgba(100,160,255,.2);color:#80a8e0;border-radius:999px;padding:2px 10px;font-size:10px;}
   </style>
   <script src="https://cdn.jsdelivr.net/npm/localforage@1.10.0/dist/localforage.min.js"></script>
 </head>
@@ -1808,10 +1790,10 @@ const FUNC_DIALOGS={
 };
 function buildFuncCard(type,data){
   const uid2='fc_'+Date.now()+'_'+Math.floor(Math.random()*9999);
-  if(type==='transfer') return `<div class="card-transfer"><div style="font-size:11px;opacity:.7;letter-spacing:.5px;">💸 微信转账</div><div class="ct-amount">¥${esc(data.amount||'0.00')}</div><div class="ct-note">${esc(data.note||'转账')}</div><div class="ct-label">微信安全转账</div><button class="ct-btn" id="${uid2}" onclick="(function(btn){btn.disabled=true;btn.parentElement.querySelector('.ct-btn')&&(btn.outerHTML='<div class=\\'ct-received\\'>✓ 已收款</div>')})(this)">确认收款</button></div>`;
-  if(type==='redpacket') return `<div class="card-redpacket"><div style="width:100%"><div style="display:flex;gap:12px;align-items:center;"><div class="rp-icon">🧧</div><div class="rp-info"><div class="rp-title">${esc(data.note||'恭喜发财，大吉大利')}</div><div class="rp-note">¥${esc(data.amount||'0.00')} 微信红包</div></div></div><div class="rp-open">微信红包</div><button class="rp-btn" id="${uid2}" onclick="(function(btn){btn.outerHTML='<div class=\\'rp-opened\\'>🎉 已领取 ¥${esc(data.amount||'0.00')}</div>'})(this)">点击领取</button></div></div>`;
-  if(type==='location') return `<div class="card-location"><div class="loc-map">🗺️</div><div class="loc-info"><div class="loc-name">📍 ${esc(data.name||'位置')}</div><div class="loc-addr">${esc(data.addr||'')}</div></div></div>`;
-  if(type==='gift') return `<div class="card-gift"><div class="gift-icon">🎁</div><div class="gift-name">${esc(data.name||'礼物')}</div><div class="gift-note">${esc(data.note||'')}</div><div class="gift-tag">送你的 ♥</div></div>`;
+  if(type==='transfer') return `<div class="card-transfer"><div class="ct-header"><span>💸</span>微信转账</div><div class="ct-amount">¥${esc(data.amount||'0.00')}</div><div class="ct-note">${esc(data.note||'')}</div><hr class="ct-divider"><div class="ct-footer"><div class="ct-label">微信安全转账</div><button class="ct-btn" onclick="(function(btn){btn.outerHTML='<div class=\\'ct-received\\'>✓ 已收款</div>'})(this)">确认收款</button></div></div>`;
+  if(type==='redpacket') return `<div class="card-redpacket"><div class="rp-main"><div class="rp-icon">🧧</div><div><div class="rp-title">${esc(data.note||'恭喜发财，大吉大利')}</div><div class="rp-sub">¥${esc(data.amount||'0.00')} 微信红包</div></div></div><hr class="rp-divider"><div class="rp-footer"><div class="rp-label">微信红包</div><button class="rp-btn" onclick="(function(btn){btn.outerHTML='<div class=\\'rp-opened\\'>已领取 ¥${esc(data.amount||'0.00')}</div>'})(this)">点击领取</button></div></div>`;
+  if(type==='location') return `<div class="card-location"><div class="loc-map">📍</div><div class="loc-info"><div class="loc-name">${esc(data.name||'位置')}</div><div class="loc-addr">${esc(data.addr||'')}</div></div></div>`;
+  if(type==='gift') return `<div class="card-gift"><div class="gift-icon">🎁</div><div class="gift-name">${esc(data.name||'礼物')}</div><div class="gift-note">${esc(data.note||'')}</div><div class="gift-tag">♥ 来自对方</div></div>`;
   return '';
 }
 
