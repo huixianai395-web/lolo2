@@ -972,16 +972,16 @@ return `<div class="msg-item ${selected?'selected':''}${sCls}" data-mid="${m.id}
   function parseJsonMessages(text){
     const t=clean(text); if(!t) return null;
     try{const j=JSON.parse(t);if(Array.isArray(j?.messages)) return j.messages.flatMap(x=>{
-  if(typeof x==='string') return [clean(x)];
-  if(x&&typeof x==='object'&&Array.isArray(x.messages)) return x.messages.map(m=>typeof m==='string'?clean(m):String(m||''));
-  return [x&&typeof x==='object'?(x.html||x.content||x.text||x.message||''):String(x||'')];
-}).filter(Boolean)catch{}
+      if(typeof x==='string') return [clean(x)];
+      if(x&&typeof x==='object'&&Array.isArray(x.messages)) return x.messages.map(m=>typeof m==='string'?clean(m):String(m||''));
+      return [x&&typeof x==='object'?(x.html||x.content||x.text||x.message||''):String(x||'')];
+    }).filter(Boolean);}catch{}
     const m=t.match(/\{[\s\S]*\}/);
-    if(m){if(Array.isArray(j?.messages)) return j.messages.flatMap(x=>{
-  if(typeof x==='string') return [clean(x)];
-  if(x&&typeof x==='object'&&Array.isArray(x.messages)) return x.messages.map(m=>typeof m==='string'?clean(m):String(m||''));
-  return [x&&typeof x==='object'?(x.html||x.content||x.text||x.message||''):String(x||'')];
-}).filter(Boolean)catch{}}
+    if(m){try{const j=JSON.parse(m[0]);if(Array.isArray(j?.messages)) return j.messages.flatMap(x=>{
+      if(typeof x==='string') return [clean(x)];
+      if(x&&typeof x==='object'&&Array.isArray(x.messages)) return x.messages.map(m=>typeof m==='string'?clean(m):String(m||''));
+      return [x&&typeof x==='object'?(x.html||x.content||x.text||x.message||''):String(x||'')];
+    }).filter(Boolean);}catch{}}
     return null;
   }
   function splitAiBubbles(raw){
@@ -1447,7 +1447,7 @@ setPref(p); applyBubbleCss(); applyFontSize();
     box.addEventListener('touchmove',e=>{if(!lpTimer) return;const t=e.touches[0];if(Math.abs(t.clientX-lpStartX)>8||Math.abs(t.clientY-lpStartY)>8){clearTimeout(lpTimer);lpTimer=null;}},{passive:true});
     ['touchend','touchcancel'].forEach(ev=>box.addEventListener(ev,()=>{clearTimeout(lpTimer);lpTimer=null;},{passive:true}));
     box.addEventListener('click',e=>{const item=e.target.closest('.msg-item');if(!item) return;if(selectMode){e.preventDefault();toggleSelect(item.dataset.mid);}});
-box.addEventListener('click',e=>{const item=e.target.closest('.msg-item');if(!item) return;if(selectMode){e.preventDefault();toggleSelect(item.dataset.mid);}});
+
 box.addEventListener('click',e=>{
   const rpBtn=e.target.closest('.rp-btn');
   if(rpBtn&&currentId){
