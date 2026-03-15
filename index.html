@@ -225,6 +225,39 @@
       line-height:1.6;
       color:#1f2430;
     }
+    /* 功能卡片 */
+.func-panel{display:none;width:100%;padding:8px 0 4px;display:none;flex-wrap:wrap;gap:10px 0;background:#f6f8ff;}
+.func-panel.show{display:flex;}
+.func-icon{width:25%;text-align:center;cursor:pointer;}
+.func-icon .ibox2{width:52px;height:52px;margin:0 auto 4px;border-radius:14px;background:#fff;border:1px solid #e4e8f5;display:grid;place-items:center;font-size:24px;}
+.func-icon .lab2{font-size:11px;color:#555;}
+.func-icon:active .ibox2{transform:scale(.88);}
+
+/* 转账卡片 */
+.card-transfer{background:linear-gradient(135deg,#c0392b,#e74c3c);color:#fff;border-radius:14px;padding:12px 14px;min-width:180px;}
+.card-transfer .ct-amount{font-size:22px;font-weight:700;margin:4px 0;}
+.card-transfer .ct-note{font-size:12px;opacity:.85;}
+.card-transfer .ct-label{font-size:11px;opacity:.7;border-top:1px solid rgba(255,255,255,.25);margin-top:8px;padding-top:6px;}
+
+/* 红包卡片 */
+.card-redpacket{background:linear-gradient(135deg,#c0392b,#e67e22);color:#fff;border-radius:14px;padding:12px 14px;min-width:160px;display:flex;align-items:center;gap:10px;}
+.card-redpacket .rp-icon{font-size:32px;}
+.card-redpacket .rp-info .rp-title{font-size:14px;font-weight:700;}
+.card-redpacket .rp-info .rp-note{font-size:11px;opacity:.8;margin-top:2px;}
+.card-redpacket .rp-open{margin-top:8px;font-size:11px;opacity:.65;border-top:1px solid rgba(255,255,255,.25);padding-top:6px;text-align:center;}
+
+/* 定位卡片 */
+.card-location{border:1px solid #e4e8f5;background:#fff;border-radius:14px;overflow:hidden;min-width:190px;}
+.card-location .loc-map{height:80px;background:linear-gradient(135deg,#a8d8ea,#7fb3c8);display:grid;place-items:center;font-size:28px;}
+.card-location .loc-info{padding:8px 10px;}
+.card-location .loc-name{font-weight:600;font-size:13px;color:#222;}
+.card-location .loc-addr{font-size:11px;color:#888;margin-top:2px;}
+
+/* 礼物卡片 */
+.card-gift{border:1px solid #f3d5e8;background:linear-gradient(135deg,#fff0f8,#ffe8f5);border-radius:14px;padding:12px 14px;min-width:160px;text-align:center;}
+.card-gift .gift-icon{font-size:36px;margin-bottom:4px;}
+.card-gift .gift-name{font-weight:700;font-size:13px;color:#b5006e;}
+.card-gift .gift-note{font-size:11px;color:#c06090;margin-top:4px;}
   </style>
   <script src="https://cdn.jsdelivr.net/npm/localforage@1.10.0/dist/localforage.min.js"></script>
 </head>
@@ -273,8 +306,14 @@
 </div>
     <div class="chatInputBar" id="chatInputWrap">
       <div id="quoteBar" class="quote-bar hidden"><div id="quoteText" class="quote-text"></div><button id="clearQuoteBtn" class="quote-close">×</button></div>
+      <div id="funcPanel" class="func-panel">
+  <div class="func-icon" data-func="transfer"><div class="ibox2">💸</div><div class="lab2">转账</div></div>
+  <div class="func-icon" data-func="redpacket"><div class="ibox2">🧧</div><div class="lab2">发红包</div></div>
+  <div class="func-icon" data-func="location"><div class="ibox2">📍</div><div class="lab2">定位</div></div>
+  <div class="func-icon" data-func="gift"><div class="ibox2">🎁</div><div class="lab2">送礼物</div></div>
+</div>
       <textarea id="chatInput" class="ta" placeholder="输入消息..."></textarea>
-      <div class="send-actions"><button class="btn store" id="storeBtn" aria-label="储存"></button><button class="btn p" id="sendBtn">发送</button></div>
+     <div class="send-actions"><button class="btn" id="funcToggleBtn" style="width:40px;height:40px;padding:0;border-radius:999px;font-size:20px;">+</button><button class="btn store" id="storeBtn" aria-label="储存"></button><button class="btn p" id="sendBtn">发送</button></div>
     </div>
   </section>
 
@@ -1723,6 +1762,49 @@ $("customBgFile").addEventListener("change", async (e) => {
   }
 });
   });
+  // 功能面板
+$('funcToggleBtn').onclick=()=>{
+  const p=$('funcPanel');
+  p.classList.toggle('show');
+};
+
+const FUNC_DIALOGS={
+  transfer:{title:'转账',fields:[{label:'金额（元）',key:'amount',placeholder:'0.00',type:'number'},{label:'备注',key:'note',placeholder:'转账备注（可选）'}]},
+  redpacket:{title:'发红包',fields:[{label:'金额（元）',key:'amount',placeholder:'0.00',type:'number'},{label:'祝福语',key:'note',placeholder:'恭喜发财，大吉大利'}]},
+  location:{title:'发送位置',fields:[{label:'地点名称',key:'name',placeholder:'例：星巴克'},{label:'详细地址',key:'addr',placeholder:'例：xx路xx号'}]},
+  gift:{title:'送礼物',fields:[{label:'礼物名称',key:'name',placeholder:'例：玫瑰花'},{label:'留言',key:'note',placeholder:'送你的～'}]}
+};
+
+function buildFuncCard(type,data){
+  if(type==='transfer') return `<div class="card-transfer"><div style="font-size:11px;opacity:.7;">转账</div><div class="ct-amount">¥${esc(data.amount||'0.00')}</div><div class="ct-note">${esc(data.note||'')}</div><div class="ct-label">微信转账</div></div>`;
+  if(type==='redpacket') return `<div class="card-redpacket"><div class="rp-icon">🧧</div><div class="rp-info"><div class="rp-title">${esc(data.note||'恭喜发财，大吉大利')}</div><div class="rp-note">¥${esc(data.amount||'0.00')} 红包</div><div class="rp-open">微信红包</div></div></div>`;
+  if(type==='location') return `<div class="card-location"><div class="loc-map">🗺️</div><div class="loc-info"><div class="loc-name">${esc(data.name||'位置')}</div><div class="loc-addr">${esc(data.addr||'')}</div></div></div>`;
+  if(type==='gift') return `<div class="card-gift"><div class="gift-icon">🎁</div><div class="gift-name">${esc(data.name||'礼物')}</div><div class="gift-note">${esc(data.note||'')}</div></div>`;
+  return '';
+}
+
+document.querySelectorAll('.func-icon[data-func]').forEach(el=>{
+  el.onclick=()=>{
+    const type=el.dataset.func,cfg=FUNC_DIALOGS[type]; if(!cfg) return;
+    let html=`<b>${cfg.title}</b><br><br>`;
+    cfg.fields.forEach(f=>{ html+=`<div style="margin-bottom:8px;"><div class="small">${f.label}</div><input id="fd_${f.key}" class="input" type="${f.type||'text'}" placeholder="${f.placeholder}" style="margin-top:4px;"></div>`; });
+    const modal=document.createElement('div');
+    modal.className='modal active';
+    modal.innerHTML=`<div class="modal-card" style="max-width:320px;">${html}<div class="row" style="justify-content:flex-end;margin-top:10px;"><button class="btn" id="fdCancelBtn">取消</button><button class="btn p" id="fdSendBtn">发送</button></div></div>`;
+    $('app').appendChild(modal);
+    modal.querySelector('#fdCancelBtn').onclick=()=>modal.remove();
+    modal.querySelector('#fdSendBtn').onclick=()=>{
+      const data={};
+      cfg.fields.forEach(f=>{ data[f.key]=clean(modal.querySelector('#fd_'+f.key)?.value||''); });
+      const cardHtml=buildFuncCard(type,data);
+      if(!cardHtml||!currentId){modal.remove();return;}
+      const arr=getChatArr(currentId);
+      arr.push(toMsg({role:'user',text:cardHtml,time:Date.now()}));
+      setChatArr(currentId,arr);updateContactPreview(currentId);renderChat();
+      modal.remove();$('funcPanel').classList.remove('show');
+    };
+  };
+});
 })();
 </script>
 </body>
